@@ -22,6 +22,13 @@ export interface List {
   updated_at: string;
 }
 
+export interface ChildListDetail {
+  id: string;
+  title: string;
+  visibility: ListVisibility;
+  items_count: number;
+}
+
 export interface Item {
   id: string;
   list: string;
@@ -31,6 +38,7 @@ export interface Item {
   item_type_detail?: ItemType | null;
   metadata?: Record<string, unknown>;
   child_list?: string | null;
+  child_list_detail?: ChildListDetail | null;
   created_at: string;
   updated_at: string;
 }

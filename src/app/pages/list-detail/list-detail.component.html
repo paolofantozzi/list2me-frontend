@@ -66,8 +66,28 @@
               <nb-icon icon="copy-outline"></nb-icon>
               Fork
             </button>
+            <button nbButton ghost status="warning" (click)="toggleSuggestions()">
+              <nb-icon icon="bulb-outline"></nb-icon>
+              Suggerisci
+            </button>
+            <button nbButton ghost status="danger" size="small" (click)="reportList()" title="Segnala lista">
+              <nb-icon icon="flag-outline"></nb-icon>
+            </button>
           }
           @if (isOwner) {
+            @if (list()!.is_fork) {
+              <button nbButton ghost status="warning" (click)="toggleDiff()">
+                <nb-icon icon="code-download-outline"></nb-icon>
+                {{ showDiff() ? 'Nascondi diff' : 'Diff / Merge' }}
+              </button>
+            }
+            <button nbButton ghost status="warning" (click)="toggleSuggestions()">
+              <nb-icon icon="bulb-outline"></nb-icon>
+              Suggerimenti
+              @if (suggestions().length > 0) {
+                <span class="badge-count">{{ suggestions().length }}</span>
+              }
+            </button>
             <button nbButton ghost status="info" (click)="toggleBookSearch()">
               <nb-icon icon="book-outline"></nb-icon>
               Cerca libro
@@ -81,6 +101,143 @@
       </div>
     </div>
 
+    <!-- ── Diff / Merge panel ─────────────────────────────────────────────── -->
+    @if (showDiff() && isOwner && list()!.is_fork) {
+      <nb-card class="diff-card" accent="warning">
+        <nb-card-header>
+          <nb-icon icon="code-download-outline"></nb-icon>
+          Differenze dalla lista originale
+        </nb-card-header>
+        <nb-card-body>
+          @if (diffLoading()) {
+            <div class="loading-center"><nb-spinner status="warning" size="medium"></nb-spinner></div>
+          } @else if (diff()) {
+            @if (diff()!.added.length === 0 && diff()!.removed.length === 0) {
+              <p class="diff-empty">La tua lista è già aggiornata con la fonte.</p>
+            } @else {
+              @if (diff()!.added.length > 0) {
+                <p class="diff-section-label diff-added-label">
+                  <nb-icon icon="plus-circle-outline"></nb-icon>
+                  Elementi aggiunti alla fonte ({{ diff()!.added.length }})
+                </p>
+                <ul class="diff-list">
+                  @for (item of diff()!.added; track item.id) {
+                    <li class="diff-item diff-item--added">{{ item.text }}</li>
+                  }
+                </ul>
+              }
+              @if (diff()!.removed.length > 0) {
+                <p class="diff-section-label diff-removed-label">
+                  <nb-icon icon="minus-circle-outline"></nb-icon>
+                  Elementi rimossi dalla fonte ({{ diff()!.removed.length }})
+                </p>
+                <ul class="diff-list">
+                  @for (item of diff()!.removed; track item.id) {
+                    <li class="diff-item diff-item--removed">{{ item.text }}</li>
+                  }
+                </ul>
+              }
+              <div class="form-actions" style="margin-top: 1rem;">
+                <button nbButton type="button" ghost (click)="showDiff.set(false)">Chiudi</button>
+                <button nbButton status="warning" [disabled]="mergeLoading()" (click)="mergeFork()">
+                  @if (mergeLoading()) {
+                    <nb-spinner size="small" status="basic"></nb-spinner>
+                  } @else {
+                    <nb-icon icon="code-download-outline"></nb-icon>
+                    Importa modifiche (Merge)
+                  }
+                </button>
+              </div>
+            }
+          }
+        </nb-card-body>
+      </nb-card>
+    }
+
+    <!-- ── Suggestions panel ──────────────────────────────────────────────── -->
+    @if (showSuggestions()) {
+      <nb-card class="suggestions-card" accent="warning">
+        <nb-card-header>
+          <nb-icon icon="bulb-outline"></nb-icon>
+          @if (isOwner) { Suggerimenti ricevuti } @else { Invia un suggerimento }
+        </nb-card-header>
+        <nb-card-body>
+          @if (suggestionsLoading()) {
+            <div class="loading-center"><nb-spinner status="warning" size="medium"></nb-spinner></div>
+          } @else if (isOwner) {
+            @if (suggestions().length === 0) {
+              <p class="diff-empty">Nessun suggerimento in attesa.</p>
+            } @else {
+              <div class="suggestions-list">
+                @for (s of suggestions(); track s.id) {
+                  <div class="suggestion-item">
+                    <div class="suggestion-meta">
+                      <strong>{{ s.author.username }}</strong>
+                      <span class="suggestion-status" [class]="'suggestion-status--' + s.status">
+                        {{ s.status === 'pending' ? 'In attesa' : s.status === 'accepted' ? 'Accettato' : 'Rifiutato' }}
+                      </span>
+                    </div>
+                    <ul class="suggestion-actions-list">
+                      @for (action of s.actions; track $index) {
+                        <li [class]="action.action === 'add' ? 'diff-item--added' : 'diff-item--removed'">
+                          <nb-icon [icon]="action.action === 'add' ? 'plus-circle-outline' : 'minus-circle-outline'"></nb-icon>
+                          {{ action.item_text }}
+                        </li>
+                      }
+                    </ul>
+                    @if (s.status === 'pending') {
+                      <div class="suggestion-btns">
+                        <button nbButton size="small" status="success" ghost (click)="acceptSuggestion(s)">
+                          <nb-icon icon="checkmark-outline"></nb-icon> Accetta
+                        </button>
+                        <button nbButton size="small" status="danger" ghost (click)="rejectSuggestion(s)">
+                          <nb-icon icon="close-outline"></nb-icon> Rifiuta
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          } @else {
+            @if (!showSuggestForm()) {
+              <p class="diff-empty">Hai un'idea per migliorare questa lista? Proponi l'aggiunta o la rimozione di un elemento.</p>
+              <div class="form-actions">
+                <button nbButton type="button" ghost (click)="showSuggestions.set(false)">Chiudi</button>
+                <button nbButton status="warning" (click)="showSuggestForm.set(true)">
+                  <nb-icon icon="edit-outline"></nb-icon>
+                  Crea suggerimento
+                </button>
+              </div>
+            } @else {
+              <form [formGroup]="suggestForm" (ngSubmit)="submitSuggestion()">
+                <div class="form-group">
+                  <label class="label">Azione *</label>
+                  <nb-select formControlName="action" fullWidth>
+                    <nb-option value="add">Aggiungi elemento</nb-option>
+                    <nb-option value="remove">Rimuovi elemento</nb-option>
+                  </nb-select>
+                </div>
+                <div class="form-group">
+                  <label class="label">Testo elemento *</label>
+                  <input nbInput fullWidth formControlName="item_text"
+                         placeholder="Testo dell'elemento da aggiungere o rimuovere..." />
+                </div>
+                <div class="form-actions">
+                  <button nbButton type="button" ghost (click)="showSuggestForm.set(false)">Annulla</button>
+                  <button nbButton type="submit" status="warning" [disabled]="suggestForm.invalid">
+                    <nb-icon icon="paper-plane-outline"></nb-icon>
+                    Invia suggerimento
+                  </button>
+                </div>
+              </form>
+            }
+          }
+        </nb-card-body>
+      </nb-card>
+    }
+
+    <!-- ── Book search panel ──────────────────────────────────────────────── -->
     @if (showBookSearch() && isOwner) {
       <nb-card class="add-item-card book-search-card" accent="info">
         <nb-card-header>
@@ -133,6 +290,7 @@
       </nb-card>
     }
 
+    <!-- ── Add item form ──────────────────────────────────────────────────── -->
     @if (showAddItem() && isOwner) {
       <nb-card class="add-item-card" accent="primary">
         <nb-card-header>Nuovo elemento</nb-card-header>
@@ -142,6 +300,32 @@
               <label class="label">Testo *</label>
               <input nbInput fullWidth formControlName="text" placeholder="Testo dell'elemento..." />
             </div>
+
+            <div class="child-list-toggle">
+              <button nbButton type="button" ghost size="small" (click)="showNewChildList.update(v => !v)">
+                <nb-icon [icon]="showNewChildList() ? 'minus-circle-outline' : 'list-outline'"></nb-icon>
+                {{ showNewChildList() ? 'Rimuovi sotto-lista' : 'Collega una nuova sotto-lista' }}
+              </button>
+            </div>
+
+            @if (showNewChildList()) {
+              <div class="child-list-form">
+                <div class="form-group">
+                  <label class="label">Titolo sotto-lista *</label>
+                  <input nbInput fullWidth formControlName="new_child_list_title"
+                         placeholder="Titolo della nuova sotto-lista..." />
+                </div>
+                <div class="form-group">
+                  <label class="label">Visibilità</label>
+                  <nb-select formControlName="new_child_list_visibility" fullWidth>
+                    <nb-option value="public">Pubblica</nb-option>
+                    <nb-option value="private">Privata</nb-option>
+                    <nb-option value="group">Gruppo</nb-option>
+                  </nb-select>
+                </div>
+              </div>
+            }
+
             <div class="form-actions">
               <button nbButton type="button" ghost (click)="showAddItem.set(false)">Annulla</button>
               <button nbButton type="submit" status="primary"
@@ -158,9 +342,13 @@
       </nb-card>
     }
 
+    <!-- ── Items list ─────────────────────────────────────────────────────── -->
     <nb-card class="items-card">
       <nb-card-header>
         <span>Elementi ({{ items().length }})</span>
+        @if (reorderLoading()) {
+          <nb-spinner size="tiny" status="primary"></nb-spinner>
+        }
       </nb-card-header>
       <nb-card-body class="items-body">
         @if (items().length === 0) {
@@ -170,11 +358,38 @@
           </div>
         } @else {
           <ol class="items-list">
-            @for (item of items(); track item.id; let i = $index) {
+            @for (item of items(); track item.id; let i = $index; let first = $first; let last = $last) {
               <li class="item" [class.item--book]="isBookItem(item)">
                 @if (editingItem()?.id === item.id) {
                   <form [formGroup]="editItemForm" (ngSubmit)="saveEditItem()" class="item-edit-form">
                     <input nbInput fullWidth formControlName="text" />
+
+                    @if (!item.child_list_detail) {
+                      <div class="child-list-toggle">
+                        <button nbButton type="button" ghost size="small" (click)="showEditChildList.update(v => !v)">
+                          <nb-icon [icon]="showEditChildList() ? 'minus-circle-outline' : 'list-outline'"></nb-icon>
+                          {{ showEditChildList() ? 'Rimuovi sotto-lista' : 'Collega nuova sotto-lista' }}
+                        </button>
+                      </div>
+                      @if (showEditChildList()) {
+                        <div class="child-list-form">
+                          <div class="form-group">
+                            <label class="label">Titolo sotto-lista *</label>
+                            <input nbInput fullWidth formControlName="new_child_list_title"
+                                   placeholder="Titolo della nuova sotto-lista..." />
+                          </div>
+                          <div class="form-group">
+                            <label class="label">Visibilità</label>
+                            <nb-select formControlName="new_child_list_visibility" fullWidth>
+                              <nb-option value="public">Pubblica</nb-option>
+                              <nb-option value="private">Privata</nb-option>
+                              <nb-option value="group">Gruppo</nb-option>
+                            </nb-select>
+                          </div>
+                        </div>
+                      }
+                    }
+
                     <div class="form-actions">
                       <button nbButton type="button" size="tiny" ghost (click)="editingItem.set(null)">Annulla</button>
                       <button nbButton type="submit" size="tiny" status="primary">Salva</button>
@@ -182,6 +397,17 @@
                   </form>
                 } @else {
                   <div class="item-content">
+                    @if (isOwner) {
+                      <div class="item-reorder">
+                        <button nbButton ghost size="tiny" [disabled]="first" (click)="moveItemUp(i)" title="Sposta su">
+                          <nb-icon icon="arrow-upward-outline"></nb-icon>
+                        </button>
+                        <button nbButton ghost size="tiny" [disabled]="last" (click)="moveItemDown(i)" title="Sposta giù">
+                          <nb-icon icon="arrow-downward-outline"></nb-icon>
+                        </button>
+                      </div>
+                    }
+
                     <span class="item-number">{{ i + 1 }}</span>
 
                     @if (isBookItem(item)) {
@@ -210,6 +436,19 @@
                       </div>
                     }
 
+                    @if (item.child_list_detail) {
+                      <div class="child-list-badge" (click)="navigateToChildList(item.child_list_detail.id)" role="button" tabindex="0"
+                           (keyup.enter)="navigateToChildList(item.child_list_detail!.id)"
+                           [title]="'Apri sotto-lista: ' + item.child_list_detail.title">
+                        <nb-icon icon="list-outline"></nb-icon>
+                        <span class="child-list-title">{{ item.child_list_detail.title }}</span>
+                        <span class="child-list-meta">
+                          <nb-icon [icon]="item.child_list_detail.visibility === 'public' ? 'globe-2-outline' : item.child_list_detail.visibility === 'group' ? 'people-outline' : 'lock-outline'"></nb-icon>
+                          {{ item.child_list_detail.items_count }} elementi
+                        </span>
+                      </div>
+                    }
+
                     @if (isOwner) {
                       <div class="item-actions">
                         @if (isBookItem(item)) {
@@ -222,6 +461,11 @@
                             } @else {
                               <nb-icon icon="refresh-outline"></nb-icon>
                             }
+                          </button>
+                        }
+                        @if (item.child_list_detail) {
+                          <button nbButton ghost size="tiny" status="warning" (click)="unlinkChildList(item)" title="Scollega sotto-lista">
+                            <nb-icon icon="link-2-outline"></nb-icon>
                           </button>
                         }
                         <button nbButton ghost size="tiny" (click)="startEditItem(item)" title="Modifica">
