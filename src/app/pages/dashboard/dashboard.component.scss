@@ -1,0 +1,74 @@
+$primary: #3366ff;
+$text-hint: #8f9bb3;
+$text-basic: #1a2138;
+
+.page-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 4rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  text-align: center;
+  gap: 1rem;
+
+  .empty-icon { font-size: 3rem; color: $text-hint; }
+  h3 { margin: 0; color: $text-basic; }
+  p { margin: 0; color: $text-hint; }
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.25rem 0;
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-description {
+  font-size: 0.875rem;
+  color: $text-basic;
+  margin-bottom: 0.25rem;
+
+  .activity-verb { color: $text-hint; }
+  .activity-target { font-style: italic; color: $primary; }
+}
+
+.activity-time {
+  font-size: 0.75rem;
+  color: $text-hint;
+}
+
+.activity-type-icon {
+  font-size: 1.25rem;
+  color: $text-hint;
+  flex-shrink: 0;
+}

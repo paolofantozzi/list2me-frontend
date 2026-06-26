@@ -1,0 +1,45 @@
+<nb-layout>
+  <nb-layout-header fixed>
+    <div class="header-container">
+      <div class="header-left">
+        <button nbButton ghost (click)="toggleSidebar()" class="sidebar-toggle">
+          <nb-icon icon="menu-2-outline"></nb-icon>
+        </button>
+        <a routerLink="/pages/dashboard" class="logo">
+          <nb-icon icon="layers-outline" class="logo-icon"></nb-icon>
+          <span class="logo-text">List2Me</span>
+        </a>
+      </div>
+
+      <div class="header-right">
+        @if (currentUser()) {
+          <nb-actions size="small">
+            <nb-action>
+              <nb-user
+                [name]="userFullName()"
+                [picture]="currentUser()?.avatar_url || ''"
+                [nbContextMenu]="userMenuItems"
+                nbContextMenuTag="user-context-menu"
+                nbContextMenuTrigger="click"
+              ></nb-user>
+            </nb-action>
+          </nb-actions>
+        }
+      </div>
+    </div>
+  </nb-layout-header>
+
+  <nb-sidebar tag="left" responsive>
+    <nb-menu [items]="menuItems" tag="main-menu"></nb-menu>
+  </nb-sidebar>
+
+  <nb-layout-column>
+    <router-outlet></router-outlet>
+  </nb-layout-column>
+
+  <nb-layout-footer fixed>
+    <span class="footer-text">
+      &copy; {{ currentYear }} List2Me
+    </span>
+  </nb-layout-footer>
+</nb-layout>

@@ -1,0 +1,114 @@
+$text-hint: #8f9bb3;
+$text-basic: #1a2138;
+$warning-100: #fff4db;
+$warning: #ffaa00;
+
+.page-container {
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.create-form-card {
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+
+  .label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 4rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  text-align: center;
+  gap: 1rem;
+
+  .empty-icon { font-size: 3rem; color: $text-hint; }
+  h3 { margin: 0; }
+  p { margin: 0; color: $text-hint; }
+}
+
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.group-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.group-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.invited-badge {
+  font-size: 0.7rem;
+  padding: 0.125rem 0.5rem;
+  background: $warning-100;
+  color: $warning;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.group-description {
+  font-size: 0.875rem;
+  color: $text-hint;
+  margin: 0 0 1rem;
+}
+
+.group-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.member-count {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: $text-hint;
+}
+
+.invite-actions {
+  display: flex;
+  gap: 0.5rem;
+}

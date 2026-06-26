@@ -1,0 +1,106 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Gruppi</h1>
+    <button nbButton status="primary" (click)="showCreateForm.update(v => !v)">
+      <nb-icon icon="plus-outline"></nb-icon>
+      Nuovo gruppo
+    </button>
+  </div>
+
+  @if (showCreateForm()) {
+    <nb-card class="create-form-card" accent="primary">
+      <nb-card-header>Crea nuovo gruppo</nb-card-header>
+      <nb-card-body>
+        <form [formGroup]="createForm" (ngSubmit)="createGroup()">
+          <div class="form-group">
+            <label class="label">Nome *</label>
+            <input nbInput fullWidth formControlName="name" placeholder="Nome del gruppo..." />
+          </div>
+          <div class="form-group">
+            <label class="label">Descrizione</label>
+            <textarea nbInput fullWidth formControlName="description"
+                      placeholder="Descrizione opzionale..." rows="2"></textarea>
+          </div>
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="showCreateForm.set(false)">Annulla</button>
+            <button nbButton type="submit" status="primary"
+                    [disabled]="createForm.invalid || createLoading()">
+              @if (createLoading()) {
+                <nb-spinner size="small" status="basic"></nb-spinner>
+              } @else {
+                Crea
+              }
+            </button>
+          </div>
+        </form>
+      </nb-card-body>
+    </nb-card>
+  }
+
+  @if (loading()) {
+    <div class="loading-center">
+      <nb-spinner status="primary" size="giant"></nb-spinner>
+    </div>
+  } @else if (error()) {
+    <nb-alert status="danger">{{ error() }}</nb-alert>
+  } @else if (groups().length === 0) {
+    <nb-card>
+      <nb-card-body class="empty-state">
+        <nb-icon icon="people-outline" class="empty-icon"></nb-icon>
+        <h3>Nessun gruppo</h3>
+        <p>Crea un gruppo per condividere liste con amici e colleghi.</p>
+        <button nbButton status="primary" (click)="showCreateForm.set(true)">
+          <nb-icon icon="plus-outline"></nb-icon>
+          Crea un gruppo
+        </button>
+      </nb-card-body>
+    </nb-card>
+  } @else {
+    <div class="groups-grid">
+      @for (group of groups(); track group.id) {
+        <nb-card class="group-card">
+          <nb-card-header>
+            <div class="group-card-header">
+              <div>
+                <h3 class="group-name">{{ group.name }}</h3>
+              </div>
+              <div class="group-header-actions">
+                @if (isOwner(group)) {
+                  <button nbButton ghost size="tiny" status="danger"
+                          (click)="deleteGroup(group)" title="Elimina gruppo">
+                    <nb-icon icon="trash-2-outline"></nb-icon>
+                  </button>
+                }
+              </div>
+            </div>
+          </nb-card-header>
+          <nb-card-body>
+            @if (group.description) {
+              <p class="group-description">{{ group.description }}</p>
+            }
+            <div class="group-meta">
+              <nb-user
+                [name]="group.owner.username"
+                [picture]="group.owner.avatar_url"
+                size="small"
+                caption="Proprietario"
+              ></nb-user>
+              <span class="member-count">
+                <nb-icon icon="people-outline"></nb-icon>
+                {{ group.members_count }} {{ group.members_count === 1 ? 'membro' : 'membri' }}
+              </span>
+            </div>
+          </nb-card-body>
+          <nb-card-footer>
+            @if (!isOwner(group)) {
+              <button nbButton ghost size="small" status="warning" (click)="leaveGroup(group)">
+                <nb-icon icon="log-out-outline"></nb-icon>
+                Lascia
+              </button>
+            }
+          </nb-card-footer>
+        </nb-card>
+      }
+    </div>
+  }
+</div>

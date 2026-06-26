@@ -1,0 +1,91 @@
+<div class="page-container">
+  <h1 class="page-title">Il mio profilo</h1>
+
+  @if (currentUser(); as user) {
+    <div class="profile-layout">
+      <nb-card class="profile-card">
+        <nb-card-body>
+          <div class="avatar-section">
+            <nb-user
+              [name]="user.first_name || user.username"
+              [picture]="user.avatar_url || ''"
+              size="giant"
+            ></nb-user>
+            <div class="user-info">
+              <h2 class="display-name">
+                {{ user.first_name || user.last_name ? (user.first_name + ' ' + user.last_name).trim() : user.username }}
+              </h2>
+              <p class="username">&#64;{{ user.username }}</p>
+              <p class="email">{{ user.email }}</p>
+              @if (user.bio) {
+                <p class="bio">{{ user.bio }}</p>
+              }
+              <p class="joined">Membro dal {{ user.date_joined | date:'mediumDate' }}</p>
+            </div>
+          </div>
+        </nb-card-body>
+        <nb-card-footer>
+          <div class="card-actions">
+            @if (!editing()) {
+              <button nbButton status="primary" (click)="startEditing()">
+                <nb-icon icon="edit-2-outline"></nb-icon>
+                Modifica profilo
+              </button>
+            }
+          </div>
+        </nb-card-footer>
+      </nb-card>
+
+      @if (editing()) {
+        <nb-card>
+          <nb-card-header>Modifica profilo</nb-card-header>
+          <nb-card-body>
+            <form [formGroup]="form" (ngSubmit)="saveProfile()">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="label">Nome</label>
+                  <input nbInput fullWidth formControlName="first_name" placeholder="Nome" />
+                </div>
+                <div class="form-group">
+                  <label class="label">Cognome</label>
+                  <input nbInput fullWidth formControlName="last_name" placeholder="Cognome" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="label">Bio</label>
+                <textarea nbInput fullWidth formControlName="bio"
+                          placeholder="Raccontati al mondo..." rows="4"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="label">URL avatar</label>
+                <input nbInput fullWidth formControlName="avatar_url" type="url"
+                       placeholder="https://..." />
+              </div>
+              <div class="form-actions">
+                <button nbButton type="button" ghost (click)="editing.set(false)">Annulla</button>
+                <button nbButton type="submit" status="primary" [disabled]="loading()">
+                  @if (loading()) {
+                    <nb-spinner size="small" status="basic"></nb-spinner>
+                  } @else {
+                    Salva modifiche
+                  }
+                </button>
+              </div>
+            </form>
+          </nb-card-body>
+        </nb-card>
+      }
+
+      <nb-card status="danger" class="danger-zone">
+        <nb-card-header>Zona pericolosa</nb-card-header>
+        <nb-card-body>
+          <p>La disattivazione dell'account è irreversibile.</p>
+          <button nbButton status="danger" ghost (click)="confirmDeactivate()">
+            <nb-icon icon="trash-2-outline"></nb-icon>
+            Disattiva account
+          </button>
+        </nb-card-body>
+      </nb-card>
+    </div>
+  }
+</div>

@@ -1,0 +1,155 @@
+<div class="page-container">
+  @if (loading()) {
+    <div class="loading-center">
+      <nb-spinner status="primary" size="giant"></nb-spinner>
+    </div>
+  } @else if (error()) {
+    <nb-alert status="danger">{{ error() }}</nb-alert>
+  } @else if (list()) {
+    <div class="list-header">
+      <button nbButton ghost (click)="goBack()">
+        <nb-icon icon="arrow-back-outline"></nb-icon>
+        Torna alle liste
+      </button>
+
+      <div class="list-meta">
+        <div class="list-title-row">
+          <h1 class="list-title">{{ list()!.title }}</h1>
+          <nb-icon
+            [icon]="list()!.visibility === 'public' ? 'globe-2-outline' : list()!.visibility === 'group' ? 'people-outline' : 'lock-outline'"
+            class="visibility-icon"
+            [title]="list()!.visibility === 'public' ? 'Pubblica' : list()!.visibility === 'group' ? 'Gruppo' : 'Privata'">
+          </nb-icon>
+        </div>
+        @if (list()!.description) {
+          <p class="list-description">{{ list()!.description }}</p>
+        }
+
+        <div class="list-owner">
+          di <strong>{{ list()!.owner.username }}</strong>
+        </div>
+
+        @if (list()!.is_fork && list()!.forked_from) {
+          <div class="fork-badge">
+            <nb-icon icon="copy-outline"></nb-icon>
+            Lista forkata
+          </div>
+        }
+
+        @if (list()!.tags.length) {
+          <div class="list-tags">
+            @for (tag of list()!.tags; track tag.id) {
+              <span class="tag">{{ tag.name }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="list-actions">
+        <div class="list-stats">
+          <span class="stat">
+            <nb-icon icon="checkmark-square-outline"></nb-icon>
+            {{ list()!.items_count }} {{ list()!.items_count === 1 ? 'elemento' : 'elementi' }}
+          </span>
+          <span class="stat">
+            <nb-icon icon="layers-outline"></nb-icon>
+            v{{ list()!.version }}
+          </span>
+        </div>
+        <div class="action-buttons">
+          @if (!isOwner) {
+            <button nbButton ghost status="primary" (click)="toggleFollow()">
+              <nb-icon [icon]="list()!.is_following ? 'heart' : 'heart-outline'"></nb-icon>
+              {{ list()!.is_following ? 'Non seguire' : 'Segui' }}
+            </button>
+            <button nbButton ghost status="info" (click)="forkList()">
+              <nb-icon icon="copy-outline"></nb-icon>
+              Fork
+            </button>
+          }
+          @if (isOwner) {
+            <button nbButton status="primary" (click)="showAddItem.update(v => !v)">
+              <nb-icon icon="plus-outline"></nb-icon>
+              Aggiungi elemento
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (showAddItem() && isOwner) {
+      <nb-card class="add-item-card" accent="primary">
+        <nb-card-header>Nuovo elemento</nb-card-header>
+        <nb-card-body>
+          <form [formGroup]="addItemForm" (ngSubmit)="addItem()">
+            <div class="form-group">
+              <label class="label">Testo *</label>
+              <input nbInput fullWidth formControlName="text" placeholder="Testo dell'elemento..." />
+            </div>
+            <div class="form-actions">
+              <button nbButton type="button" ghost (click)="showAddItem.set(false)">Annulla</button>
+              <button nbButton type="submit" status="primary"
+                      [disabled]="addItemForm.invalid || addItemLoading()">
+                @if (addItemLoading()) {
+                  <nb-spinner size="small" status="basic"></nb-spinner>
+                } @else {
+                  Aggiungi
+                }
+              </button>
+            </div>
+          </form>
+        </nb-card-body>
+      </nb-card>
+    }
+
+    <nb-card class="items-card">
+      <nb-card-header>
+        <span>Elementi ({{ items().length }})</span>
+      </nb-card-header>
+      <nb-card-body class="items-body">
+        @if (items().length === 0) {
+          <div class="empty-state">
+            <nb-icon icon="inbox-outline" class="empty-icon"></nb-icon>
+            <p>Nessun elemento. @if (isOwner) { Aggiungine uno qui sopra. }</p>
+          </div>
+        } @else {
+          <ol class="items-list">
+            @for (item of items(); track item.id; let i = $index) {
+              <li class="item">
+                @if (editingItem()?.id === item.id) {
+                  <form [formGroup]="editItemForm" (ngSubmit)="saveEditItem()" class="item-edit-form">
+                    <input nbInput fullWidth formControlName="text" />
+                    <div class="form-actions">
+                      <button nbButton type="button" size="tiny" ghost (click)="editingItem.set(null)">Annulla</button>
+                      <button nbButton type="submit" size="tiny" status="primary">Salva</button>
+                    </div>
+                  </form>
+                } @else {
+                  <div class="item-content">
+                    <span class="item-number">{{ i + 1 }}</span>
+                    <div class="item-text">
+                      <p class="item-title">{{ item.text || '(vuoto)' }}</p>
+                      @if (item.item_type_detail) {
+                        <span class="item-type-badge">{{ item.item_type_detail.label }}</span>
+                      }
+                    </div>
+                    @if (isOwner) {
+                      <div class="item-actions">
+                        <button nbButton ghost size="tiny" (click)="startEditItem(item)" title="Modifica">
+                          <nb-icon icon="edit-2-outline"></nb-icon>
+                        </button>
+                        <button nbButton ghost size="tiny" status="danger" (click)="deleteItem(item)" title="Elimina">
+                          <nb-icon icon="trash-2-outline"></nb-icon>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ol>
+        }
+      </nb-card-body>
+    </nb-card>
+  }
+</div>

@@ -1,0 +1,52 @@
+// Use Nebular prebuilt default theme
+@use '@nebular/theme/styles/all' as *;
+
+// Configure and register the default theme (must be before nb-install)
+$nb-enabled-themes: (default);
+$nb-enable-css-custom-properties: false;
+
+@include nb-install() {
+  @include nb-theme-global();
+}
+
+// ── Global overrides ────────────────────────────────────────────────────────
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Open Sans', 'Segoe UI', sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c5cee0;
+  border-radius: 3px;
+}
+
+// Fix nb-icon SVG size when used as nbPrefix/nbSuffix inside nb-form-field
+nb-form-field nb-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+// Constrain the nb-icon element itself inside form-field slots
+nb-form-field nb-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}

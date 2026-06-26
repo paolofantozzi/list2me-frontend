@@ -1,0 +1,97 @@
+<div class="auth-wrapper">
+  <div class="auth-brand">
+    <nb-icon icon="layers-outline" class="brand-icon"></nb-icon>
+    <span class="brand-name">List2Me</span>
+    <p class="brand-tagline">Organizza il tuo mondo, condividilo con chi ami.</p>
+  </div>
+
+  <div class="auth-panel">
+    <div class="auth-box">
+      <h2 class="auth-title">Crea account</h2>
+      <p class="auth-subtitle">Unisciti a List2Me e inizia a organizzare la tua vita.</p>
+
+      @if (error()) {
+        <nb-alert status="danger" closable (close)="error.set('')" class="auth-alert">
+          {{ error() }}
+        </nb-alert>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-group">
+          <label class="label" for="username">Nome utente</label>
+          <div class="input-wrap">
+            <nb-icon icon="person-outline" pack="eva" class="input-icon"></nb-icon>
+            <input nbInput fullWidth id="username" formControlName="username"
+                   class="has-icon" placeholder="Scegli un nome utente" autocomplete="username" />
+          </div>
+          @if (hasError('username', 'required')) {
+            <p class="error-text">Il nome utente è obbligatorio.</p>
+          }
+          @if (hasError('username', 'minlength')) {
+            <p class="error-text">Il nome utente deve avere almeno 3 caratteri.</p>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="label" for="email">Email</label>
+          <div class="input-wrap">
+            <nb-icon icon="email-outline" pack="eva" class="input-icon"></nb-icon>
+            <input nbInput fullWidth id="email" formControlName="email"
+                   class="has-icon" type="email" placeholder="La tua email" autocomplete="email" />
+          </div>
+          @if (hasError('email', 'email')) {
+            <p class="error-text">Inserisci un indirizzo email valido.</p>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="label" for="password1">Password</label>
+          <div class="input-wrap">
+            <nb-icon icon="lock-outline" pack="eva" class="input-icon"></nb-icon>
+            <input nbInput fullWidth id="password1" formControlName="password1"
+                   class="has-icon has-suffix" [type]="getInputType()"
+                   placeholder="Crea una password" autocomplete="new-password" />
+            <button type="button" class="toggle-btn" (click)="togglePassword()" tabindex="-1">
+              <nb-icon [icon]="showPassword() ? 'eye-outline' : 'eye-off-outline'" pack="eva"></nb-icon>
+            </button>
+          </div>
+          @if (hasError('password1', 'minlength')) {
+            <p class="error-text">La password deve avere almeno 8 caratteri.</p>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="label" for="password2">Conferma password</label>
+          <div class="input-wrap">
+            <nb-icon icon="lock-outline" pack="eva" class="input-icon"></nb-icon>
+            <input nbInput fullWidth id="password2" formControlName="password2"
+                   class="has-icon" [type]="getInputType()"
+                   placeholder="Ripeti la password" autocomplete="new-password" />
+          </div>
+          @if (form.hasError('passwordMismatch') && form.get('password2')?.touched) {
+            <p class="error-text">Le password non corrispondono.</p>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="label" for="bio">Bio <span class="optional">(opzionale)</span></label>
+          <textarea nbInput fullWidth id="bio" formControlName="bio"
+                    placeholder="Raccontaci qualcosa di te..." rows="3"></textarea>
+        </div>
+
+        <button nbButton fullWidth status="primary" type="submit"
+                [disabled]="form.invalid || loading()" class="submit-btn">
+          @if (loading()) {
+            <nb-spinner size="small" status="basic"></nb-spinner>
+          } @else {
+            Crea account
+          }
+        </button>
+      </form>
+
+      <p class="auth-footer-text">
+        Hai già un account? <a routerLink="/auth/login">Accedi</a>
+      </p>
+    </div>
+  </div>
+</div>

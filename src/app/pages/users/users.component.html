@@ -1,0 +1,69 @@
+<div class="page-container">
+  <h1 class="page-title">Trova utenti</h1>
+
+  <nb-card class="search-card">
+    <nb-card-body>
+      <div class="search-wrap">
+        <nb-icon icon="search-outline" pack="eva" class="search-icon"></nb-icon>
+        <input nbInput fullWidth [formControl]="searchControl"
+               class="has-icon" placeholder="Cerca per nome utente o nome..."
+               (keydown.enter)="search()" />
+        @if (loading()) {
+          <nb-spinner class="search-spinner" size="small" status="primary"></nb-spinner>
+        }
+      </div>
+    </nb-card-body>
+  </nb-card>
+
+  @if (error()) {
+    <nb-alert status="danger">{{ error() }}</nb-alert>
+  }
+
+  @if (users().length > 0) {
+    <div class="results-header">
+      <span class="results-count">{{ total() }} {{ total() === 1 ? 'utente trovato' : 'utenti trovati' }}</span>
+    </div>
+
+    <div class="users-grid">
+      @for (user of users(); track user.id) {
+        <nb-card class="user-card">
+          <nb-card-body>
+            <div class="user-info">
+              <nb-user
+                [name]="displayName(user)"
+                [picture]="user.avatar_url"
+                [title]="'@' + user.username"
+                size="large"
+              ></nb-user>
+              @if (user.bio) {
+                <p class="user-bio">{{ user.bio }}</p>
+              }
+            </div>
+            <button nbButton
+                    [status]="isFollowing(user) ? 'basic' : 'primary'"
+                    size="small"
+                    ghost
+                    (click)="toggleFollow(user)">
+              <nb-icon [icon]="isFollowing(user) ? 'person-remove-outline' : 'person-add-outline'"></nb-icon>
+              {{ isFollowing(user) ? 'Non seguire' : 'Segui' }}
+            </button>
+          </nb-card-body>
+        </nb-card>
+      }
+    </div>
+  } @else if (!loading() && searchControl.value) {
+    <nb-card>
+      <nb-card-body class="empty-state">
+        <nb-icon icon="search-outline" class="empty-icon"></nb-icon>
+        <p>Nessun utente trovato per "{{ searchControl.value }}".</p>
+      </nb-card-body>
+    </nb-card>
+  } @else if (!loading() && !searchControl.value) {
+    <nb-card>
+      <nb-card-body class="empty-state">
+        <nb-icon icon="people-outline" class="empty-icon"></nb-icon>
+        <p>Cerca utenti per nome utente o nome.</p>
+      </nb-card-body>
+    </nb-card>
+  }
+</div>

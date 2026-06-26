@@ -1,0 +1,62 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Feed attività</h1>
+    <button nbButton status="primary" ghost (click)="loadFeed()">
+      <nb-icon icon="refresh-outline"></nb-icon>
+      Aggiorna
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-center">
+      <nb-spinner status="primary" size="giant"></nb-spinner>
+    </div>
+  } @else if (error()) {
+    <nb-card status="danger">
+      <nb-card-body>
+        <nb-icon icon="alert-circle-outline"></nb-icon>
+        {{ error() }}
+        <button nbButton ghost status="danger" (click)="loadFeed()">Riprova</button>
+      </nb-card-body>
+    </nb-card>
+  } @else if (activities().length === 0) {
+    <nb-card>
+      <nb-card-body class="empty-state">
+        <nb-icon icon="inbox-outline" class="empty-icon"></nb-icon>
+        <h3>Nessuna attività</h3>
+        <p>Segui utenti e liste per vedere la loro attività qui.</p>
+        <button nbButton status="primary" routerLink="/pages/users">
+          <nb-icon icon="person-add-outline"></nb-icon>
+          Trova utenti da seguire
+        </button>
+      </nb-card-body>
+    </nb-card>
+  } @else {
+    <nb-card>
+      <nb-list>
+        @for (activity of activities(); track activity.id) {
+          <nb-list-item>
+            <div class="activity-item">
+              <nb-user
+                [name]="activity.actor.username"
+                [picture]="activity.actor.avatar_url"
+                size="medium"
+              ></nb-user>
+              <div class="activity-content">
+                <div class="activity-description">
+                  <strong>{{ activity.actor.username }}</strong>
+                  <span class="activity-verb"> {{ activity.verb }} </span>
+                  @if (activity.target_title) {
+                    <span class="activity-target">{{ activity.target_title }}</span>
+                  }
+                </div>
+                <span class="activity-time">{{ activity.created_at | date:'medium' }}</span>
+              </div>
+              <nb-icon [icon]="activityIcon(activity.verb)" class="activity-type-icon"></nb-icon>
+            </div>
+          </nb-list-item>
+        }
+      </nb-list>
+    </nb-card>
+  }
+</div>
