@@ -53,6 +53,12 @@ export class AuthService {
     );
   }
 
+  googleLogin(accessToken: string): Observable<JWT> {
+    return this.http.post<JWT>(`${API_BASE}/auth/google/`, { access_token: accessToken }).pipe(
+      tap(jwt => this.saveSession(jwt))
+    );
+  }
+
   refreshToken(): Observable<TokenRefresh> {
     const refresh = this.getRefreshToken();
     return this.http.post<TokenRefresh>(`${API_BASE}/auth/token/refresh/`, { refresh }).pipe(
