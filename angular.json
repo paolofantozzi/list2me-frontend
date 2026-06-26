@@ -75,7 +75,7 @@
                 }
               ],
               "outputHashing": "all",
-              "baseHref": "/list2me-frontend/",
+              "baseHref": "/",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -105,7 +105,7 @@
           "builder": "angular-cli-ghpages:deploy",
           "options": {
             "buildTarget": "list2me-frontend:build:github-pages",
-            "baseHref": "/list2me-frontend/",
+            "baseHref": "/",
             "outputPath": "dist/list2me-frontend/browser"
           }
         }
