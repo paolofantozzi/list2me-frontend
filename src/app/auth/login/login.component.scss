@@ -176,6 +176,20 @@ $border: #e4e9f2;
   border-radius: 8px;
 }
 
+// ── Forgot password link ──────────────────────────────────────────────────────
+
+.forgot-link {
+  text-align: right;
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+
+  a {
+    color: $text-hint;
+    text-decoration: none;
+    &:hover { color: $primary; text-decoration: underline; }
+  }
+}
+
 // ── Google / social ───────────────────────────────────────────────────────────
 
 .auth-divider {

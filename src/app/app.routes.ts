@@ -20,6 +20,10 @@ export const routes: Routes = [
         loadComponent: () => import('./auth/register/register.component').then(m => m.RegisterComponent),
       },
       {
+        path: 'forgot-password',
+        loadComponent: () => import('./auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
+      },
+      {
         path: '',
         redirectTo: 'login',
         pathMatch: 'full',
@@ -61,6 +65,10 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
     ],
+  },
+  {
+    path: 'reset-password/:uid/:token',
+    loadComponent: () => import('./auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
   },
   {
     path: '**',

@@ -53,6 +53,21 @@ export class AuthService {
     );
   }
 
+  requestPasswordReset(email: string): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${API_BASE}/auth/password/reset/`, { email });
+  }
+
+  confirmPasswordReset(
+    uid: string,
+    token: string,
+    new_password1: string,
+    new_password2: string
+  ): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${API_BASE}/auth/password/reset/confirm/`, {
+      uid, token, new_password1, new_password2,
+    });
+  }
+
   googleLogin(accessToken: string): Observable<JWT> {
     return this.http.post<JWT>(`${API_BASE}/auth/google/`, { access_token: accessToken }).pipe(
       tap(jwt => this.saveSession(jwt))
