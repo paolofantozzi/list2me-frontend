@@ -37,7 +37,7 @@ export class RegisterComponent {
     private router: Router
   ) {
     this.form = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
+      username: ['', [Validators.minLength(3), Validators.maxLength(150)]],
       email: ['', [Validators.required, Validators.email]],
       password1: ['', [Validators.required, Validators.minLength(8)]],
       password2: ['', Validators.required],
@@ -63,7 +63,10 @@ export class RegisterComponent {
     this.loading.set(true);
     this.error.set('');
 
-    this.auth.register(this.form.value).subscribe({
+    const { username, ...rest } = this.form.value;
+    const payload = username?.trim() ? { username: username.trim(), ...rest } : rest;
+
+    this.auth.register(payload).subscribe({
       next: () => this.router.navigate(['/pages/dashboard']),
       error: (err) => {
         const msg = err?.error?.detail || err?.error?.username?.[0] || err?.error?.email?.[0]

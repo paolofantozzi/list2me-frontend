@@ -60,4 +60,5 @@ For more information on using the Angular CLI, including detailed command refere
 
 ## APIs
 Backend: https://api.list2me.it/api/v1/schema/
+Changelog: https://api.list2me.it/api/v1/changelog/
 Frontend: https://www.list2me.it

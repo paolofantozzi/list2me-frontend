@@ -18,18 +18,16 @@
 
       <form [formGroup]="form" (ngSubmit)="submit()">
         <div class="form-group">
-          <label class="label" for="username">Nome utente</label>
+          <label class="label" for="username">Nome utente <span class="optional">(opzionale)</span></label>
           <div class="input-wrap">
             <nb-icon icon="person-outline" pack="eva" class="input-icon"></nb-icon>
             <input nbInput fullWidth id="username" formControlName="username"
                    class="has-icon" placeholder="Scegli un nome utente" autocomplete="username" />
           </div>
-          @if (hasError('username', 'required')) {
-            <p class="error-text">Il nome utente è obbligatorio.</p>
-          }
           @if (hasError('username', 'minlength')) {
             <p class="error-text">Il nome utente deve avere almeno 3 caratteri.</p>
           }
+          <p class="hint-text">Se lasci vuoto, verrà generato automaticamente dall'email.</p>
         </div>
 
         <div class="form-group">

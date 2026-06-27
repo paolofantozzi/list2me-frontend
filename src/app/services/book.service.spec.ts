@@ -9,8 +9,8 @@ import { BookResult } from '../models/book.model';
 import { API_BASE } from './auth.service';
 
 const mockBooks: BookResult[] = [
-  { title: 'Dune', author: 'Frank Herbert', isbn: '9780441013593', cover_url: 'https://covers.openlibrary.org/b/id/1-M.jpg', open_library_key: '/works/OL118077W', year: 1965 },
-  { title: 'Dune Messiah', author: 'Frank Herbert', isbn: '', cover_url: '', open_library_key: '/works/OL118078W', year: 1969 },
+  { title: 'Dune', author: 'Frank Herbert', isbn: '9780441013593', cover_url: 'https://covers.openlibrary.org/b/id/1-M.jpg', open_library_key: '/works/OL118077W', year: 1965, service_url: 'https://openlibrary.org/works/OL118077W' },
+  { title: 'Dune Messiah', author: 'Frank Herbert', isbn: '', cover_url: '', open_library_key: '/works/OL118078W', year: 1969, service_url: '' },
 ];
 
 const mockItemTypeResp = {
@@ -79,6 +79,37 @@ describe('BookService', () => {
       const req = http.expectOne(r => r.url.includes('/books/search/'));
       expect(req.request.params.get('limit')).toBe('5');
       req.flush([]);
+    });
+  });
+
+  describe('getEditions()', () => {
+    it('fa GET con work_key e restituisce le edizioni', () => {
+      const mockEditions = [
+        { edition_key: '/books/OL123M', title: 'Dune', languages: ['English'], year: 1965, publisher: 'Chilton', isbn: '9780441013593', cover_url: '', pages: 412, edition_name: 'First edition', service_url: 'https://openlibrary.org/books/OL123M' },
+      ];
+      let result: any;
+      service.getEditions('/works/OL118077W').subscribe(r => (result = r));
+
+      const req = http.expectOne(r => r.url.includes('/books/editions/'));
+      expect(req.request.params.get('work_key')).toBe('/works/OL118077W');
+      req.flush({ editions: mockEditions });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].edition_key).toBe('/books/OL123M');
+    });
+
+    it('restituisce array vuoto se editions mancanti', () => {
+      let result: any;
+      service.getEditions('OL118077W').subscribe(r => (result = r));
+      http.expectOne(r => r.url.includes('/books/editions/')).flush({});
+      expect(result).toEqual([]);
+    });
+
+    it('usa il limit personalizzato', () => {
+      service.getEditions('OL118077W', 5).subscribe();
+      const req = http.expectOne(r => r.url.includes('/books/editions/'));
+      expect(req.request.params.get('limit')).toBe('5');
+      req.flush({ editions: [] });
     });
   });
 

@@ -11,8 +11,11 @@ import { ListDetailComponent } from './list-detail.component';
 import { ListService } from '../../services/list.service';
 import { ItemService } from '../../services/item.service';
 import { BookService } from '../../services/book.service';
+import { TvdbService } from '../../services/tvdb.service';
 import { AuthService } from '../../services/auth.service';
 import { List, Item, Suggestion, ListDiff } from '../../models/list.model';
+import { BookResult } from '../../models/book.model';
+import { TvdbSearchResult } from '../../models/tvdb.model';
 import { UserDetail } from '../../models/user.model';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -86,6 +89,16 @@ function buildComponent(userOverride: Partial<UserDetail> = {}) {
     search: vi.fn().mockReturnValue(of([])),
     syncBook: vi.fn(),
     getBookItemTypeId: vi.fn().mockReturnValue(of('type-book-id')),
+    getEditions: vi.fn().mockReturnValue(of([])),
+  };
+
+  const tvdbService = {
+    search: vi.fn().mockReturnValue(of([])),
+    getSeries: vi.fn(),
+    getSeriesEpisodes: vi.fn(),
+    getMovie: vi.fn(),
+    getLanguages: vi.fn().mockReturnValue(of([])),
+    getItemTypeId: vi.fn().mockReturnValue(of('type-series-id')),
   };
 
   const toastr = { success: vi.fn(), danger: vi.fn(), info: vi.fn() };
@@ -98,6 +111,7 @@ function buildComponent(userOverride: Partial<UserDetail> = {}) {
       { provide: ListService, useValue: listService },
       { provide: ItemService, useValue: itemService },
       { provide: BookService, useValue: bookService },
+      { provide: TvdbService, useValue: tvdbService },
       { provide: NbToastrService, useValue: toastr },
       { provide: Router, useValue: router },
       { provide: AuthService, useValue: { currentUser } },
@@ -113,7 +127,7 @@ function buildComponent(userOverride: Partial<UserDetail> = {}) {
   const component = fixture.componentInstance;
   fixture.detectChanges();
 
-  return { fixture, component, listService, itemService, bookService, toastr, router };
+  return { fixture, component, listService, itemService, bookService, tvdbService, toastr, router };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -518,6 +532,185 @@ describe('ListDetailComponent', () => {
       component.forkList();
 
       expect(router.navigate).toHaveBeenCalledWith(['/pages/lists', 'list-fork']);
+    });
+  });
+
+  // ── TVDB search ───────────────────────────────────────────────────────────────
+
+  describe('TVDB search', () => {
+    const mockTvdbResult: TvdbSearchResult = {
+      tvdb_id: '76290',
+      type: 'series',
+      name: 'Buffy the Vampire Slayer',
+      slug: 'buffy-the-vampire-slayer',
+      overview: 'A girl with superpowers fights vampires.',
+      image_url: 'https://artworks.thetvdb.com/banners/posters/70327-1.jpg',
+      year: '1997',
+      network: 'The WB',
+      status: 'Ended',
+      country: 'usa',
+      primary_language: 'eng',
+      available_languages: ['eng'],
+      service_url: 'https://thetvdb.com/series/buffy-the-vampire-slayer',
+    };
+
+    it('toggleTvdbSearch() imposta showTvdbSearch a true e chiude gli altri pannelli', () => {
+      const { component } = buildComponent();
+      component.showAddItem.set(true);
+      component.showBookSearch.set(true);
+
+      component.toggleTvdbSearch();
+
+      expect(component.showTvdbSearch()).toBe(true);
+      expect(component.showAddItem()).toBe(false);
+      expect(component.showBookSearch()).toBe(false);
+    });
+
+    it('closeTvdbSearch() resetta lo stato', () => {
+      const { component } = buildComponent();
+      component.showTvdbSearch.set(true);
+      component.tvdbQuery.set('buffy');
+      component.tvdbResults.set([mockTvdbResult]);
+
+      component.closeTvdbSearch();
+
+      expect(component.showTvdbSearch()).toBe(false);
+      expect(component.tvdbQuery()).toBe('');
+      expect(component.tvdbResults()).toHaveLength(0);
+    });
+
+    it('onTvdbQueryChange() resetta i risultati per query corte', () => {
+      const { component } = buildComponent();
+      component.tvdbResults.set([mockTvdbResult]);
+
+      component.onTvdbQueryChange('b');
+
+      expect(component.tvdbResults()).toHaveLength(0);
+    });
+
+    it('addTvdbItem() chiama getItemTypeId e addItem con i metadati TVDB', () => {
+      const { component, tvdbService, itemService } = buildComponent();
+      itemService.addItem.mockReturnValue(of(makeItem({ text: 'Buffy the Vampire Slayer' })));
+
+      component.addTvdbItem(mockTvdbResult);
+
+      expect(tvdbService.getItemTypeId).toHaveBeenCalledWith('series');
+      expect(itemService.addItem).toHaveBeenCalledWith(
+        'list-1',
+        expect.objectContaining({
+          text: 'Buffy the Vampire Slayer',
+          item_type: 'type-series-id',
+          metadata: expect.objectContaining({
+            thetvdb_id: '76290',
+            service_url: 'https://thetvdb.com/series/buffy-the-vampire-slayer',
+          }),
+        })
+      );
+    });
+
+    it('addTvdbItem() usa type "movie" per risultati di tipo movie', () => {
+      const { component, tvdbService, itemService } = buildComponent();
+      tvdbService.getItemTypeId.mockReturnValue(of('type-movie-id'));
+      itemService.addItem.mockReturnValue(of(makeItem({ text: 'The Matrix' })));
+
+      component.addTvdbItem({ ...mockTvdbResult, type: 'movie', name: 'The Matrix' });
+
+      expect(tvdbService.getItemTypeId).toHaveBeenCalledWith('movie');
+    });
+
+    it('addTvdbItem() aggiunge l\'item ai signal dopo il successo', () => {
+      const { component, itemService } = buildComponent();
+      const newItem = makeItem({ id: 'item-new', text: 'Buffy' });
+      itemService.addItem.mockReturnValue(of(newItem));
+
+      const prevCount = component.items().length;
+      component.addTvdbItem(mockTvdbResult);
+
+      expect(component.items()).toHaveLength(prevCount + 1);
+    });
+  });
+
+  // ── Book editions ─────────────────────────────────────────────────────────────
+
+  describe('book editions', () => {
+    const mockBook: BookResult = {
+      title: 'Dune',
+      author: 'Frank Herbert',
+      isbn: '9780441013593',
+      cover_url: 'https://covers.openlibrary.org/b/id/1-M.jpg',
+      open_library_key: '/works/OL118077W',
+      year: 1965,
+      service_url: 'https://openlibrary.org/works/OL118077W',
+    };
+
+    const mockEdition = {
+      edition_key: '/books/OL123M',
+      title: 'Dune (1st ed.)',
+      languages: ['English'],
+      year: 1965,
+      publisher: 'Chilton',
+      isbn: '9780441013593',
+      cover_url: '',
+      pages: 412,
+      edition_name: 'First edition',
+      service_url: 'https://openlibrary.org/books/OL123M',
+    };
+
+    it('openEditions() imposta editionsBook e carica le edizioni', () => {
+      const { component, bookService } = buildComponent();
+      bookService.getEditions.mockReturnValue(of([mockEdition]));
+
+      component.openEditions(mockBook);
+
+      expect(component.showEditions()).toBe(true);
+      expect(component.editionsBook()).toEqual(mockBook);
+      expect(bookService.getEditions).toHaveBeenCalledWith('/works/OL118077W');
+      expect(component.editions()).toHaveLength(1);
+    });
+
+    it('closeEditions() resetta lo stato edizioni', () => {
+      const { component } = buildComponent();
+      component.showEditions.set(true);
+      component.editionsBook.set(mockBook);
+      component.editions.set([mockEdition] as any);
+
+      component.closeEditions();
+
+      expect(component.showEditions()).toBe(false);
+      expect(component.editionsBook()).toBeNull();
+      expect(component.editions()).toHaveLength(0);
+    });
+
+    it('addEditionItem() chiama addItem con i metadati dell\'edizione', () => {
+      const { component, bookService, itemService } = buildComponent();
+      bookService.getEditions.mockReturnValue(of([mockEdition]));
+      itemService.addItem.mockReturnValue(of(makeItem({ text: 'Dune (1st ed.)' })));
+
+      component.openEditions(mockBook);
+      component.addEditionItem(mockEdition as any);
+
+      expect(itemService.addItem).toHaveBeenCalledWith(
+        'list-1',
+        expect.objectContaining({
+          text: 'Dune (1st ed.)',
+          metadata: expect.objectContaining({
+            author: 'Frank Herbert',
+            isbn: '9780441013593',
+            open_library_key: '/works/OL118077W',
+          }),
+        })
+      );
+    });
+
+    it('addEditionItem() chiude il pannello edizioni dopo il successo', () => {
+      const { component, bookService, itemService } = buildComponent();
+      bookService.getEditions.mockReturnValue(of([mockEdition]));
+      itemService.addItem.mockReturnValue(of(makeItem()));
+
+      component.openEditions(mockBook);
+      component.addEditionItem(mockEdition as any);
+
+      expect(component.showEditions()).toBe(false);
     });
   });
 });

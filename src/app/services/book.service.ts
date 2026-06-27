@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { map } from 'rxjs';
 import { API_BASE } from './auth.service';
 import { ItemTypeService } from './item-type.service';
-import { BookResult } from '../models/book.model';
+import { BookResult, BookEdition } from '../models/book.model';
 import { Item } from '../models/list.model';
 
 @Injectable({ providedIn: 'root' })
@@ -22,6 +22,14 @@ export class BookService {
       params: { q, limit: limit.toString() }
     }).pipe(
       map(resp => Array.isArray(resp) ? resp : (resp.results ?? []))
+    );
+  }
+
+  getEditions(workKey: string, limit = 20): Observable<BookEdition[]> {
+    return this.http.get<{ editions: BookEdition[] }>(`${API_BASE}/books/editions/`, {
+      params: { work_key: workKey, limit: limit.toString() }
+    }).pipe(
+      map(resp => resp.editions ?? [])
     );
   }
 

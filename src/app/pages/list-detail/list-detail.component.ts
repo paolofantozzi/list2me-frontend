@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { SlicePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -11,14 +12,17 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } fro
 import { ListService } from '../../services/list.service';
 import { ItemService } from '../../services/item.service';
 import { BookService } from '../../services/book.service';
+import { TvdbService } from '../../services/tvdb.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
-import { BookResult } from '../../models/book.model';
+import { BookResult, BookEdition } from '../../models/book.model';
+import { TvdbSearchResult } from '../../models/tvdb.model';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-list-detail',
   standalone: true,
   imports: [
+    SlicePipe,
     ReactiveFormsModule,
     NbCardModule,
     NbIconModule,
@@ -50,6 +54,20 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   bookSearchLoading = signal(false);
   syncingItemId = signal<string | null>(null);
 
+  // Book editions
+  showEditions = signal(false);
+  editionsBook = signal<BookResult | null>(null);
+  editions = signal<BookEdition[]>([]);
+  editionsLoading = signal(false);
+
+  // TVDB search
+  showTvdbSearch = signal(false);
+  tvdbQuery = signal('');
+  tvdbResults = signal<TvdbSearchResult[]>([]);
+  tvdbSearchLoading = signal(false);
+  tvdbLanguage = signal('ita');
+  tvdbType = signal('');
+
   // Reorder
   reorderLoading = signal(false);
 
@@ -75,6 +93,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   suggestForm: FormGroup;
 
   private bookSearch$ = new Subject<string>();
+  private tvdbSearch$ = new Subject<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -82,6 +101,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private listService: ListService,
     private itemService: ItemService,
     private bookService: BookService,
+    private tvdbService: TvdbService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private auth: AuthService
@@ -123,10 +143,29 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.bookResults.set(results);
       this.bookSearchLoading.set(false);
     });
+
+    this.tvdbSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.tvdbSearchLoading.set(true);
+        return this.tvdbService.search(q, this.tvdbType() || undefined, this.tvdbLanguage()).pipe(
+          catchError(() => {
+            this.tvdbSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.tvdbResults.set(results);
+      this.tvdbSearchLoading.set(false);
+    });
   }
 
   ngOnDestroy(): void {
     this.bookSearch$.complete();
+    this.tvdbSearch$.complete();
   }
 
   loadList(id: string): void {
@@ -418,6 +457,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
           cover_url: book.cover_url,
           open_library_key: book.open_library_key,
           year: book.year,
+          service_url: book.service_url || undefined,
         },
         position,
       }))
@@ -468,6 +508,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showAddItem.update(v => !v);
     if (this.showAddItem()) {
       this.showBookSearch.set(false);
+      this.showTvdbSearch.set(false);
+      this.showEditions.set(false);
       this.showNewChildList.set(false);
     }
   }
@@ -476,6 +518,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showBookSearch.update(v => !v);
     if (this.showBookSearch()) {
       this.showAddItem.set(false);
+      this.showTvdbSearch.set(false);
+      this.showEditions.set(false);
       this.bookResults.set([]);
       this.bookQuery.set('');
     }
@@ -483,8 +527,139 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   closeBookSearch(): void {
     this.showBookSearch.set(false);
+    this.showEditions.set(false);
     this.bookResults.set([]);
     this.bookQuery.set('');
+  }
+
+  // ── Book editions ─────────────────────────────────────────────────────────────
+
+  openEditions(book: BookResult): void {
+    this.editionsBook.set(book);
+    this.showEditions.set(true);
+    this.editions.set([]);
+    this.editionsLoading.set(true);
+    this.bookService.getEditions(book.open_library_key).subscribe({
+      next: eds => { this.editions.set(eds); this.editionsLoading.set(false); },
+      error: () => {
+        this.editionsLoading.set(false);
+        this.toastr.danger('Impossibile caricare le edizioni.', 'Errore');
+      }
+    });
+  }
+
+  closeEditions(): void {
+    this.showEditions.set(false);
+    this.editionsBook.set(null);
+    this.editions.set([]);
+  }
+
+  addEditionItem(edition: BookEdition): void {
+    const book = this.editionsBook()!;
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const title = edition.title || book.title;
+
+    this.bookService.getBookItemTypeId().pipe(
+      switchMap(typeId => this.itemService.addItem(listId, {
+        text: title,
+        ...(typeId ? { item_type: typeId } : {}),
+        metadata: {
+          author: book.author,
+          isbn: edition.isbn || book.isbn,
+          cover_url: edition.cover_url || book.cover_url,
+          open_library_key: book.open_library_key,
+          year: edition.year ?? book.year,
+          service_url: edition.service_url || book.service_url || undefined,
+        },
+        position,
+      }))
+    ).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.toastr.success(`"${title}" aggiunto!`, 'Libro aggiunto');
+        this.closeEditions();
+        this.closeBookSearch();
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere il libro.', 'Errore')
+    });
+  }
+
+  // ── TVDB search ──────────────────────────────────────────────────────────────
+
+  toggleTvdbSearch(): void {
+    this.showTvdbSearch.update(v => !v);
+    if (this.showTvdbSearch()) {
+      this.showAddItem.set(false);
+      this.showBookSearch.set(false);
+      this.showEditions.set(false);
+      this.tvdbResults.set([]);
+      this.tvdbQuery.set('');
+    }
+  }
+
+  closeTvdbSearch(): void {
+    this.showTvdbSearch.set(false);
+    this.tvdbResults.set([]);
+    this.tvdbQuery.set('');
+  }
+
+  onTvdbQueryChange(q: string): void {
+    this.tvdbQuery.set(q);
+    if (q.trim().length < 2) {
+      this.tvdbResults.set([]);
+      this.tvdbSearchLoading.set(false);
+      return;
+    }
+    this.tvdbSearch$.next(q.trim());
+  }
+
+  onTvdbLanguageChange(event: Event): void {
+    this.tvdbLanguage.set((event.target as HTMLSelectElement).value);
+  }
+
+  onTvdbTypeSelectChange(event: Event): void {
+    this.onTvdbTypeChange((event.target as HTMLSelectElement).value);
+  }
+
+  onTvdbTypeChange(type: string): void {
+    this.tvdbType.set(type);
+    if (this.tvdbQuery().trim().length >= 2) {
+      this.tvdbResults.set([]);
+      this.tvdbSearch$.next(this.tvdbQuery().trim());
+    }
+  }
+
+  addTvdbItem(result: TvdbSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeName = result.type === 'movie' ? 'movie' : result.type === 'episode' ? 'episode' : 'series';
+
+    this.tvdbService.getItemTypeId(typeName).pipe(
+      switchMap(typeId => this.itemService.addItem(listId, {
+        text: result.name,
+        ...(typeId ? { item_type: typeId } : {}),
+        metadata: {
+          thetvdb_id: result.tvdb_id,
+          slug: result.slug || undefined,
+          network: result.network || undefined,
+          status: result.status || undefined,
+          image_url: result.image_url || undefined,
+          language: result.primary_language || this.tvdbLanguage(),
+          service_url: result.service_url || undefined,
+          ...(result.year ? { year: parseInt(result.year, 10) || undefined } : {}),
+        },
+        position,
+      }))
+    ).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.toastr.success(`"${result.name}" aggiunto!`, 'Aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore')
+    });
   }
 
   isBookItem(item: Item): boolean {

@@ -92,6 +92,10 @@
               <nb-icon icon="book-outline"></nb-icon>
               Cerca libro
             </button>
+            <button nbButton ghost status="info" (click)="toggleTvdbSearch()">
+              <nb-icon icon="tv-outline"></nb-icon>
+              Cerca serie/film
+            </button>
             <button nbButton status="primary" (click)="toggleAddItem()">
               <nb-icon icon="plus-outline"></nb-icon>
               Aggiungi elemento
@@ -258,24 +262,41 @@
           @if (bookResults().length > 0) {
             <div class="book-results">
               @for (book of bookResults(); track (book.open_library_key || book.isbn)) {
-                <div class="book-result" (click)="addBookItem(book)" role="button" tabindex="0"
-                     (keyup.enter)="addBookItem(book)">
-                  @if (book.cover_url) {
-                    <img [src]="book.cover_url" [alt]="book.title" class="book-result-cover" loading="lazy">
-                  } @else {
-                    <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon icon="book-outline"></nb-icon>
+                <div class="book-result">
+                  <div class="book-result-clickable" (click)="addBookItem(book)" role="button" tabindex="0"
+                       (keyup.enter)="addBookItem(book)">
+                    @if (book.cover_url) {
+                      <img [src]="book.cover_url" [alt]="book.title" class="book-result-cover" loading="lazy">
+                    } @else {
+                      <div class="book-result-cover book-result-cover--placeholder">
+                        <nb-icon icon="book-outline"></nb-icon>
+                      </div>
+                    }
+                    <div class="book-result-info">
+                      <p class="book-result-title">{{ book.title }}</p>
+                      <p class="book-result-meta">
+                        {{ book.author }}
+                        @if (book.year) { · {{ book.year }} }
+                        @if (book.isbn) { · ISBN {{ book.isbn }} }
+                      </p>
+                      @if (book.service_url) {
+                        <a [href]="book.service_url" target="_blank" rel="noopener noreferrer"
+                           class="result-service-link" (click)="$event.stopPropagation()">
+                          <nb-icon icon="external-link-outline"></nb-icon> OpenLibrary
+                        </a>
+                      }
                     </div>
-                  }
-                  <div class="book-result-info">
-                    <p class="book-result-title">{{ book.title }}</p>
-                    <p class="book-result-meta">
-                      {{ book.author }}
-                      @if (book.year) { · {{ book.year }} }
-                      @if (book.isbn) { · ISBN {{ book.isbn }} }
-                    </p>
                   </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                  <div class="book-result-actions">
+                    <button nbButton ghost size="tiny" status="info" (click)="openEditions(book)"
+                            title="Vedi edizioni">
+                      <nb-icon icon="layers-outline"></nb-icon>
+                    </button>
+                    <button nbButton ghost size="tiny" status="primary" (click)="addBookItem(book)"
+                            title="Aggiungi">
+                      <nb-icon icon="plus-circle-outline"></nb-icon>
+                    </button>
+                  </div>
                 </div>
               }
             </div>
@@ -285,6 +306,139 @@
 
           <div class="form-actions">
             <button nbButton type="button" ghost (click)="closeBookSearch()">Chiudi</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
+    <!-- ── Book editions panel ──────────────────────────────────────────────── -->
+    @if (showEditions() && isOwner && editionsBook()) {
+      <nb-card class="add-item-card editions-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="layers-outline"></nb-icon>
+          Edizioni di "{{ editionsBook()!.title }}"
+        </nb-card-header>
+        <nb-card-body>
+          @if (editionsLoading()) {
+            <div class="loading-center"><nb-spinner status="info" size="medium"></nb-spinner></div>
+          } @else if (editions().length > 0) {
+            <div class="editions-list">
+              @for (ed of editions(); track ed.edition_key) {
+                <div class="edition-item" (click)="addEditionItem(ed)" role="button" tabindex="0"
+                     (keyup.enter)="addEditionItem(ed)">
+                  @if (ed.cover_url) {
+                    <img [src]="ed.cover_url" [alt]="ed.title" class="book-result-cover" loading="lazy">
+                  } @else {
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon icon="book-outline"></nb-icon>
+                    </div>
+                  }
+                  <div class="edition-info">
+                    <p class="book-result-title">{{ ed.edition_name || ed.title }}</p>
+                    <p class="book-result-meta">
+                      @if (ed.languages.length) { {{ ed.languages.join(', ') }} · }
+                      @if (ed.year) { {{ ed.year }} · }
+                      @if (ed.publisher) { {{ ed.publisher }} · }
+                      @if (ed.pages) { {{ ed.pages }} pag. · }
+                      @if (ed.isbn) { ISBN {{ ed.isbn }} }
+                    </p>
+                    @if (ed.service_url) {
+                      <a [href]="ed.service_url" target="_blank" rel="noopener noreferrer"
+                         class="result-service-link" (click)="$event.stopPropagation()">
+                        <nb-icon icon="external-link-outline"></nb-icon> OpenLibrary
+                      </a>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="book-no-results">Nessuna edizione trovata.</p>
+          }
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="closeEditions()">Chiudi</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
+    <!-- ── TVDB search panel ─────────────────────────────────────────────────── -->
+    @if (showTvdbSearch() && isOwner) {
+      <nb-card class="add-item-card tvdb-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="tv-outline"></nb-icon>
+          Cerca serie o film su TheTVDB
+        </nb-card-header>
+        <nb-card-body>
+          <div class="tvdb-filters">
+            <select class="tvdb-select" [value]="tvdbType()" (change)="onTvdbTypeSelectChange($event)">
+              <option value="">Tutto</option>
+              <option value="series">Serie TV</option>
+              <option value="movie">Film</option>
+            </select>
+            <select class="tvdb-select" [value]="tvdbLanguage()" (change)="onTvdbLanguageChange($event)">
+              <option value="ita">Italiano</option>
+              <option value="eng">English</option>
+              <option value="fra">Français</option>
+              <option value="deu">Deutsch</option>
+              <option value="spa">Español</option>
+              <option value="por">Português</option>
+              <option value="jpn">日本語</option>
+            </select>
+          </div>
+          <div class="book-search-input-wrap">
+            <input nbInput fullWidth #tvdbInput
+                   [value]="tvdbQuery()"
+                   placeholder="Titolo della serie o del film..."
+                   (input)="onTvdbQueryChange(tvdbInput.value)" />
+            @if (tvdbSearchLoading()) {
+              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+            }
+          </div>
+
+          @if (tvdbResults().length > 0) {
+            <div class="book-results">
+              @for (result of tvdbResults(); track result.tvdb_id) {
+                <div class="book-result tvdb-result" (click)="addTvdbItem(result)" role="button" tabindex="0"
+                     (keyup.enter)="addTvdbItem(result)">
+                  @if (result.image_url) {
+                    <img [src]="result.image_url" [alt]="result.name" class="book-result-cover tvdb-cover" loading="lazy">
+                  } @else {
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon icon="tv-outline"></nb-icon>
+                    </div>
+                  }
+                  <div class="book-result-info">
+                    <p class="book-result-title">
+                      {{ result.name }}
+                      <span class="tvdb-type-badge">{{ result.type }}</span>
+                    </p>
+                    <p class="book-result-meta">
+                      @if (result.year) { {{ result.year }} · }
+                      @if (result.network) { {{ result.network }} · }
+                      @if (result.status) { {{ result.status }} }
+                    </p>
+                    @if (result.overview) {
+                      <p class="tvdb-overview">{{ result.overview | slice:0:100 }}{{ result.overview.length > 100 ? '…' : '' }}</p>
+                    }
+                    @if (result.service_url) {
+                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
+                         class="result-service-link" (click)="$event.stopPropagation()">
+                        <nb-icon icon="external-link-outline"></nb-icon> TheTVDB
+                      </a>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+            </div>
+          } @else if (tvdbQuery().trim().length >= 2 && !tvdbSearchLoading()) {
+            <p class="book-no-results">Nessun risultato trovato per "{{ tvdbQuery() }}".</p>
+          }
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="closeTvdbSearch()">Chiudi</button>
           </div>
         </nb-card-body>
       </nb-card>
