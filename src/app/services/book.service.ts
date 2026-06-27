@@ -18,9 +18,11 @@ export class BookService {
   ) {}
 
   search(q: string, limit = 10): Observable<BookResult[]> {
-    return this.http.get<BookResult[]>(`${API_BASE}/books/search/`, {
+    return this.http.get<BookResult[] | { results: BookResult[] }>(`${API_BASE}/books/search/`, {
       params: { q, limit: limit.toString() }
-    });
+    }).pipe(
+      map(resp => Array.isArray(resp) ? resp : (resp.results ?? []))
+    );
   }
 
   syncBook(listId: string, itemId: string, openLibraryKey?: string): Observable<Item> {
