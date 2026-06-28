@@ -12,9 +12,11 @@ import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } from 'rxjs';
 import { ListService } from '../../services/list.service';
 import { ItemService } from '../../services/item.service';
+import { ItemTypeService } from '../../services/item-type.service';
 import { BookService } from '../../services/book.service';
 import { TvdbService } from '../../services/tvdb.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
+import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
 import { TvdbSearchResult } from '../../models/tvdb.model';
 import { AuthService } from '../../services/auth.service';
@@ -45,6 +47,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   items = signal<Item[]>([]);
   loading = signal(true);
   error = signal('');
+
+  // Item types (loaded from API)
+  itemTypes = signal<ItemType[]>([]);
+  itemTypesLoading = signal(false);
+  selectedType = signal<ItemType | null>(null);
 
   // Add item flow
   showTypePicker = signal(false);
@@ -105,6 +112,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private router: Router,
     private listService: ListService,
     private itemService: ItemService,
+    private itemTypeService: ItemTypeService,
     private bookService: BookService,
     private tvdbService: TvdbService,
     private fb: FormBuilder,
@@ -130,6 +138,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.loadList(id);
+
+    this.itemTypesLoading.set(true);
+    this.itemTypeService.getItemTypes().subscribe({
+      next: resp => { this.itemTypes.set(resp.results); this.itemTypesLoading.set(false); },
+      error: () => this.itemTypesLoading.set(false),
+    });
 
     this.bookSearch$.pipe(
       debounceTime(400),
@@ -213,6 +227,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const { text, new_child_list_title, new_child_list_visibility } = this.addItemForm.value;
     const position = String(this.items().length + 1);
     const payload: Record<string, unknown> = { text, position };
+    const type = this.selectedType();
+    if (type) payload['item_type'] = type.id;
     if (this.showNewChildList() && new_child_list_title?.trim()) {
       payload['new_child_list'] = { title: new_child_list_title.trim(), visibility: new_child_list_visibility };
     }
@@ -317,7 +333,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   toggleDiff(): void {
     this.showDiff.update(v => !v);
-    if (this.showDiff() && !this.diff()) {
+    if (this.showDiff()) {
+      this.diff.set(null);
       this.loadDiff();
     }
   }
@@ -325,7 +342,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   loadDiff(): void {
     this.diffLoading.set(true);
     this.listService.getDiff(this.list()!.id).subscribe({
-      next: diff => { this.diff.set(diff); this.diffLoading.set(false); },
+      next: (resp: any) => {
+        const added: Item[] = Array.isArray(resp?.added) ? resp.added : (resp?.added?.results ?? []);
+        const removed: Item[] = Array.isArray(resp?.removed) ? resp.removed : (resp?.removed?.results ?? []);
+        this.diff.set({ added, removed });
+        this.diffLoading.set(false);
+      },
       error: () => {
         this.diffLoading.set(false);
         this.toastr.danger('Impossibile caricare il diff.', 'Errore');
@@ -453,22 +475,36 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showNewChildList.set(false);
   }
 
-  selectItemType(type: 'text' | 'book' | 'tvdb'): void {
+  selectItemType(type: ItemType): void {
+    this.selectedType.set(type);
     this.showTypePicker.set(false);
-    if (type === 'text') {
-      this.showAddItem.set(true);
-    } else if (type === 'book') {
+    if (type.name === 'book') {
       this.showBookSearch.set(true);
       this.bookResults.set([]);
       this.bookQuery.set('');
-    } else if (type === 'tvdb') {
+    } else if (['series', 'movie', 'episode'].includes(type.name)) {
       this.showTvdbSearch.set(true);
       this.tvdbResults.set([]);
       this.tvdbQuery.set('');
+      this.tvdbType.set(type.name === 'episode' ? '' : type.name);
+    } else {
+      this.showAddItem.set(true);
     }
   }
 
+  getDefaultIcon(name: string): string {
+    const icons: Record<string, string> = {
+      book: 'book-outline',
+      series: 'tv-outline',
+      movie: 'film-outline',
+      episode: 'play-circle-outline',
+      text: 'edit-2-outline',
+    };
+    return icons[name] ?? 'list-outline';
+  }
+
   backToTypePicker(): void {
+    this.selectedType.set(null);
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
@@ -482,6 +518,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   }
 
   closeAddPanel(): void {
+    this.selectedType.set(null);
     this.showTypePicker.set(false);
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
@@ -510,22 +547,21 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   addBookItem(book: BookResult): void {
     const listId = this.list()!.id;
     const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'book')?.id ?? null;
 
-    this.bookService.getBookItemTypeId().pipe(
-      switchMap(typeId => this.itemService.addItem(listId, {
-        text: book.title,
-        ...(typeId ? { item_type: typeId } : {}),
-        metadata: {
-          author: book.author,
-          isbn: book.isbn,
-          cover_url: book.cover_url,
-          open_library_key: book.open_library_key,
-          year: book.year,
-          service_url: book.service_url || undefined,
-        },
-        position,
-      }))
-    ).subscribe({
+    this.itemService.addItem(listId, {
+      text: book.title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        author: book.author,
+        isbn: book.isbn,
+        cover_url: book.cover_url,
+        open_library_key: book.open_library_key,
+        year: book.year,
+        service_url: book.service_url || undefined,
+      },
+      position,
+    }).subscribe({
       next: item => {
         this.items.update(items => [...items, item]);
         this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
@@ -596,22 +632,21 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const listId = this.list()!.id;
     const position = String(this.items().length + 1);
     const title = edition.title || book.title;
+    const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'book')?.id ?? null;
 
-    this.bookService.getBookItemTypeId().pipe(
-      switchMap(typeId => this.itemService.addItem(listId, {
-        text: title,
-        ...(typeId ? { item_type: typeId } : {}),
-        metadata: {
-          author: book.author,
-          isbn: edition.isbn || book.isbn,
-          cover_url: edition.cover_url || book.cover_url,
-          open_library_key: book.open_library_key,
-          year: edition.year ?? book.year,
-          service_url: edition.service_url || book.service_url || undefined,
-        },
-        position,
-      }))
-    ).subscribe({
+    this.itemService.addItem(listId, {
+      text: title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        author: book.author,
+        isbn: edition.isbn || book.isbn,
+        cover_url: edition.cover_url || book.cover_url,
+        open_library_key: book.open_library_key,
+        year: edition.year ?? book.year,
+        service_url: edition.service_url || book.service_url || undefined,
+      },
+      position,
+    }).subscribe({
       next: item => {
         this.items.update(items => [...items, item]);
         this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
@@ -654,24 +689,23 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const listId = this.list()!.id;
     const position = String(this.items().length + 1);
     const typeName = result.type === 'movie' ? 'movie' : result.type === 'episode' ? 'episode' : 'series';
+    const typeId = this.itemTypes().find(t => t.name === typeName)?.id ?? null;
 
-    this.tvdbService.getItemTypeId(typeName).pipe(
-      switchMap(typeId => this.itemService.addItem(listId, {
-        text: result.name,
-        ...(typeId ? { item_type: typeId } : {}),
-        metadata: {
-          thetvdb_id: result.tvdb_id,
-          slug: result.slug || undefined,
-          network: result.network || undefined,
-          status: result.status || undefined,
-          image_url: result.image_url || undefined,
-          language: result.primary_language || this.tvdbLanguage(),
-          service_url: result.service_url || undefined,
-          ...(result.year ? { year: parseInt(result.year, 10) || undefined } : {}),
-        },
-        position,
-      }))
-    ).subscribe({
+    this.itemService.addItem(listId, {
+      text: result.name,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        thetvdb_id: result.tvdb_id,
+        slug: result.slug || undefined,
+        network: result.network || undefined,
+        status: result.status || undefined,
+        image_url: result.image_url || undefined,
+        language: result.primary_language || this.tvdbLanguage(),
+        service_url: result.service_url || undefined,
+        ...(result.year ? { year: parseInt(result.year, 10) || undefined } : {}),
+      },
+      position,
+    }).subscribe({
       next: item => {
         this.items.update(items => [...items, item]);
         this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);

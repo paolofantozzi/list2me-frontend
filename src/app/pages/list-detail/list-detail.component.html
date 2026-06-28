@@ -108,27 +108,32 @@
           @if (diffLoading()) {
             <div class="loading-center"><nb-spinner status="warning" size="medium"></nb-spinner></div>
           } @else if (diff()) {
-            @if (diff()!.added.length === 0 && diff()!.removed.length === 0) {
+            @let added = diff()!.added ?? [];
+            @let removed = diff()!.removed ?? [];
+            @if (added.length === 0 && removed.length === 0) {
               <p class="diff-empty">La tua lista è già aggiornata con la fonte.</p>
+              <div class="form-actions" style="margin-top: 1rem;">
+                <button nbButton type="button" ghost (click)="showDiff.set(false)">Chiudi</button>
+              </div>
             } @else {
-              @if (diff()!.added.length > 0) {
+              @if (added.length > 0) {
                 <p class="diff-section-label diff-added-label">
                   <nb-icon icon="plus-circle-outline"></nb-icon>
-                  Elementi aggiunti alla fonte ({{ diff()!.added.length }})
+                  Elementi aggiunti alla fonte ({{ added.length }})
                 </p>
                 <ul class="diff-list">
-                  @for (item of diff()!.added; track item.id) {
+                  @for (item of added; track item.id) {
                     <li class="diff-item diff-item--added">{{ item.text }}</li>
                   }
                 </ul>
               }
-              @if (diff()!.removed.length > 0) {
+              @if (removed.length > 0) {
                 <p class="diff-section-label diff-removed-label">
                   <nb-icon icon="minus-circle-outline"></nb-icon>
-                  Elementi rimossi dalla fonte ({{ diff()!.removed.length }})
+                  Elementi rimossi dalla fonte ({{ removed.length }})
                 </p>
                 <ul class="diff-list">
-                  @for (item of diff()!.removed; track item.id) {
+                  @for (item of removed; track item.id) {
                     <li class="diff-item diff-item--removed">{{ item.text }}</li>
                   }
                 </ul>
@@ -145,6 +150,15 @@
                 </button>
               </div>
             }
+          } @else {
+            <p class="diff-empty">Impossibile caricare le differenze.</p>
+            <div class="form-actions" style="margin-top: 1rem;">
+              <button nbButton type="button" ghost (click)="showDiff.set(false)">Chiudi</button>
+              <button nbButton status="warning" ghost (click)="loadDiff()">
+                <nb-icon icon="refresh-outline"></nb-icon>
+                Riprova
+              </button>
+            </div>
           }
         </nb-card-body>
       </nb-card>
@@ -241,26 +255,21 @@
           Aggiungi elemento — scegli il tipo
         </nb-card-header>
         <nb-card-body>
-          <div class="type-picker-grid">
-            <div class="type-picker-item" (click)="selectItemType('text')" role="button" tabindex="0"
-                 (keyup.enter)="selectItemType('text')">
-              <nb-icon icon="edit-2-outline" class="type-picker-icon"></nb-icon>
-              <span class="type-picker-label">Testo libero</span>
-              <span class="type-picker-desc">Un semplice elemento testuale</span>
+          @if (itemTypesLoading()) {
+            <div class="loading-center"><nb-spinner status="primary" size="medium"></nb-spinner></div>
+          } @else if (itemTypes().length > 0) {
+            <div class="type-picker-grid">
+              @for (type of itemTypes(); track type.id) {
+                <div class="type-picker-item" (click)="selectItemType(type)" role="button" tabindex="0"
+                     (keyup.enter)="selectItemType(type)">
+                  <nb-icon [icon]="type.icon || getDefaultIcon(type.name)" class="type-picker-icon"></nb-icon>
+                  <span class="type-picker-label">{{ type.label }}</span>
+                </div>
+              }
             </div>
-            <div class="type-picker-item" (click)="selectItemType('book')" role="button" tabindex="0"
-                 (keyup.enter)="selectItemType('book')">
-              <nb-icon icon="book-outline" class="type-picker-icon"></nb-icon>
-              <span class="type-picker-label">Libro</span>
-              <span class="type-picker-desc">Cerca su OpenLibrary</span>
-            </div>
-            <div class="type-picker-item" (click)="selectItemType('tvdb')" role="button" tabindex="0"
-                 (keyup.enter)="selectItemType('tvdb')">
-              <nb-icon icon="tv-outline" class="type-picker-icon"></nb-icon>
-              <span class="type-picker-label">Film / Serie TV</span>
-              <span class="type-picker-desc">Cerca su TheTVDB</span>
-            </div>
-          </div>
+          } @else {
+            <p class="diff-empty">Nessun tipo disponibile.</p>
+          }
           <div class="form-actions">
             <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
           </div>
@@ -490,7 +499,7 @@
     <!-- ── Add item form ──────────────────────────────────────────────────── -->
     @if (showAddItem() && isOwner) {
       <nb-card class="add-item-card" accent="primary">
-        <nb-card-header>Nuovo elemento — Testo libero</nb-card-header>
+        <nb-card-header>Nuovo elemento — {{ selectedType()?.label || 'Testo libero' }}</nb-card-header>
         <nb-card-body>
           <form [formGroup]="addItemForm" (ngSubmit)="addItem()">
             <div class="form-group">
