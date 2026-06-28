@@ -360,6 +360,55 @@
       </nb-card>
     }
 
+    <!-- ── Image item panel ──────────────────────────────────────────────────── -->
+    @if (showImagePanel() && isOwner) {
+      <nb-card class="add-item-card image-panel-card" accent="warning">
+        <nb-card-header>
+          <nb-icon icon="image-outline"></nb-icon>
+          Aggiungi immagine
+        </nb-card-header>
+        <nb-card-body>
+          <div class="form-group">
+            <label class="label">Didascalia (opzionale)</label>
+            <input nbInput fullWidth
+                   [value]="pendingImageCaption()"
+                   (input)="pendingImageCaption.set($any($event.target).value)"
+                   placeholder="Descrizione dell'immagine..." />
+          </div>
+
+          <div class="form-group">
+            <label class="label">Immagine</label>
+            <label class="image-file-label" [class.has-file]="pendingImageFile()">
+              <input type="file" accept="image/*" hidden (change)="onImageFileChange($event)">
+              <nb-icon [icon]="pendingImageFile() ? 'checkmark-circle-2-outline' : 'upload-outline'"></nb-icon>
+              {{ pendingImageFile() ? pendingImageFile()!.name : 'Seleziona un file...' }}
+            </label>
+          </div>
+
+          @if (pendingImagePreviewUrl()) {
+            <div class="image-preview-wrap">
+              <img [src]="pendingImagePreviewUrl()" alt="Anteprima" class="image-panel-preview">
+            </div>
+          }
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+            <button nbButton status="warning" [disabled]="imageAddLoading()" (click)="addImageItem()">
+              @if (imageAddLoading()) {
+                <nb-spinner size="small" status="basic"></nb-spinner>
+              } @else {
+                Aggiungi
+              }
+            </button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
     <!-- ── Book editions panel ──────────────────────────────────────────────── -->
     @if (showEditions() && isOwner && editionsBook()) {
       <nb-card class="add-item-card editions-card" accent="info">

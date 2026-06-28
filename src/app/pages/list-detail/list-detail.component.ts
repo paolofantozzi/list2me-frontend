@@ -81,6 +81,13 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   tvdbLanguage = signal('ita');
   tvdbType = signal('');
 
+  // Image item creation panel
+  showImagePanel = signal(false);
+  pendingImageCaption = signal('');
+  pendingImageFile = signal<File | null>(null);
+  pendingImagePreviewUrl = signal<string | null>(null);
+  imageAddLoading = signal(false);
+
   // Item image upload
   imageUploadingItemId = signal<string | null>(null);
 
@@ -491,6 +498,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
+    this.showImagePanel.set(false);
     this.showEditions.set(false);
     this.showNewChildList.set(false);
   }
@@ -507,6 +515,10 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.tvdbResults.set([]);
       this.tvdbQuery.set('');
       this.tvdbType.set(type.name === 'episode' ? 'series' : type.name);
+    } else if (type.name === 'image') {
+      this.showImagePanel.set(true);
+      this.pendingImageCaption.set('');
+      this.pendingImageFile.set(null);
     } else {
       this.showAddItem.set(true);
     }
@@ -528,6 +540,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
+    this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
     this.bookResults.set([]);
@@ -538,6 +551,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
     this.showNewChildList.set(false);
+    this.pendingImageCaption.set('');
+    this.pendingImageFile.set(null);
+    const prev1 = this.pendingImagePreviewUrl();
+    if (prev1) URL.revokeObjectURL(prev1);
+    this.pendingImagePreviewUrl.set(null);
     this.showTypePicker.set(true);
   }
 
@@ -547,6 +565,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
+    this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
     this.bookResults.set([]);
@@ -555,6 +574,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.tvdbQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
+    this.pendingImageCaption.set('');
+    this.pendingImageFile.set(null);
+    const prev2 = this.pendingImagePreviewUrl();
+    if (prev2) URL.revokeObjectURL(prev2);
+    this.pendingImagePreviewUrl.set(null);
     this.episodeSeriesId.set(null);
     this.showNewChildList.set(false);
     this.addItemForm.reset({ new_child_list_visibility: 'public' });
@@ -836,6 +860,56 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   isTvdbItem(item: Item): boolean {
     const name = item.item_type_detail?.name;
     return name === 'series' || name === 'movie' || name === 'episode';
+  }
+
+  onImageFileChange(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    const prev = this.pendingImagePreviewUrl();
+    if (prev) URL.revokeObjectURL(prev);
+    this.pendingImageFile.set(file);
+    this.pendingImagePreviewUrl.set(file ? URL.createObjectURL(file) : null);
+  }
+
+  addImageItem(): void {
+    const listId = this.list()!.id;
+    const typeId = this.selectedType()!.id;
+    const caption = this.pendingImageCaption().trim() || 'Immagine';
+    const file = this.pendingImageFile();
+    this.imageAddLoading.set(true);
+
+    this.itemService.addItem(listId, {
+      text: caption,
+      item_type: typeId,
+      position: String(this.items().length + 1),
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        if (file) {
+          this.itemService.uploadItemImage(listId, item.id, file).subscribe({
+            next: updated => {
+              this.items.update(items => items.map(i => i.id === updated.id ? updated : i));
+              this.imageAddLoading.set(false);
+              this.closeAddPanel();
+              this.toastr.success('Immagine aggiunta!', 'Successo');
+            },
+            error: () => {
+              this.imageAddLoading.set(false);
+              this.closeAddPanel();
+              this.toastr.warning('Elemento creato ma caricamento immagine fallito.', 'Attenzione');
+            }
+          });
+        } else {
+          this.imageAddLoading.set(false);
+          this.closeAddPanel();
+          this.toastr.success('Elemento immagine aggiunto!', 'Successo');
+        }
+      },
+      error: () => {
+        this.imageAddLoading.set(false);
+        this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore');
+      }
+    });
   }
 
   isImageItem(item: Item): boolean {

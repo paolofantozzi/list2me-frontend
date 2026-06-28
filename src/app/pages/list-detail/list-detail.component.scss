@@ -1057,6 +1057,42 @@ $warning-100: #fff8e6;
   &.uploading { cursor: not-allowed; opacity: 0.6; }
 }
 
+.image-file-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 2px dashed #edf0f7;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #8f9bb3;
+  font-size: 0.875rem;
+  transition: border-color 0.15s, color 0.15s;
+
+  &:hover {
+    border-color: #3366ff;
+    color: #3366ff;
+  }
+
+  &.has-file {
+    border-color: #3366ff;
+    border-style: solid;
+    color: #1a2138;
+  }
+}
+
+.image-preview-wrap {
+  margin-top: 0.75rem;
+  text-align: center;
+
+  img {
+    max-width: 100%;
+    max-height: 240px;
+    border-radius: 6px;
+    object-fit: contain;
+  }
+}
+
 .item-detail-image-full {
   padding: 0.5rem 0;
   text-align: center;
