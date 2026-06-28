@@ -592,6 +592,12 @@
                     @if (ep.aired) {
                       <p class="book-result-meta">{{ ep.aired }}</p>
                     }
+                    @if (ep.service_url) {
+                      <a [href]="ep.service_url" target="_blank" rel="noopener noreferrer"
+                         class="result-service-link" (click)="$event.stopPropagation()">
+                        <nb-icon icon="external-link-outline"></nb-icon> TheTVDB
+                      </a>
+                    }
                   </div>
                   <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
                 </div>
