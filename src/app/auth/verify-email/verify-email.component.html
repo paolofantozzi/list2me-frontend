@@ -1,0 +1,44 @@
+<div class="auth-wrapper">
+  <div class="auth-brand">
+    <nb-icon icon="layers-outline" class="brand-icon"></nb-icon>
+    <span class="brand-name">List2Me</span>
+    <p class="brand-tagline">Organizza il tuo mondo, condividilo con chi ami.</p>
+  </div>
+
+  <div class="auth-panel">
+    <div class="auth-box">
+      <h2 class="auth-title">Verifica email</h2>
+
+      @switch (status()) {
+        @case ('loading') {
+          <div class="status-center">
+            <nb-spinner status="primary" size="giant"></nb-spinner>
+            <p class="status-text">Verifica in corso…</p>
+          </div>
+        }
+        @case ('success') {
+          <div class="status-center">
+            <nb-icon icon="checkmark-circle-2-outline" class="status-icon status-icon--success"></nb-icon>
+            <p class="status-text">Il tuo indirizzo email è stato verificato con successo!</p>
+          </div>
+          <button nbButton fullWidth status="primary" class="submit-btn" routerLink="/auth/login">
+            Accedi al tuo account
+          </button>
+        }
+        @case ('error') {
+          <nb-alert status="danger" class="auth-alert">
+            <nb-icon icon="alert-circle-outline"></nb-icon>
+            {{ errorMessage() }}
+          </nb-alert>
+          <p class="hint-text">
+            Il link potrebbe essere già stato utilizzato o essere scaduto.
+            Accedi per richiederne uno nuovo.
+          </p>
+          <button nbButton fullWidth status="primary" class="submit-btn" routerLink="/auth/login">
+            Vai al login
+          </button>
+        }
+      }
+    </div>
+  </div>
+</div>

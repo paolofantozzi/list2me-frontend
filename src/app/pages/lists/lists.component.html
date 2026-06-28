@@ -56,64 +56,132 @@
     </div>
   } @else if (error()) {
     <nb-alert status="danger">{{ error() }}</nb-alert>
-  } @else if (lists().length === 0) {
-    <nb-card>
-      <nb-card-body class="empty-state">
-        <nb-icon icon="list-outline" class="empty-icon"></nb-icon>
-        <h3>Nessuna lista</h3>
-        <p>Crea la tua prima lista per iniziare.</p>
-        <button nbButton status="primary" (click)="showCreateForm.set(true)">
-          <nb-icon icon="plus-outline"></nb-icon>
-          Crea una lista
-        </button>
-      </nb-card-body>
-    </nb-card>
   } @else {
-    <div class="lists-grid">
-      @for (list of lists(); track list.id) {
-        <nb-card [routerLink]="['/pages/lists', list.id]" class="list-card">
-          <nb-card-header>
-            <div class="list-card-header">
-              <div class="list-title-row">
-                <h3 class="list-title">{{ list.title }}</h3>
-                <nb-icon [icon]="list.visibility === 'public' ? 'globe-2-outline' : list.visibility === 'group' ? 'people-outline' : 'lock-outline'"
-                         class="visibility-icon"
-                         [title]="list.visibility === 'public' ? 'Pubblica' : list.visibility === 'group' ? 'Gruppo' : 'Privata'"></nb-icon>
+
+    <!-- ── Le mie liste ────────────────────────────────────────────────────── -->
+    <div class="section-header">
+      <h2 class="section-title">Le mie liste</h2>
+      <span class="section-count">{{ myLists().length }}</span>
+    </div>
+
+    @if (myLists().length === 0) {
+      <nb-card class="empty-section-card">
+        <nb-card-body class="empty-state">
+          <nb-icon icon="list-outline" class="empty-icon"></nb-icon>
+          <p>Non hai ancora creato nessuna lista.</p>
+          <button nbButton status="primary" size="small" (click)="showCreateForm.set(true)">
+            <nb-icon icon="plus-outline"></nb-icon>
+            Crea una lista
+          </button>
+        </nb-card-body>
+      </nb-card>
+    } @else {
+      <div class="lists-grid">
+        @for (list of myLists(); track list.id) {
+          <nb-card [routerLink]="['/pages/lists', list.id]" class="list-card list-card--own">
+            <nb-card-header>
+              <div class="list-card-header">
+                <div class="list-title-row">
+                  <h3 class="list-title">{{ list.title }}</h3>
+                  <nb-icon [icon]="list.visibility === 'public' ? 'globe-2-outline' : list.visibility === 'group' ? 'people-outline' : 'lock-outline'"
+                           class="visibility-icon"
+                           [title]="list.visibility === 'public' ? 'Pubblica' : list.visibility === 'group' ? 'Gruppo' : 'Privata'"></nb-icon>
+                </div>
+                <button nbButton ghost size="tiny" status="danger"
+                        (click)="deleteList(list, $event)" title="Elimina lista">
+                  <nb-icon icon="trash-2-outline"></nb-icon>
+                </button>
               </div>
-              <button nbButton ghost size="tiny" status="danger"
-                      (click)="deleteList(list, $event)" title="Elimina lista">
-                <nb-icon icon="trash-2-outline"></nb-icon>
-              </button>
-            </div>
-          </nb-card-header>
-          <nb-card-body>
-            @if (list.description) {
-              <p class="list-description">{{ list.description }}</p>
-            }
-            @if (list.tags.length) {
-              <div class="list-tags">
-                @for (tag of list.tags; track tag.id) {
-                  <span class="tag">{{ tag.name }}</span>
+            </nb-card-header>
+            <nb-card-body>
+              @if (list.description) {
+                <p class="list-description">{{ list.description }}</p>
+              }
+              @if (list.tags.length) {
+                <div class="list-tags">
+                  @for (tag of list.tags; track tag.id) {
+                    <span class="tag">{{ tag.name }}</span>
+                  }
+                </div>
+              }
+            </nb-card-body>
+            <nb-card-footer>
+              <div class="list-stats">
+                <span class="stat">
+                  <nb-icon icon="checkmark-square-outline"></nb-icon>
+                  {{ list.items_count }} {{ list.items_count === 1 ? 'elemento' : 'elementi' }}
+                </span>
+                @if (list.is_fork) {
+                  <span class="stat">
+                    <nb-icon icon="copy-outline"></nb-icon>
+                    Fork
+                  </span>
                 }
               </div>
-            }
-          </nb-card-body>
-          <nb-card-footer>
-            <div class="list-stats">
-              <span class="stat">
-                <nb-icon icon="checkmark-square-outline"></nb-icon>
-                {{ list.items_count }} {{ list.items_count === 1 ? 'elemento' : 'elementi' }}
-              </span>
-              @if (list.is_fork) {
-                <span class="stat">
-                  <nb-icon icon="copy-outline"></nb-icon>
-                  Fork
-                </span>
+            </nb-card-footer>
+          </nb-card>
+        }
+      </div>
+    }
+
+    <!-- ── Liste di altri utenti ───────────────────────────────────────────── -->
+    @if (otherLists().length > 0) {
+      <div class="section-header section-header--others">
+        <h2 class="section-title">Liste di altri utenti</h2>
+        <span class="section-count">{{ otherLists().length }}</span>
+      </div>
+      <div class="lists-grid">
+        @for (list of otherLists(); track list.id) {
+          <nb-card [routerLink]="['/pages/lists', list.id]" class="list-card list-card--other">
+            <nb-card-header>
+              <div class="list-card-header">
+                <div class="list-title-row">
+                  <h3 class="list-title">{{ list.title }}</h3>
+                  <nb-icon [icon]="list.visibility === 'public' ? 'globe-2-outline' : list.visibility === 'group' ? 'people-outline' : 'lock-outline'"
+                           class="visibility-icon"
+                           [title]="list.visibility === 'public' ? 'Pubblica' : list.visibility === 'group' ? 'Gruppo' : 'Privata'"></nb-icon>
+                </div>
+              </div>
+            </nb-card-header>
+            <nb-card-body>
+              <div class="list-owner-row">
+                <nb-icon icon="person-outline" class="owner-icon"></nb-icon>
+                <span class="owner-name">{{ list.owner.username }}</span>
+              </div>
+              @if (list.description) {
+                <p class="list-description">{{ list.description }}</p>
               }
-            </div>
-          </nb-card-footer>
-        </nb-card>
-      }
-    </div>
+              @if (list.tags.length) {
+                <div class="list-tags">
+                  @for (tag of list.tags; track tag.id) {
+                    <span class="tag">{{ tag.name }}</span>
+                  }
+                </div>
+              }
+            </nb-card-body>
+            <nb-card-footer>
+              <div class="list-stats">
+                <span class="stat">
+                  <nb-icon icon="checkmark-square-outline"></nb-icon>
+                  {{ list.items_count }} {{ list.items_count === 1 ? 'elemento' : 'elementi' }}
+                </span>
+                @if (list.is_following) {
+                  <span class="stat stat--following">
+                    <nb-icon icon="heart"></nb-icon>
+                    Seguita
+                  </span>
+                }
+                @if (list.is_fork) {
+                  <span class="stat">
+                    <nb-icon icon="copy-outline"></nb-icon>
+                    Fork
+                  </span>
+                }
+              </div>
+            </nb-card-footer>
+          </nb-card>
+        }
+      </div>
+    }
   }
 </div>

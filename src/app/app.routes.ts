@@ -71,6 +71,10 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
   },
   {
+    path: 'verify-email/:key',
+    loadComponent: () => import('./auth/verify-email/verify-email.component').then(m => m.VerifyEmailComponent),
+  },
+  {
     path: '**',
     redirectTo: 'pages/dashboard',
   },

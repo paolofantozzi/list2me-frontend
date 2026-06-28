@@ -77,6 +77,10 @@ export class LayoutComponent implements OnInit {
       if (item.title === 'Esci') {
         this.logout();
       }
+      // Collapse sidebar after navigation on non-desktop viewports
+      if (item.link && window.innerWidth < 1200) {
+        this.sidebarService.collapse('left');
+      }
     });
   }
 

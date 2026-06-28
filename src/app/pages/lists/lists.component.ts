@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -7,6 +7,7 @@ import {
   NbToastrService, NbAlertModule, NbTagModule, NbCheckboxModule
 } from '@nebular/theme';
 import { ListService } from '../../services/list.service';
+import { AuthService } from '../../services/auth.service';
 import { List } from '../../models/list.model';
 
 @Component({
@@ -37,10 +38,21 @@ export class ListsComponent implements OnInit {
   showCreateForm = signal(false);
   createLoading = signal(false);
 
+  myLists = computed(() => {
+    const uid = this.auth.currentUser()?.id;
+    return this.lists().filter(l => l.owner.id === uid);
+  });
+
+  otherLists = computed(() => {
+    const uid = this.auth.currentUser()?.id;
+    return this.lists().filter(l => l.owner.id !== uid);
+  });
+
   createForm: FormGroup;
 
   constructor(
     private listService: ListService,
+    private auth: AuthService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
   ) {
