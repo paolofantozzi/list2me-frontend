@@ -29,6 +29,6 @@ export class ItemService {
   }
 
   reorderItems(listId: string, order: { id: string; position: number }[]): Observable<unknown> {
-    return this.http.post(`${API_BASE}/lists/${listId}/items/reorder/`, { order });
+    return this.http.post(`${API_BASE}/lists/${listId}/items/reorder/`, { items: order });
   }
 }

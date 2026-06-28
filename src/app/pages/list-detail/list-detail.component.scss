@@ -125,10 +125,73 @@ $warning-100: #fff8e6;
   justify-content: flex-end;
 }
 
+// ── Type picker ───────────────────────────────────────────────────────────────
+
+.type-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+
+.type-picker-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1.5rem 0.75rem;
+  border: 2px solid $border;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  user-select: none;
+
+  &:hover {
+    border-color: $primary;
+    background: $primary-100;
+    transform: translateY(-2px);
+  }
+
+  &:focus {
+    outline: 2px solid $primary;
+    border-color: $primary;
+  }
+}
+
+.type-picker-icon {
+  font-size: 2.25rem;
+  color: $primary;
+  margin-bottom: 0.25rem;
+}
+
+.type-picker-label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: $text-basic;
+}
+
+.type-picker-desc {
+  font-size: 0.8rem;
+  color: $text-hint;
+}
+
+// ── Items card ────────────────────────────────────────────────────────────────
+
 .items-card {
   ::ng-deep nb-card-body {
     padding: 0;
   }
+}
+
+.drag-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: $text-hint;
+  font-weight: 400;
+  margin-left: auto;
 }
 
 .empty-state {
@@ -223,6 +286,86 @@ $warning-100: #fff8e6;
   border-radius: 4px;
   padding: 0.1rem 0.4rem;
   margin-top: 0.25rem;
+  margin-right: 0.375rem;
+}
+
+// ── Drag handle & CDK drag ────────────────────────────────────────────────────
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  color: $text-hint;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s;
+  margin-right: -0.5rem;
+  padding: 0 0.25rem;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  nb-icon { font-size: 1.1rem; }
+}
+
+.item:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-placeholder {
+  background: $primary-100;
+  border: 2px dashed $primary;
+  border-radius: 8px;
+  min-height: 64px;
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drag-preview {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(51, 102, 255, 0.18);
+  border: 2px solid $primary;
+  padding: 1rem 1.25rem;
+  list-style: none;
+  opacity: 0.95;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.items-list.cdk-drop-list-dragging .item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+// ── Reorder buttons ───────────────────────────────────────────────────────────
+
+.item-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+  margin-right: -0.25rem;
+}
+
+.item:hover .item-reorder {
+  opacity: 1;
+}
+
+.badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: $warning;
+  color: #fff;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 0.375rem;
 }
 
 // ── Book items ────────────────────────────────────────────────────────────────
@@ -250,6 +393,15 @@ $warning-100: #fff8e6;
       font-size: 1.25rem;
     }
   }
+}
+
+.tvdb-cover-item {
+  width: 44px;
+  min-width: 44px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .book-meta {
@@ -390,6 +542,36 @@ $warning-100: #fff8e6;
   margin: 0.5rem 0 1rem;
 }
 
+// ── Panel attribution ─────────────────────────────────────────────────────────
+
+.panel-attribution {
+  font-size: 0.75rem;
+  color: $text-hint;
+  margin-bottom: 1rem;
+
+  a {
+    color: $primary;
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+}
+
+.items-attribution {
+  font-size: 0.75rem;
+  color: $text-hint;
+  padding: 0.625rem 1.25rem;
+  border-top: 1px solid $border;
+
+  a {
+    color: $primary;
+    text-decoration: none;
+    margin: 0 0.2rem;
+
+    &:hover { text-decoration: underline; }
+  }
+}
+
 // ── Nested lists (child_list) ─────────────────────────────────────────────────
 
 .child-list-toggle {
@@ -439,36 +621,6 @@ $warning-100: #fff8e6;
   color: darken($primary, 10%);
   opacity: 0.75;
   font-size: 0.75rem;
-}
-
-// ── Reorder buttons ───────────────────────────────────────────────────────────
-
-.item-reorder {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  opacity: 0;
-  transition: opacity 0.15s;
-  margin-right: -0.25rem;
-}
-
-.item:hover .item-reorder {
-  opacity: 1;
-}
-
-.badge-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  background: $warning;
-  color: #fff;
-  border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  margin-left: 0.375rem;
 }
 
 // ── Diff / merge ──────────────────────────────────────────────────────────────

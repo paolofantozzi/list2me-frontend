@@ -16,6 +16,24 @@
         </nb-alert>
       }
 
+      @if (emailNotVerified()) {
+        <nb-alert status="warning" class="auth-alert">
+          <p class="verify-msg">Il tuo indirizzo email non è ancora stato verificato.</p>
+          @if (resendSuccess()) {
+            <p class="verify-sent">Email di verifica inviata! Controlla la tua casella di posta.</p>
+          } @else {
+            <button nbButton size="small" status="warning" [disabled]="resendLoading()" (click)="resendVerification()" class="resend-btn">
+              @if (resendLoading()) {
+                <nb-spinner size="tiny" status="basic"></nb-spinner>
+              } @else {
+                <nb-icon icon="email-outline"></nb-icon>
+              }
+              Invia di nuovo l'email di verifica
+            </button>
+          }
+        </nb-alert>
+      }
+
       <form [formGroup]="form" (ngSubmit)="submit()">
         <div class="form-group">
           <label class="label" for="email">Email</label>

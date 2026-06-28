@@ -242,6 +242,23 @@ $border: #e4e9f2;
   }
 }
 
+// ── Email verification resend ─────────────────────────────────────────────────
+
+.verify-msg {
+  margin: 0 0 0.625rem;
+  font-size: 0.875rem;
+}
+
+.verify-sent {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.resend-btn {
+  margin-top: 0.25rem;
+}
+
 // ── Footer link ───────────────────────────────────────────────────────────────
 
 .auth-footer-text {

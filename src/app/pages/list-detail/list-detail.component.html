@@ -88,15 +88,7 @@
                 <span class="badge-count">{{ suggestions().length }}</span>
               }
             </button>
-            <button nbButton ghost status="info" (click)="toggleBookSearch()">
-              <nb-icon icon="book-outline"></nb-icon>
-              Cerca libro
-            </button>
-            <button nbButton ghost status="info" (click)="toggleTvdbSearch()">
-              <nb-icon icon="tv-outline"></nb-icon>
-              Cerca serie/film
-            </button>
-            <button nbButton status="primary" (click)="toggleAddItem()">
+            <button nbButton status="primary" (click)="openAddPanel()">
               <nb-icon icon="plus-outline"></nb-icon>
               Aggiungi elemento
             </button>
@@ -241,6 +233,41 @@
       </nb-card>
     }
 
+    <!-- ── Type picker panel ─────────────────────────────────────────────── -->
+    @if (showTypePicker() && isOwner) {
+      <nb-card class="add-item-card type-picker-card" accent="primary">
+        <nb-card-header>
+          <nb-icon icon="plus-circle-outline"></nb-icon>
+          Aggiungi elemento — scegli il tipo
+        </nb-card-header>
+        <nb-card-body>
+          <div class="type-picker-grid">
+            <div class="type-picker-item" (click)="selectItemType('text')" role="button" tabindex="0"
+                 (keyup.enter)="selectItemType('text')">
+              <nb-icon icon="edit-2-outline" class="type-picker-icon"></nb-icon>
+              <span class="type-picker-label">Testo libero</span>
+              <span class="type-picker-desc">Un semplice elemento testuale</span>
+            </div>
+            <div class="type-picker-item" (click)="selectItemType('book')" role="button" tabindex="0"
+                 (keyup.enter)="selectItemType('book')">
+              <nb-icon icon="book-outline" class="type-picker-icon"></nb-icon>
+              <span class="type-picker-label">Libro</span>
+              <span class="type-picker-desc">Cerca su OpenLibrary</span>
+            </div>
+            <div class="type-picker-item" (click)="selectItemType('tvdb')" role="button" tabindex="0"
+                 (keyup.enter)="selectItemType('tvdb')">
+              <nb-icon icon="tv-outline" class="type-picker-icon"></nb-icon>
+              <span class="type-picker-label">Film / Serie TV</span>
+              <span class="type-picker-desc">Cerca su TheTVDB</span>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
     <!-- ── Book search panel ──────────────────────────────────────────────── -->
     @if (showBookSearch() && isOwner) {
       <nb-card class="add-item-card book-search-card" accent="info">
@@ -304,8 +331,16 @@
             <p class="book-no-results">Nessun risultato trovato per "{{ bookQuery() }}".</p>
           }
 
+          <div class="panel-attribution">
+            Ricerca fornita da <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">OpenLibrary</a>
+          </div>
+
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="closeBookSearch()">Chiudi</button>
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
           </div>
         </nb-card-body>
       </nb-card>
@@ -357,7 +392,7 @@
             <p class="book-no-results">Nessuna edizione trovata.</p>
           }
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="closeEditions()">Chiudi</button>
+            <button nbButton type="button" ghost (click)="closeEditions()">Indietro</button>
           </div>
         </nb-card-body>
       </nb-card>
@@ -437,8 +472,16 @@
             <p class="book-no-results">Nessun risultato trovato per "{{ tvdbQuery() }}".</p>
           }
 
+          <div class="panel-attribution">
+            Ricerca fornita da <a href="https://thetvdb.com" target="_blank" rel="noopener noreferrer">TheTVDB</a>
+          </div>
+
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="closeTvdbSearch()">Chiudi</button>
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
           </div>
         </nb-card-body>
       </nb-card>
@@ -447,7 +490,7 @@
     <!-- ── Add item form ──────────────────────────────────────────────────── -->
     @if (showAddItem() && isOwner) {
       <nb-card class="add-item-card" accent="primary">
-        <nb-card-header>Nuovo elemento</nb-card-header>
+        <nb-card-header>Nuovo elemento — Testo libero</nb-card-header>
         <nb-card-body>
           <form [formGroup]="addItemForm" (ngSubmit)="addItem()">
             <div class="form-group">
@@ -481,7 +524,11 @@
             }
 
             <div class="form-actions">
-              <button nbButton type="button" ghost (click)="showAddItem.set(false)">Annulla</button>
+              <button nbButton type="button" ghost (click)="backToTypePicker()">
+                <nb-icon icon="arrow-back-outline"></nb-icon>
+                Indietro
+              </button>
+              <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
               <button nbButton type="submit" status="primary"
                       [disabled]="addItemForm.invalid || addItemLoading()">
                 @if (addItemLoading()) {
@@ -503,6 +550,12 @@
         @if (reorderLoading()) {
           <nb-spinner size="tiny" status="primary"></nb-spinner>
         }
+        @if (isOwner && items().length > 1) {
+          <span class="drag-hint">
+            <nb-icon icon="move-outline"></nb-icon>
+            Trascina per riordinare
+          </span>
+        }
       </nb-card-header>
       <nb-card-body class="items-body">
         @if (items().length === 0) {
@@ -511,9 +564,13 @@
             <p>Nessun elemento. @if (isOwner) { Aggiungine uno qui sopra. }</p>
           </div>
         } @else {
-          <ol class="items-list">
+          <ol cdkDropList (cdkDropListDropped)="onItemDropped($event)" class="items-list">
             @for (item of items(); track item.id; let i = $index; let first = $first; let last = $last) {
-              <li class="item" [class.item--book]="isBookItem(item)">
+              <li cdkDrag [cdkDragDisabled]="!isOwner" class="item" [class.item--book]="isBookItem(item)">
+                <ng-template cdkDragPlaceholder>
+                  <div class="drag-placeholder"></div>
+                </ng-template>
+
                 @if (editingItem()?.id === item.id) {
                   <form [formGroup]="editItemForm" (ngSubmit)="saveEditItem()" class="item-edit-form">
                     <input nbInput fullWidth formControlName="text" />
@@ -552,6 +609,12 @@
                 } @else {
                   <div class="item-content">
                     @if (isOwner) {
+                      <div cdkDragHandle class="drag-handle" title="Trascina per riordinare">
+                        <nb-icon icon="menu-outline"></nb-icon>
+                      </div>
+                    }
+
+                    @if (isOwner) {
                       <div class="item-reorder">
                         <button nbButton ghost size="tiny" [disabled]="first" (click)="moveItemUp(i)" title="Sposta su">
                           <nb-icon icon="arrow-upward-outline"></nb-icon>
@@ -579,6 +642,24 @@
                           @if (bookMeta(item).author) { {{ bookMeta(item).author }} }
                           @if (bookMeta(item).year) { · {{ bookMeta(item).year }} }
                           @if (bookMeta(item).isbn) { · ISBN {{ bookMeta(item).isbn }} }
+                        </p>
+                      </div>
+                    } @else if (isTvdbItem(item)) {
+                      @if (tvdbMeta(item).image_url) {
+                        <img [src]="tvdbMeta(item).image_url" [alt]="item.text"
+                             class="book-cover tvdb-cover-item" loading="lazy">
+                      } @else {
+                        <div class="book-cover book-cover--placeholder">
+                          <nb-icon icon="tv-outline"></nb-icon>
+                        </div>
+                      }
+                      <div class="item-text">
+                        <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                        <p class="book-meta">
+                          @if (item.item_type_detail) { <span class="item-type-badge">{{ item.item_type_detail.label }}</span> }
+                          @if (tvdbMeta(item).year) { {{ tvdbMeta(item).year }} }
+                          @if (tvdbMeta(item).network) { · {{ tvdbMeta(item).network }} }
+                          @if (tvdbMeta(item).status) { · {{ tvdbMeta(item).status }} }
                         </p>
                       </div>
                     } @else {
@@ -637,6 +718,18 @@
           </ol>
         }
       </nb-card-body>
+      @if (hasExternalItems) {
+        <nb-card-footer class="items-attribution">
+          Dati provenienti da:
+          @if (hasBookItems) {
+            <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">OpenLibrary</a>
+          }
+          @if (hasBookItems && hasTvdbItems) { · }
+          @if (hasTvdbItems) {
+            <a href="https://thetvdb.com" target="_blank" rel="noopener noreferrer">TheTVDB</a>
+          }
+        </nb-card-footer>
+      }
     </nb-card>
   }
 </div>

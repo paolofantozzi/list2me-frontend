@@ -68,6 +68,10 @@ export class AuthService {
     });
   }
 
+  resendVerificationEmail(email: string): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${API_BASE}/auth/register/resend-email/`, { email });
+  }
+
   googleLogin(accessToken: string): Observable<JWT> {
     return this.http.post<JWT>(`${API_BASE}/auth/google/`, { access_token: accessToken }).pipe(
       tap(jwt => this.saveSession(jwt))

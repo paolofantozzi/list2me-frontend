@@ -7,6 +7,7 @@ import {
   NbInputModule, NbFormFieldModule, NbToastrService, NbAlertModule, NbTagModule,
   NbSelectModule,
 } from '@nebular/theme';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } from 'rxjs';
 import { ListService } from '../../services/list.service';
@@ -24,6 +25,7 @@ import { AuthService } from '../../services/auth.service';
   imports: [
     SlicePipe,
     ReactiveFormsModule,
+    DragDropModule,
     NbCardModule,
     NbIconModule,
     NbSpinnerModule,
@@ -43,6 +45,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   items = signal<Item[]>([]);
   loading = signal(true);
   error = signal('');
+
+  // Add item flow
+  showTypePicker = signal(false);
   showAddItem = signal(false);
   addItemLoading = signal(false);
   editingItem = signal<Item | null>(null);
@@ -215,11 +220,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.itemService.addItem(listId, payload as Partial<Item>).subscribe({
       next: item => {
         this.items.update(items => [...items, item]);
-        this.addItemForm.reset({ new_child_list_visibility: 'public' });
-        this.showAddItem.set(false);
-        this.showNewChildList.set(false);
         this.addItemLoading.set(false);
         this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
         this.toastr.success('Elemento aggiunto!', 'Successo');
       },
       error: () => {
@@ -285,6 +288,14 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const items = [...this.items()];
     if (index === items.length - 1) return;
     [items[index], items[index + 1]] = [items[index + 1], items[index]];
+    this.items.set(items);
+    this.saveOrder(items);
+  }
+
+  onItemDropped(event: CdkDragDrop<Item[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+    const items = [...this.items()];
+    moveItemInArray(items, event.previousIndex, event.currentIndex);
     this.items.set(items);
     this.saveOrder(items);
   }
@@ -431,6 +442,59 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Add item panel flow ────────────────────────────────────────────────────────
+
+  openAddPanel(): void {
+    this.showTypePicker.set(true);
+    this.showAddItem.set(false);
+    this.showBookSearch.set(false);
+    this.showTvdbSearch.set(false);
+    this.showEditions.set(false);
+    this.showNewChildList.set(false);
+  }
+
+  selectItemType(type: 'text' | 'book' | 'tvdb'): void {
+    this.showTypePicker.set(false);
+    if (type === 'text') {
+      this.showAddItem.set(true);
+    } else if (type === 'book') {
+      this.showBookSearch.set(true);
+      this.bookResults.set([]);
+      this.bookQuery.set('');
+    } else if (type === 'tvdb') {
+      this.showTvdbSearch.set(true);
+      this.tvdbResults.set([]);
+      this.tvdbQuery.set('');
+    }
+  }
+
+  backToTypePicker(): void {
+    this.showAddItem.set(false);
+    this.showBookSearch.set(false);
+    this.showTvdbSearch.set(false);
+    this.showEditions.set(false);
+    this.bookResults.set([]);
+    this.bookQuery.set('');
+    this.tvdbResults.set([]);
+    this.tvdbQuery.set('');
+    this.showNewChildList.set(false);
+    this.showTypePicker.set(true);
+  }
+
+  closeAddPanel(): void {
+    this.showTypePicker.set(false);
+    this.showAddItem.set(false);
+    this.showBookSearch.set(false);
+    this.showTvdbSearch.set(false);
+    this.showEditions.set(false);
+    this.bookResults.set([]);
+    this.bookQuery.set('');
+    this.tvdbResults.set([]);
+    this.tvdbQuery.set('');
+    this.showNewChildList.set(false);
+    this.addItemForm.reset({ new_child_list_visibility: 'public' });
+  }
+
   // ── Book search ──────────────────────────────────────────────────────────────
 
   onBookQueryChange(q: string): void {
@@ -465,6 +529,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       next: item => {
         this.items.update(items => [...items, item]);
         this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
         this.toastr.success(`"${book.title}" aggiunto!`, 'Libro aggiunto');
       },
       error: () => this.toastr.danger('Impossibile aggiungere il libro.', 'Errore')
@@ -502,34 +567,6 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       },
       error: () => this.toastr.danger('Impossibile scollegare la sotto-lista.', 'Errore')
     });
-  }
-
-  toggleAddItem(): void {
-    this.showAddItem.update(v => !v);
-    if (this.showAddItem()) {
-      this.showBookSearch.set(false);
-      this.showTvdbSearch.set(false);
-      this.showEditions.set(false);
-      this.showNewChildList.set(false);
-    }
-  }
-
-  toggleBookSearch(): void {
-    this.showBookSearch.update(v => !v);
-    if (this.showBookSearch()) {
-      this.showAddItem.set(false);
-      this.showTvdbSearch.set(false);
-      this.showEditions.set(false);
-      this.bookResults.set([]);
-      this.bookQuery.set('');
-    }
-  }
-
-  closeBookSearch(): void {
-    this.showBookSearch.set(false);
-    this.showEditions.set(false);
-    this.bookResults.set([]);
-    this.bookQuery.set('');
   }
 
   // ── Book editions ─────────────────────────────────────────────────────────────
@@ -578,32 +615,14 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       next: item => {
         this.items.update(items => [...items, item]);
         this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
         this.toastr.success(`"${title}" aggiunto!`, 'Libro aggiunto');
-        this.closeEditions();
-        this.closeBookSearch();
       },
       error: () => this.toastr.danger('Impossibile aggiungere il libro.', 'Errore')
     });
   }
 
   // ── TVDB search ──────────────────────────────────────────────────────────────
-
-  toggleTvdbSearch(): void {
-    this.showTvdbSearch.update(v => !v);
-    if (this.showTvdbSearch()) {
-      this.showAddItem.set(false);
-      this.showBookSearch.set(false);
-      this.showEditions.set(false);
-      this.tvdbResults.set([]);
-      this.tvdbQuery.set('');
-    }
-  }
-
-  closeTvdbSearch(): void {
-    this.showTvdbSearch.set(false);
-    this.tvdbResults.set([]);
-    this.tvdbQuery.set('');
-  }
 
   onTvdbQueryChange(q: string): void {
     this.tvdbQuery.set(q);
@@ -656,6 +675,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       next: item => {
         this.items.update(items => [...items, item]);
         this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
         this.toastr.success(`"${result.name}" aggiunto!`, 'Aggiunto');
       },
       error: () => this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore')
@@ -666,8 +686,29 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return !!(item.metadata?.['cover_url'] || item.metadata?.['author'] || item.item_type_detail?.name === 'book');
   }
 
+  isTvdbItem(item: Item): boolean {
+    const name = item.item_type_detail?.name;
+    return name === 'series' || name === 'movie' || name === 'episode';
+  }
+
   bookMeta(item: Item): { author?: string; isbn?: string; cover_url?: string; year?: number | null } {
     return (item.metadata ?? {}) as { author?: string; isbn?: string; cover_url?: string; year?: number | null };
+  }
+
+  tvdbMeta(item: Item): { image_url?: string; network?: string; status?: string; year?: number } {
+    return (item.metadata ?? {}) as { image_url?: string; network?: string; status?: string; year?: number };
+  }
+
+  get hasBookItems(): boolean {
+    return this.items().some(item => this.isBookItem(item));
+  }
+
+  get hasTvdbItems(): boolean {
+    return this.items().some(item => this.isTvdbItem(item));
+  }
+
+  get hasExternalItems(): boolean {
+    return this.hasBookItems || this.hasTvdbItems;
   }
 
   get isOwner(): boolean {
