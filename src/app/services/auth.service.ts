@@ -51,6 +51,26 @@ export class AuthService {
     );
   }
 
+  uploadAvatar(file: File): Observable<UserDetail> {
+    const form = new FormData();
+    form.append('avatar', file);
+    return this.http.post<UserDetail>(`${API_BASE}/auth/me/avatar/`, form).pipe(
+      tap(user => {
+        this._currentUser.set(user);
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+      })
+    );
+  }
+
+  removeAvatar(): Observable<UserDetail> {
+    return this.http.delete<UserDetail>(`${API_BASE}/auth/me/avatar/`).pipe(
+      tap(user => {
+        this._currentUser.set(user);
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+      })
+    );
+  }
+
   requestPasswordReset(email: string): Observable<{ detail: string }> {
     return this.http.post<{ detail: string }>(`${API_BASE}/auth/password/reset/`, { email });
   }

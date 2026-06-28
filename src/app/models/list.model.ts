@@ -39,6 +39,7 @@ export interface Item {
   item_type?: string | null;
   item_type_detail?: ItemType | null;
   metadata?: Record<string, unknown>;
+  image?: string | null;
   child_list?: string | null;
   child_list_detail?: ChildListDetail | null;
   created_at: string;

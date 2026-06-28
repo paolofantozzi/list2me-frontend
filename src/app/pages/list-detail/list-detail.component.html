@@ -749,6 +749,21 @@
                           </p>
                         </div>
                       </div>
+                    } @else if (isImageItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra immagine">
+                        @if (item.image) {
+                          <img [src]="item.image" [alt]="item.text" class="book-cover item-image-thumb" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon icon="image-outline"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <span class="item-type-badge">{{ item.item_type_detail?.label }}</span>
+                        </div>
+                      </div>
                     } @else {
                       <div class="item-text">
                         <p class="item-title">{{ item.text || '(vuoto)' }}</p>
@@ -785,6 +800,22 @@
                             }
                           </button>
                         }
+                        @if (isImageItem(item)) {
+                          <label class="item-image-upload-btn" [class.uploading]="imageUploadingItemId() === item.id" title="Carica immagine">
+                            <input type="file" accept="image/*" hidden (change)="uploadItemImage(item, $event)"
+                                   [disabled]="imageUploadingItemId() === item.id">
+                            @if (imageUploadingItemId() === item.id) {
+                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                            } @else {
+                              <nb-icon icon="camera-outline"></nb-icon>
+                            }
+                          </label>
+                          @if (item.image) {
+                            <button nbButton ghost size="tiny" status="danger" (click)="removeItemImage(item)" title="Rimuovi immagine">
+                              <nb-icon icon="trash-2-outline"></nb-icon>
+                            </button>
+                          }
+                        }
                         @if (item.child_list_detail) {
                           <button nbButton ghost size="tiny" status="warning" (click)="unlinkChildList(item)" title="Scollega sotto-lista">
                             <nb-icon icon="link-2-outline"></nb-icon>
@@ -801,7 +832,7 @@
                   </div>
 
                   <!-- ── Item detail panel ──────────────────────────────── -->
-                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item))) {
+                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || (isImageItem(item) && item.image))) {
                     <div class="item-detail">
                       @if (isBookItem(item)) {
                         <div class="item-detail-grid">
@@ -876,6 +907,10 @@
                               </a>
                             }
                           </div>
+                        </div>
+                      } @else if (isImageItem(item) && item.image) {
+                        <div class="item-detail-image-full">
+                          <img [src]="item.image" [alt]="item.text" loading="lazy">
                         </div>
                       }
                     </div>

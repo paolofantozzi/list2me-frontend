@@ -6,6 +6,7 @@ export interface UserDetail {
   last_name: string;
   bio?: string;
   avatar_url?: string;
+  avatar?: string | null;
   date_joined: string;
 }
 

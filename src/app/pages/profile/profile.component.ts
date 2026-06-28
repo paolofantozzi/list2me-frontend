@@ -30,7 +30,13 @@ export class ProfileComponent implements OnInit {
   currentUser = computed(() => this.auth.currentUser());
   editing = signal(false);
   loading = signal(false);
+  avatarUploading = signal(false);
   form: FormGroup;
+
+  avatarPicture(): string {
+    const user = this.currentUser();
+    return user?.avatar || user?.avatar_url || '';
+  }
 
   constructor(
     private auth: AuthService,
@@ -74,6 +80,30 @@ export class ProfileComponent implements OnInit {
         this.toastr.danger('Impossibile aggiornare il profilo.', 'Errore');
         this.loading.set(false);
       }
+    });
+  }
+
+  uploadAvatar(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.avatarUploading.set(true);
+    this.auth.uploadAvatar(file).subscribe({
+      next: () => {
+        this.avatarUploading.set(false);
+        this.toastr.success('Avatar aggiornato!', 'Successo');
+      },
+      error: () => {
+        this.toastr.danger('Impossibile caricare l\'avatar.', 'Errore');
+        this.avatarUploading.set(false);
+      }
+    });
+  }
+
+  removeAvatar(): void {
+    if (!confirm('Rimuovere l\'avatar caricato?')) return;
+    this.auth.removeAvatar().subscribe({
+      next: () => this.toastr.success('Avatar rimosso!', 'Successo'),
+      error: () => this.toastr.danger('Impossibile rimuovere l\'avatar.', 'Errore')
     });
   }
 

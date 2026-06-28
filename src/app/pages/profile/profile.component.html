@@ -6,11 +6,28 @@
       <nb-card class="profile-card">
         <nb-card-body>
           <div class="avatar-section">
-            <nb-user
-              [name]="user.first_name || user.username"
-              [picture]="user.avatar_url || ''"
-              size="giant"
-            ></nb-user>
+            <div class="avatar-upload-wrap">
+              <nb-user
+                [name]="user.first_name || user.username"
+                [picture]="avatarPicture()"
+                size="giant"
+              ></nb-user>
+              <div class="avatar-actions">
+                <label class="avatar-upload-btn" title="Carica avatar" [class.loading]="avatarUploading()">
+                  <input type="file" accept="image/*" hidden (change)="uploadAvatar($event)" [disabled]="avatarUploading()">
+                  @if (avatarUploading()) {
+                    <nb-spinner size="small" status="primary"></nb-spinner>
+                  } @else {
+                    <nb-icon icon="camera-outline"></nb-icon>
+                  }
+                </label>
+                @if (user.avatar) {
+                  <button nbButton ghost size="tiny" status="danger" (click)="removeAvatar()" title="Rimuovi avatar caricato">
+                    <nb-icon icon="trash-2-outline"></nb-icon>
+                  </button>
+                }
+              </div>
+            </div>
             <div class="user-info">
               <h2 class="display-name">
                 {{ user.first_name || user.last_name ? (user.first_name + ' ' + user.last_name).trim() : user.username }}

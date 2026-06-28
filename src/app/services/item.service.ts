@@ -31,4 +31,14 @@ export class ItemService {
   reorderItems(listId: string, order: { id: string; position: number }[]): Observable<unknown> {
     return this.http.post(`${API_BASE}/lists/${listId}/items/reorder/`, { items: order });
   }
+
+  uploadItemImage(listId: string, itemId: string, file: File): Observable<Item> {
+    const form = new FormData();
+    form.append('image', file);
+    return this.http.post<Item>(`${API_BASE}/lists/${listId}/items/${itemId}/image/`, form);
+  }
+
+  removeItemImage(listId: string, itemId: string): Observable<Item> {
+    return this.http.delete<Item>(`${API_BASE}/lists/${listId}/items/${itemId}/image/`);
+  }
 }

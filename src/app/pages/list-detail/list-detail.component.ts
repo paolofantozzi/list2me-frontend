@@ -81,6 +81,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   tvdbLanguage = signal('ita');
   tvdbType = signal('');
 
+  // Item image upload
+  imageUploadingItemId = signal<string | null>(null);
+
   // Episode picker (drill-down from series)
   showEpisodePicker = signal(false);
   episodeSeriesId = signal<number | null>(null);
@@ -833,6 +836,44 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   isTvdbItem(item: Item): boolean {
     const name = item.item_type_detail?.name;
     return name === 'series' || name === 'movie' || name === 'episode';
+  }
+
+  isImageItem(item: Item): boolean {
+    return item.item_type_detail?.name === 'image';
+  }
+
+  uploadItemImage(item: Item, event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const listId = this.list()!.id;
+    this.imageUploadingItemId.set(item.id);
+    this.itemService.uploadItemImage(listId, item.id, file).subscribe({
+      next: updated => {
+        this.items.update(items => items.map(i => i.id === updated.id ? updated : i));
+        this.imageUploadingItemId.set(null);
+        this.toastr.success('Immagine caricata!', 'Successo');
+      },
+      error: () => {
+        this.toastr.danger('Impossibile caricare l\'immagine.', 'Errore');
+        this.imageUploadingItemId.set(null);
+      }
+    });
+  }
+
+  removeItemImage(item: Item): void {
+    const listId = this.list()!.id;
+    this.imageUploadingItemId.set(item.id);
+    this.itemService.removeItemImage(listId, item.id).subscribe({
+      next: updated => {
+        this.items.update(items => items.map(i => i.id === updated.id ? updated : i));
+        this.imageUploadingItemId.set(null);
+        this.toastr.success('Immagine rimossa!', 'Successo');
+      },
+      error: () => {
+        this.toastr.danger('Impossibile rimuovere l\'immagine.', 'Errore');
+        this.imageUploadingItemId.set(null);
+      }
+    });
   }
 
   bookMeta(item: Item): { author?: string; isbn?: string; cover_url?: string; year?: number | null; service_url?: string } {
