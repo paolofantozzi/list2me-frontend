@@ -1007,3 +1007,29 @@ $warning-100: #fff8e6;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
+
+.episode-season-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.episode-list { max-height: 400px; overflow-y: auto; }
+
+.episode-result { cursor: pointer; }
+
+.episode-thumb {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.episode-number {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #3366ff;
+  margin-right: 0.35rem;
+}

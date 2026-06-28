@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE } from './auth.service';
 import { PaginatedResponse } from '../models/common.model';
-import { UserPublic } from '../models/user.model';
+import { UserFollowRecord, UserPublic } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -28,11 +28,11 @@ export class UserService {
     return this.http.delete<void>(`${API_BASE}/users/${userId}/follow/`);
   }
 
-  getFollowers(userId: string): Observable<UserPublic[]> {
-    return this.http.get<UserPublic[]>(`${API_BASE}/users/${userId}/followers/`);
+  getFollowers(userId: string): Observable<UserFollowRecord[]> {
+    return this.http.get<UserFollowRecord[]>(`${API_BASE}/users/${userId}/followers/`);
   }
 
-  getFollowing(userId: string): Observable<UserPublic[]> {
-    return this.http.get<UserPublic[]>(`${API_BASE}/users/${userId}/following/`);
+  getFollowing(userId: string): Observable<UserFollowRecord[]> {
+    return this.http.get<UserFollowRecord[]>(`${API_BASE}/users/${userId}/following/`);
   }
 }

@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, of } from 'rxjs';
 import {
   NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule,
   NbInputModule, NbUserModule, NbAlertModule
 } from '@nebular/theme';
+import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { UserPublic } from '../../models/user.model';
 
@@ -24,7 +25,7 @@ import { UserPublic } from '../../models/user.model';
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss'
 })
-export class UsersComponent {
+export class UsersComponent implements OnInit {
   searchControl = new FormControl('');
   users = signal<UserPublic[]>([]);
   loading = signal(false);
@@ -32,7 +33,7 @@ export class UsersComponent {
   total = signal(0);
   followingIds = new Set<string>();
 
-  constructor(private userService: UserService) {
+  constructor(private userService: UserService, private authService: AuthService) {
     this.searchControl.valueChanges.pipe(
       debounceTime(400),
       distinctUntilChanged(),
@@ -51,6 +52,17 @@ export class UsersComponent {
       this.total.set(result.count);
       this.loading.set(false);
     });
+  }
+
+  ngOnInit(): void {
+    const currentUser = this.authService.currentUser();
+    if (currentUser) {
+      this.userService.getFollowing(currentUser.id).subscribe({
+        next: records => {
+          records.forEach(r => this.followingIds.add(r.following.id));
+        }
+      });
+    }
   }
 
   search(): void {

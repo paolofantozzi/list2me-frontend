@@ -19,6 +19,13 @@ export interface UserPublic {
   date_joined: string;
 }
 
+export interface UserFollowRecord {
+  id: string;
+  follower: UserPublic;
+  following: UserPublic;
+  created_at: string;
+}
+
 export interface JWT {
   access: string;
   refresh: string;

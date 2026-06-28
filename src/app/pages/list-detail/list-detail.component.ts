@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
-import { SlicePipe } from '@angular/common';
+import { SlicePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -18,7 +18,7 @@ import { TvdbService } from '../../services/tvdb.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
 import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
-import { TvdbSearchResult } from '../../models/tvdb.model';
+import { TvdbSearchResult, TvdbEpisode, TvdbEpisodesPage } from '../../models/tvdb.model';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -26,6 +26,7 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [
     SlicePipe,
+    DecimalPipe,
     ReactiveFormsModule,
     DragDropModule,
     NbCardModule,
@@ -79,6 +80,14 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   tvdbSearchLoading = signal(false);
   tvdbLanguage = signal('ita');
   tvdbType = signal('');
+
+  // Episode picker (drill-down from series)
+  showEpisodePicker = signal(false);
+  episodeSeriesId = signal<number | null>(null);
+  episodeSeriesName = signal('');
+  episodesPage = signal<TvdbEpisodesPage | null>(null);
+  episodesLoading = signal(false);
+  episodeSeasonFilter = signal<number | null>(null);
 
   // Reorder
   reorderLoading = signal(false);
@@ -494,7 +503,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.showTvdbSearch.set(true);
       this.tvdbResults.set([]);
       this.tvdbQuery.set('');
-      this.tvdbType.set(type.name === 'episode' ? '' : type.name);
+      this.tvdbType.set(type.name === 'episode' ? 'series' : type.name);
     } else {
       this.showAddItem.set(true);
     }
@@ -516,11 +525,15 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
+    this.showEpisodePicker.set(false);
     this.showEditions.set(false);
     this.bookResults.set([]);
     this.bookQuery.set('');
     this.tvdbResults.set([]);
     this.tvdbQuery.set('');
+    this.episodesPage.set(null);
+    this.episodeSeasonFilter.set(null);
+    this.episodeSeriesId.set(null);
     this.showNewChildList.set(false);
     this.showTypePicker.set(true);
   }
@@ -531,11 +544,15 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
+    this.showEpisodePicker.set(false);
     this.showEditions.set(false);
     this.bookResults.set([]);
     this.bookQuery.set('');
     this.tvdbResults.set([]);
     this.tvdbQuery.set('');
+    this.episodesPage.set(null);
+    this.episodeSeasonFilter.set(null);
+    this.episodeSeriesId.set(null);
     this.showNewChildList.set(false);
     this.addItemForm.reset({ new_child_list_visibility: 'public' });
   }
@@ -695,7 +712,87 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  selectSeriesForEpisodes(result: TvdbSearchResult): void {
+    const id = parseInt(result.metadata.thetvdb_id, 10);
+    if (!id) return;
+    this.episodeSeriesId.set(id);
+    this.episodeSeriesName.set(result.title);
+    this.showTvdbSearch.set(false);
+    this.showEpisodePicker.set(true);
+    this.episodesLoading.set(true);
+    this.episodeSeasonFilter.set(null);
+    this.tvdbService.getSeriesEpisodes(id, undefined, 0, this.tvdbLanguage()).subscribe({
+      next: page => {
+        this.episodesPage.set(page);
+        this.episodesLoading.set(false);
+        const seasons = [...new Set(page.episodes.map(e => e.season_number))].sort((a, b) => a - b);
+        if (seasons.length > 0) this.episodeSeasonFilter.set(seasons[0]);
+      },
+      error: () => { this.episodesLoading.set(false); }
+    });
+  }
+
+  episodeSeasons(): number[] {
+    const page = this.episodesPage();
+    if (!page) return [];
+    return [...new Set(page.episodes.map(e => e.season_number))].sort((a, b) => a - b);
+  }
+
+  filteredEpisodes(): TvdbEpisode[] {
+    const page = this.episodesPage();
+    if (!page) return [];
+    const season = this.episodeSeasonFilter();
+    if (season === null) return page.episodes;
+    return page.episodes.filter(e => e.season_number === season);
+  }
+
+  addEpisodeItem(episode: TvdbEpisode): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.itemTypes().find(t => t.name === 'episode')?.id ?? null;
+    this.itemService.addItem(listId, {
+      text: episode.name,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        thetvdb_id: String(episode.tvdb_id),
+        type: 'episode',
+        series_tvdb_id: this.episodeSeriesId() ? String(this.episodeSeriesId()) : undefined,
+        series_name: this.episodeSeriesName() || undefined,
+        season_number: episode.season_number,
+        episode_number: episode.episode_number,
+        image_url: episode.image_url || undefined,
+        language: this.tvdbLanguage(),
+        service_url: episode.service_url || undefined,
+        aired: episode.aired || undefined,
+      },
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${episode.name}" aggiunto!`, 'Aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere l\'episodio.', 'Errore')
+    });
+  }
+
+  backToSeriesSearch(): void {
+    this.showEpisodePicker.set(false);
+    this.episodesPage.set(null);
+    this.episodeSeasonFilter.set(null);
+    this.episodeSeriesId.set(null);
+    this.tvdbResults.set([]);
+    this.tvdbQuery.set('');
+    this.showTvdbSearch.set(true);
+  }
+
   addTvdbItem(result: TvdbSearchResult): void {
+    if (this.selectedType()?.name === 'episode' && result.metadata.type !== 'episode') {
+      this.selectSeriesForEpisodes(result);
+      return;
+    }
+
     const listId = this.list()!.id;
     const position = String(this.items().length + 1);
     const typeName = this.selectedType()?.name

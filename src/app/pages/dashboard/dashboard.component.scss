@@ -60,6 +60,7 @@ $text-basic: #1a2138;
 
   .activity-verb { color: $text-hint; }
   .activity-target { font-style: italic; color: $primary; }
+  .activity-target-link { font-style: italic; color: $primary; text-decoration: none; &:hover { text-decoration: underline; } }
 }
 
 .activity-time {

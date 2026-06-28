@@ -417,7 +417,11 @@
       <nb-card class="add-item-card tvdb-search-card" accent="info">
         <nb-card-header>
           <nb-icon icon="tv-outline"></nb-icon>
-          Cerca serie o film su TheTVDB
+          @if (selectedType()?.name === 'episode') {
+            Cerca la serie TV per scegliere un episodio
+          } @else {
+            Cerca serie o film su TheTVDB
+          }
         </nb-card-header>
         <nb-card-body>
           <div class="tvdb-filters">
@@ -491,6 +495,72 @@
             <button nbButton type="button" ghost (click)="backToTypePicker()">
               <nb-icon icon="arrow-back-outline"></nb-icon>
               Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
+    @if (showEpisodePicker() && isOwner) {
+      <nb-card class="add-item-card tvdb-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="play-circle-outline"></nb-icon>
+          {{ episodeSeriesName() }} — Scegli un episodio
+        </nb-card-header>
+        <nb-card-body>
+          @if (episodesLoading()) {
+            <div class="book-search-input-wrap">
+              <nb-spinner size="small" status="info"></nb-spinner>
+              <span style="margin-left: 0.5rem; color: #8f9bb3;">Caricamento episodi...</span>
+            </div>
+          } @else if (episodesPage()) {
+            <div class="episode-season-tabs">
+              @for (season of episodeSeasons(); track season) {
+                <button nbButton size="tiny"
+                        [status]="episodeSeasonFilter() === season ? 'info' : 'basic'"
+                        (click)="episodeSeasonFilter.set(season)">
+                  @if (season === 0) { Speciali } @else { Stagione {{ season }} }
+                </button>
+              }
+            </div>
+            <div class="book-results episode-list">
+              @for (ep of filteredEpisodes(); track ep.tvdb_id) {
+                <div class="book-result episode-result" (click)="addEpisodeItem(ep)" role="button" tabindex="0"
+                     (keyup.enter)="addEpisodeItem(ep)">
+                  @if (ep.image_url) {
+                    <img [src]="ep.image_url" [alt]="ep.name" class="book-result-cover episode-thumb" loading="lazy">
+                  } @else {
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon icon="play-circle-outline"></nb-icon>
+                    </div>
+                  }
+                  <div class="book-result-info">
+                    <p class="book-result-title">
+                      <span class="episode-number">{{ ep.season_number }}×{{ ep.episode_number | number:'2.0' }}</span>
+                      {{ ep.name }}
+                    </p>
+                    @if (ep.aired) {
+                      <p class="book-result-meta">{{ ep.aired }}</p>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+              @if (filteredEpisodes().length === 0) {
+                <p class="book-no-results">Nessun episodio disponibile per questa stagione.</p>
+              }
+            </div>
+          }
+
+          <div class="panel-attribution">
+            Ricerca fornita da <a href="https://thetvdb.com" target="_blank" rel="noopener noreferrer">TheTVDB</a>
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToSeriesSearch()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Cambia serie
             </button>
             <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
           </div>

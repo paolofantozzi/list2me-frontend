@@ -45,9 +45,12 @@
               <div class="activity-content">
                 <div class="activity-description">
                   <strong>{{ activity.actor.username }}</strong>
-                  <span class="activity-verb"> {{ activity.verb }} </span>
-                  @if (activity.target_type) {
-                    <span class="activity-target">{{ activity.target_type }}</span>
+                  <span class="activity-verb"> {{ verbLabel(activity.verb) }} </span>
+                  @let link = targetLink(activity);
+                  @if (link) {
+                    <a [routerLink]="link" class="activity-target-link">{{ targetName(activity) }}</a>
+                  } @else if (targetName(activity)) {
+                    <span class="activity-target">{{ targetName(activity) }}</span>
                   }
                 </div>
                 <span class="activity-time">{{ activity.created_at | date:'medium' }}</span>
