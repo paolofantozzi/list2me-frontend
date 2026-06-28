@@ -46,8 +46,8 @@
                 <div class="activity-description">
                   <strong>{{ activity.actor.username }}</strong>
                   <span class="activity-verb"> {{ activity.verb }} </span>
-                  @if (activity.target_title) {
-                    <span class="activity-target">{{ activity.target_title }}</span>
+                  @if (activity.target_type) {
+                    <span class="activity-target">{{ activity.target_type }}</span>
                   }
                 </div>
                 <span class="activity-time">{{ activity.created_at | date:'medium' }}</span>

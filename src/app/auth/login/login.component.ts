@@ -1,6 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NbInputModule, NbButtonModule, NbIconModule, NbAlertModule, NbSpinnerModule, NbToastrService } from '@nebular/theme';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
@@ -20,7 +20,7 @@ import { environment } from '../../../environments/environment';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   form: FormGroup;
   loading = signal(false);
   error = signal('');
@@ -28,17 +28,25 @@ export class LoginComponent {
   emailNotVerified = signal(false);
   resendLoading = signal(false);
   resendSuccess = signal(false);
+  registered = signal(false);
 
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private toastr: NbToastrService,
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
     });
+  }
+
+  ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('registered') === '1') {
+      this.registered.set(true);
+    }
   }
 
   getInputType(): string {

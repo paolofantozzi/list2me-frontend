@@ -133,6 +133,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       new_child_list_visibility: ['public'],
     });
     this.suggestForm = this.fb.group({
+      description: ['', [Validators.required, Validators.maxLength(500)]],
       action: ['add', Validators.required],
       item_text: ['', [Validators.required, Validators.maxLength(500)]],
     });
@@ -394,8 +395,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   submitSuggestion(): void {
     if (this.suggestForm.invalid) return;
-    const { action, item_text } = this.suggestForm.value;
-    this.listService.createSuggestion(this.list()!.id, [{ action, item_text }]).subscribe({
+    const { description, action, item_text } = this.suggestForm.value;
+    this.listService.createSuggestion(
+      this.list()!.id,
+      description,
+      [{ action_type: action, text: item_text }]
+    ).subscribe({
       next: () => {
         this.suggestForm.reset({ action: 'add' });
         this.showSuggestForm.set(false);
@@ -430,9 +435,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   // ── Report ────────────────────────────────────────────────────────────────────
 
   reportList(): void {
-    const reason = prompt('Motivo della segnalazione:');
-    if (!reason?.trim()) return;
-    this.listService.reportList(this.list()!.id, reason.trim()).subscribe({
+    const list = this.list();
+    if (!list) return;
+    const message = prompt('Motivo della segnalazione:');
+    if (!message?.trim()) return;
+    this.listService.reportList(list.id, list.owner.id, message.trim()).subscribe({
       next: () => this.toastr.success('Lista segnalata.', 'Segnalata'),
       error: () => this.toastr.danger('Impossibile segnalare la lista.', 'Errore')
     });

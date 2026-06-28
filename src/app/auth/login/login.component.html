@@ -10,6 +10,12 @@
       <h2 class="auth-title">Bentornato</h2>
       <p class="auth-subtitle">Inserisci le tue credenziali per accedere.</p>
 
+      @if (registered()) {
+        <nb-alert status="success" closable (close)="registered.set(false)" class="auth-alert">
+          Registrazione completata! Controlla la tua email per verificare l'account, poi accedi.
+        </nb-alert>
+      }
+
       @if (error()) {
         <nb-alert status="danger" closable (close)="error.set('')" class="auth-alert">
           {{ error() }}

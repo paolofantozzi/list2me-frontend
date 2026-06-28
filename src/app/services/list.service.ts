@@ -51,8 +51,8 @@ export class ListService {
     return this.http.post(`${API_BASE}/lists/${id}/merge/`, {});
   }
 
-  reportList(id: string, reason: string): Observable<unknown> {
-    return this.http.post(`${API_BASE}/lists/${id}/report/`, { reason });
+  reportList(id: string, reportedToId: string, message: string): Observable<unknown> {
+    return this.http.post(`${API_BASE}/lists/${id}/report/`, { reported_to_id: reportedToId, message });
   }
 
   getShares(listId: string): Observable<ListShare[]> {
@@ -60,7 +60,7 @@ export class ListService {
   }
 
   shareList(listId: string, userId: string): Observable<ListShare> {
-    return this.http.post<ListShare>(`${API_BASE}/lists/${listId}/shares/`, { user_id: userId });
+    return this.http.post<ListShare>(`${API_BASE}/lists/${listId}/shares/`, { shared_with_id: userId });
   }
 
   revokeShare(listId: string, shareId: string): Observable<void> {
@@ -83,8 +83,8 @@ export class ListService {
     return this.http.get<Suggestion[]>(`${API_BASE}/lists/${listId}/suggestions/`);
   }
 
-  createSuggestion(listId: string, actions: unknown[]): Observable<Suggestion> {
-    return this.http.post<Suggestion>(`${API_BASE}/lists/${listId}/suggestions/`, { actions });
+  createSuggestion(listId: string, description: string, actions: unknown[]): Observable<Suggestion> {
+    return this.http.post<Suggestion>(`${API_BASE}/lists/${listId}/suggestions/`, { description, actions });
   }
 
   acceptSuggestion(listId: string, suggestionId: string): Observable<unknown> {

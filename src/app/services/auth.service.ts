@@ -23,10 +23,8 @@ export class AuthService {
     );
   }
 
-  register(data: RegisterRequest): Observable<JWT> {
-    return this.http.post<JWT>(`${API_BASE}/auth/register/`, data).pipe(
-      tap(jwt => this.saveSession(jwt))
-    );
+  register(data: RegisterRequest): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${API_BASE}/auth/register/`, data);
   }
 
   logout(): Observable<unknown> {

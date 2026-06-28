@@ -155,8 +155,8 @@
                         @if (member.user.id !== currentUserId) {
                           <li class="member-item">
                             <nb-user [name]="member.user.username" [picture]="member.user.avatar_url" size="small"
-                                     [title]="member.role === 'owner' ? 'Proprietario' : 'Membro'"></nb-user>
-                            @if (member.role !== 'owner') {
+                                     [title]="member.role === 'admin' ? 'Amministratore' : 'Membro'"></nb-user>
+                            @if (member.role !== 'admin') {
                               <button nbButton ghost size="tiny" status="danger"
                                       [disabled]="removingUserId() === member.user.id"
                                       (click)="removeMember(group.id, member)"

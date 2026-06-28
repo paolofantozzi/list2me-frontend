@@ -67,9 +67,9 @@ export class RegisterComponent {
     const payload = username?.trim() ? { username: username.trim(), ...rest } : rest;
 
     this.auth.register(payload).subscribe({
-      next: () => this.router.navigate(['/pages/dashboard']),
+      next: () => this.router.navigate(['/auth/login'], { queryParams: { registered: '1' } }),
       error: (err) => {
-        const msg = err?.error?.detail || err?.error?.username?.[0] || err?.error?.email?.[0]
+        const msg = err?.error?.error?.message || err?.error?.detail || err?.error?.username?.[0] || err?.error?.email?.[0]
           || 'Registration failed. Please check your details and try again.';
         this.error.set(msg);
         this.loading.set(false);

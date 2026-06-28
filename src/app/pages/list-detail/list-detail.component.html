@@ -182,16 +182,16 @@
                 @for (s of suggestions(); track s.id) {
                   <div class="suggestion-item">
                     <div class="suggestion-meta">
-                      <strong>{{ s.author.username }}</strong>
+                      <strong>{{ s.suggested_by.username }}</strong>
                       <span class="suggestion-status" [class]="'suggestion-status--' + s.status">
                         {{ s.status === 'pending' ? 'In attesa' : s.status === 'accepted' ? 'Accettato' : 'Rifiutato' }}
                       </span>
                     </div>
                     <ul class="suggestion-actions-list">
                       @for (action of s.actions; track $index) {
-                        <li [class]="action.action === 'add' ? 'diff-item--added' : 'diff-item--removed'">
-                          <nb-icon [icon]="action.action === 'add' ? 'plus-circle-outline' : 'minus-circle-outline'"></nb-icon>
-                          {{ action.item_text }}
+                        <li [class]="action.action_type === 'add' ? 'diff-item--added' : 'diff-item--removed'">
+                          <nb-icon [icon]="action.action_type === 'add' ? 'plus-circle-outline' : 'minus-circle-outline'"></nb-icon>
+                          {{ action.text }}
                         </li>
                       }
                     </ul>
@@ -221,6 +221,11 @@
               </div>
             } @else {
               <form [formGroup]="suggestForm" (ngSubmit)="submitSuggestion()">
+                <div class="form-group">
+                  <label class="label">Motivazione *</label>
+                  <input nbInput fullWidth formControlName="description"
+                         placeholder="Perché suggerisci questa modifica?" />
+                </div>
                 <div class="form-group">
                   <label class="label">Azione *</label>
                   <nb-select formControlName="action" fullWidth>

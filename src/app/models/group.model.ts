@@ -13,6 +13,8 @@ export interface Group {
 export interface GroupMember {
   id: string;
   user: UserPublic;
-  role: 'owner' | 'member';
-  joined_at: string;
+  role: 'admin' | 'member';
+  status: 'pending' | 'accepted' | 'declined';
+  invited_by: UserPublic;
+  created_at: string;
 }
