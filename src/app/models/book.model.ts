@@ -1,11 +1,18 @@
-export interface BookResult {
-  title: string;
+export interface BookResultMetadata {
+  open_library_key: string;
   author: string;
   isbn: string;
   cover_url: string;
-  open_library_key: string;
   year: number | null;
   service_url: string;
+}
+
+export interface BookResult {
+  title: string;
+  subtitle: string | null;
+  image_url: string | null;
+  service_url: string;
+  metadata: BookResultMetadata;
 }
 
 export interface BookEdition {

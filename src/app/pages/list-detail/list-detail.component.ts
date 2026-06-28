@@ -556,17 +556,18 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const listId = this.list()!.id;
     const position = String(this.items().length + 1);
     const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'book')?.id ?? null;
+    const meta = book.metadata;
 
     this.itemService.addItem(listId, {
       text: book.title,
       ...(typeId ? { item_type: typeId } : {}),
       metadata: {
-        author: book.author,
-        isbn: book.isbn,
-        cover_url: book.cover_url,
-        open_library_key: book.open_library_key,
-        year: book.year,
-        service_url: book.service_url || undefined,
+        author: meta.author,
+        isbn: meta.isbn,
+        cover_url: meta.cover_url || book.image_url || undefined,
+        open_library_key: meta.open_library_key,
+        year: meta.year,
+        service_url: meta.service_url || book.service_url || undefined,
       },
       position,
     }).subscribe({
@@ -620,7 +621,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showEditions.set(true);
     this.editions.set([]);
     this.editionsLoading.set(true);
-    this.bookService.getEditions(book.open_library_key).subscribe({
+    this.bookService.getEditions(book.metadata.open_library_key).subscribe({
       next: eds => { this.editions.set(eds); this.editionsLoading.set(false); },
       error: () => {
         this.editionsLoading.set(false);
@@ -641,17 +642,18 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const position = String(this.items().length + 1);
     const title = edition.title || book.title;
     const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'book')?.id ?? null;
+    const bookMeta = book.metadata;
 
     this.itemService.addItem(listId, {
       text: title,
       ...(typeId ? { item_type: typeId } : {}),
       metadata: {
-        author: book.author,
-        isbn: edition.isbn || book.isbn,
-        cover_url: edition.cover_url || book.cover_url,
-        open_library_key: book.open_library_key,
-        year: edition.year ?? book.year,
-        service_url: edition.service_url || book.service_url || undefined,
+        author: bookMeta.author,
+        isbn: edition.isbn || bookMeta.isbn,
+        cover_url: edition.cover_url || bookMeta.cover_url || book.image_url || undefined,
+        open_library_key: bookMeta.open_library_key,
+        year: edition.year ?? bookMeta.year,
+        service_url: edition.service_url || bookMeta.service_url || book.service_url || undefined,
       },
       position,
     }).subscribe({
