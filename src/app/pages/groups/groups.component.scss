@@ -1,7 +1,10 @@
+$primary: #3366ff;
+$primary-100: #ebf2ff;
 $text-hint: #8f9bb3;
 $text-basic: #1a2138;
 $warning-100: #fff4db;
 $warning: #ffaa00;
+$border: #edf0f7;
 
 .page-container {
   padding: 1.5rem;
@@ -60,10 +63,15 @@ $warning: #ffaa00;
   p { margin: 0; color: $text-hint; }
 }
 
-.groups-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+.groups-list {
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
+}
+
+.group-card {
+  width: 100%;
+  max-width: 680px;
 }
 
 .group-card-header {
@@ -111,4 +119,78 @@ $warning: #ffaa00;
 .invite-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+// ── Member management ─────────────────────────────────────────────────────────
+
+.manage-panel {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.manage-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.manage-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: $text-hint;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.25rem;
+}
+
+.user-search-wrap {
+  position: relative;
+
+  .search-spinner {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+.user-results,
+.members-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.user-result,
+.member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid $border;
+}
+
+.no-results {
+  font-size: 0.875rem;
+  color: $text-hint;
+  margin: 0;
+}
+
+.members-loading {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem;
 }

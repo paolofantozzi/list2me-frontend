@@ -108,8 +108,8 @@
           @if (diffLoading()) {
             <div class="loading-center"><nb-spinner status="warning" size="medium"></nb-spinner></div>
           } @else if (diff()) {
-            @let added = diff()!.added ?? [];
-            @let removed = diff()!.removed ?? [];
+            @let added = diff()!.only_in_source ?? [];
+            @let removed = diff()!.only_in_fork ?? [];
             @if (added.length === 0 && removed.length === 0) {
               <p class="diff-empty">La tua lista è già aggiornata con la fonte.</p>
               <div class="form-actions" style="margin-top: 1rem;">
@@ -122,8 +122,8 @@
                   Elementi aggiunti alla fonte ({{ added.length }})
                 </p>
                 <ul class="diff-list">
-                  @for (item of added; track item.id) {
-                    <li class="diff-item diff-item--added">{{ item.text }}</li>
+                  @for (text of added; track $index) {
+                    <li class="diff-item diff-item--added">{{ text }}</li>
                   }
                 </ul>
               }
@@ -133,8 +133,8 @@
                   Elementi rimossi dalla fonte ({{ removed.length }})
                 </p>
                 <ul class="diff-list">
-                  @for (item of removed; track item.id) {
-                    <li class="diff-item diff-item--removed">{{ item.text }}</li>
+                  @for (text of removed; track $index) {
+                    <li class="diff-item diff-item--removed">{{ text }}</li>
                   }
                 </ul>
               }
@@ -443,11 +443,11 @@
 
           @if (tvdbResults().length > 0) {
             <div class="book-results">
-              @for (result of tvdbResults(); track result.tvdb_id) {
+              @for (result of tvdbResults(); track result.metadata.thetvdb_id) {
                 <div class="book-result tvdb-result" (click)="addTvdbItem(result)" role="button" tabindex="0"
                      (keyup.enter)="addTvdbItem(result)">
                   @if (result.image_url) {
-                    <img [src]="result.image_url" [alt]="result.name" class="book-result-cover tvdb-cover" loading="lazy">
+                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover tvdb-cover" loading="lazy">
                   } @else {
                     <div class="book-result-cover book-result-cover--placeholder">
                       <nb-icon icon="tv-outline"></nb-icon>
@@ -455,16 +455,13 @@
                   }
                   <div class="book-result-info">
                     <p class="book-result-title">
-                      {{ result.name }}
-                      <span class="tvdb-type-badge">{{ result.type }}</span>
+                      {{ result.title }}
+                      @if (result.metadata.type) {
+                        <span class="tvdb-type-badge">{{ result.metadata.type }}</span>
+                      }
                     </p>
-                    <p class="book-result-meta">
-                      @if (result.year) { {{ result.year }} · }
-                      @if (result.network) { {{ result.network }} · }
-                      @if (result.status) { {{ result.status }} }
-                    </p>
-                    @if (result.overview) {
-                      <p class="tvdb-overview">{{ result.overview | slice:0:100 }}{{ result.overview.length > 100 ? '…' : '' }}</p>
+                    @if (result.subtitle) {
+                      <p class="book-result-meta">{{ result.subtitle }}</p>
                     }
                     @if (result.service_url) {
                       <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
@@ -637,39 +634,45 @@
                     <span class="item-number">{{ i + 1 }}</span>
 
                     @if (isBookItem(item)) {
-                      @if (bookMeta(item).cover_url) {
-                        <img [src]="bookMeta(item).cover_url" [alt]="item.text"
-                             class="book-cover" loading="lazy">
-                      } @else {
-                        <div class="book-cover book-cover--placeholder">
-                          <nb-icon icon="book-outline"></nb-icon>
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        @if (bookMeta(item).cover_url) {
+                          <img [src]="bookMeta(item).cover_url" [alt]="item.text"
+                               class="book-cover" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon icon="book-outline"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (bookMeta(item).author) { {{ bookMeta(item).author }} }
+                            @if (bookMeta(item).year) { · {{ bookMeta(item).year }} }
+                            @if (bookMeta(item).isbn) { · ISBN {{ bookMeta(item).isbn }} }
+                          </p>
                         </div>
-                      }
-                      <div class="item-text">
-                        <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                        <p class="book-meta">
-                          @if (bookMeta(item).author) { {{ bookMeta(item).author }} }
-                          @if (bookMeta(item).year) { · {{ bookMeta(item).year }} }
-                          @if (bookMeta(item).isbn) { · ISBN {{ bookMeta(item).isbn }} }
-                        </p>
                       </div>
                     } @else if (isTvdbItem(item)) {
-                      @if (tvdbMeta(item).image_url) {
-                        <img [src]="tvdbMeta(item).image_url" [alt]="item.text"
-                             class="book-cover tvdb-cover-item" loading="lazy">
-                      } @else {
-                        <div class="book-cover book-cover--placeholder">
-                          <nb-icon icon="tv-outline"></nb-icon>
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        @if (tvdbMeta(item).image_url) {
+                          <img [src]="tvdbMeta(item).image_url" [alt]="item.text"
+                               class="book-cover tvdb-cover-item" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon icon="tv-outline"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ item.item_type_detail.label }}</span> }
+                            @if (tvdbMeta(item).year) { {{ tvdbMeta(item).year }} }
+                            @if (tvdbMeta(item).network) { · {{ tvdbMeta(item).network }} }
+                            @if (tvdbMeta(item).status) { · {{ tvdbMeta(item).status }} }
+                          </p>
                         </div>
-                      }
-                      <div class="item-text">
-                        <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                        <p class="book-meta">
-                          @if (item.item_type_detail) { <span class="item-type-badge">{{ item.item_type_detail.label }}</span> }
-                          @if (tvdbMeta(item).year) { {{ tvdbMeta(item).year }} }
-                          @if (tvdbMeta(item).network) { · {{ tvdbMeta(item).network }} }
-                          @if (tvdbMeta(item).status) { · {{ tvdbMeta(item).status }} }
-                        </p>
                       </div>
                     } @else {
                       <div class="item-text">
@@ -721,6 +724,87 @@
                       </div>
                     }
                   </div>
+
+                  <!-- ── Item detail panel ──────────────────────────────── -->
+                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item))) {
+                    <div class="item-detail">
+                      @if (isBookItem(item)) {
+                        <div class="item-detail-grid">
+                          @if (bookMeta(item).cover_url) {
+                            <img [src]="bookMeta(item).cover_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
+                          }
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (bookMeta(item).author) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="person-outline"></nb-icon>
+                                {{ bookMeta(item).author }}
+                              </p>
+                            }
+                            @if (bookMeta(item).year) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="calendar-outline"></nb-icon>
+                                {{ bookMeta(item).year }}
+                              </p>
+                            }
+                            @if (bookMeta(item).isbn) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="hash-outline"></nb-icon>
+                                ISBN {{ bookMeta(item).isbn }}
+                              </p>
+                            }
+                            @if (bookMeta(item).service_url) {
+                              <a [href]="bookMeta(item).service_url" target="_blank" rel="noopener noreferrer"
+                                 class="item-detail-link">
+                                <nb-icon icon="external-link-outline"></nb-icon>
+                                Apri su OpenLibrary
+                              </a>
+                            }
+                          </div>
+                        </div>
+                      } @else if (isTvdbItem(item)) {
+                        <div class="item-detail-grid">
+                          @if (tvdbMeta(item).image_url) {
+                            <img [src]="tvdbMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
+                          }
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (item.item_type_detail) {
+                              <p class="item-detail-row">
+                                <nb-icon [icon]="item.item_type_detail.name === 'movie' ? 'film-outline' : 'tv-outline'"></nb-icon>
+                                {{ item.item_type_detail.label }}
+                              </p>
+                            }
+                            @if (tvdbMeta(item).year) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="calendar-outline"></nb-icon>
+                                {{ tvdbMeta(item).year }}
+                              </p>
+                            }
+                            @if (tvdbMeta(item).network) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="monitor-outline"></nb-icon>
+                                {{ tvdbMeta(item).network }}
+                              </p>
+                            }
+                            @if (tvdbMeta(item).status) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="info-outline"></nb-icon>
+                                {{ tvdbMeta(item).status }}
+                              </p>
+                            }
+                            @if (tvdbMeta(item).service_url) {
+                              <a [href]="tvdbMeta(item).service_url" target="_blank" rel="noopener noreferrer"
+                                 class="item-detail-link">
+                                <nb-icon icon="external-link-outline"></nb-icon>
+                                Apri su TheTVDB
+                              </a>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
                 }
               </li>
             }

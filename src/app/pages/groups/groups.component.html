@@ -56,7 +56,7 @@
       </nb-card-body>
     </nb-card>
   } @else {
-    <div class="groups-grid">
+    <div class="groups-list">
       @for (group of groups(); track group.id) {
         <nb-card class="group-card">
           <nb-card-header>
@@ -66,6 +66,11 @@
               </div>
               <div class="group-header-actions">
                 @if (isOwner(group)) {
+                  <button nbButton ghost size="tiny" status="primary"
+                          (click)="toggleManage(group)"
+                          [title]="managingGroupId() === group.id ? 'Chiudi gestione' : 'Gestisci membri'">
+                    <nb-icon [icon]="managingGroupId() === group.id ? 'close-outline' : 'people-outline'"></nb-icon>
+                  </button>
                   <button nbButton ghost size="tiny" status="danger"
                           (click)="deleteGroup(group)" title="Elimina gruppo">
                     <nb-icon icon="trash-2-outline"></nb-icon>
@@ -90,6 +95,87 @@
                 {{ group.members_count }} {{ group.members_count === 1 ? 'membro' : 'membri' }}
               </span>
             </div>
+
+            <!-- ── Member management panel ─────────────────────────────── -->
+            @if (managingGroupId() === group.id && isOwner(group)) {
+              <div class="manage-panel">
+                <div class="manage-section">
+                  <p class="manage-label">
+                    <nb-icon icon="person-add-outline"></nb-icon>
+                    Invita utente
+                  </p>
+                  <div class="user-search-wrap">
+                    <input nbInput fullWidth #userSearchInput
+                           [value]="userSearchQuery()"
+                           placeholder="Cerca per username..."
+                           (input)="onUserSearchChange(userSearchInput.value)" />
+                    @if (userSearchLoading()) {
+                      <nb-spinner size="small" status="primary" class="search-spinner"></nb-spinner>
+                    }
+                  </div>
+                  @if (userSearchResults().length > 0) {
+                    <ul class="user-results">
+                      @for (user of userSearchResults(); track user.id) {
+                        @if (!isMember(user) && user.id !== currentUserId) {
+                          <li class="user-result">
+                            <nb-user [name]="user.username" [picture]="user.avatar_url" size="small"></nb-user>
+                            <button nbButton ghost size="tiny" status="primary"
+                                    [disabled]="invitingUserId() === user.id"
+                                    (click)="inviteUser(group.id, user)"
+                                    title="Invita">
+                              @if (invitingUserId() === user.id) {
+                                <nb-spinner size="tiny" status="primary"></nb-spinner>
+                              } @else {
+                                <nb-icon icon="person-add-outline"></nb-icon>
+                              }
+                            </button>
+                          </li>
+                        }
+                      }
+                    </ul>
+                  } @else if (userSearchQuery().trim().length >= 2 && !userSearchLoading()) {
+                    <p class="no-results">Nessun utente trovato.</p>
+                  }
+                </div>
+
+                <div class="manage-section">
+                  <p class="manage-label">
+                    <nb-icon icon="people-outline"></nb-icon>
+                    Membri
+                  </p>
+                  @if (membersLoading()) {
+                    <div class="members-loading">
+                      <nb-spinner size="small" status="primary"></nb-spinner>
+                    </div>
+                  } @else if (members().length === 0) {
+                    <p class="no-results">Nessun membro oltre a te.</p>
+                  } @else {
+                    <ul class="members-list">
+                      @for (member of members(); track member.id) {
+                        @if (member.user.id !== currentUserId) {
+                          <li class="member-item">
+                            <nb-user [name]="member.user.username" [picture]="member.user.avatar_url" size="small"
+                                     [title]="member.role === 'owner' ? 'Proprietario' : 'Membro'"></nb-user>
+                            @if (member.role !== 'owner') {
+                              <button nbButton ghost size="tiny" status="danger"
+                                      [disabled]="removingUserId() === member.user.id"
+                                      (click)="removeMember(group.id, member)"
+                                      title="Rimuovi">
+                                @if (removingUserId() === member.user.id) {
+                                  <nb-spinner size="tiny" status="danger"></nb-spinner>
+                                } @else {
+                                  <nb-icon icon="person-remove-outline"></nb-icon>
+                                }
+                              </button>
+                            }
+                          </li>
+                        }
+                      }
+                    </ul>
+                  }
+                </div>
+              </div>
+            }
           </nb-card-body>
           <nb-card-footer>
             @if (!isOwner(group)) {

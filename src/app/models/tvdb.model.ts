@@ -1,19 +1,23 @@
 export type TvdbItemType = 'series' | 'movie' | 'episode' | 'person' | 'company';
 
-export interface TvdbSearchResult {
-  tvdb_id: string;
+export interface TvdbSearchResultMetadata {
+  thetvdb_id: string;
   type: TvdbItemType | string;
-  name: string;
   slug: string;
-  overview: string;
   image_url: string;
-  year: string;
-  network: string;
-  status: string;
-  country: string;
-  primary_language: string;
-  available_languages: string[];
+  language: string;
   service_url: string;
+  year?: string;
+  network?: string;
+  status?: string;
+}
+
+export interface TvdbSearchResult {
+  title: string;
+  subtitle: string | null;
+  image_url: string | null;
+  service_url: string;
+  metadata: TvdbSearchResultMetadata;
 }
 
 export interface TvdbSeries {

@@ -71,6 +71,9 @@ export interface SuggestionAction {
 }
 
 export interface ListDiff {
-  added: Item[];
-  removed: Item[];
+  only_in_source: string[];
+  only_in_fork: string[];
+  in_both: string[];
+  fork_version?: number;
+  fork_point_version?: number;
 }

@@ -88,6 +88,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   showEditChildList = signal(false);
   childListVisibilities: ListVisibility[] = ['public', 'private', 'group'];
 
+  // Item detail
+  detailItem = signal<Item | null>(null);
+
   // Diff / merge
   showDiff = signal(false);
   diff = signal<ListDiff | null>(null);
@@ -342,10 +345,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   loadDiff(): void {
     this.diffLoading.set(true);
     this.listService.getDiff(this.list()!.id).subscribe({
-      next: (resp: any) => {
-        const added: Item[] = Array.isArray(resp?.added) ? resp.added : (resp?.added?.results ?? []);
-        const removed: Item[] = Array.isArray(resp?.removed) ? resp.removed : (resp?.removed?.results ?? []);
-        this.diff.set({ added, removed });
+      next: resp => {
+        this.diff.set(resp);
         this.diffLoading.set(false);
       },
       error: () => {
@@ -688,21 +689,24 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   addTvdbItem(result: TvdbSearchResult): void {
     const listId = this.list()!.id;
     const position = String(this.items().length + 1);
-    const typeName = result.type === 'movie' ? 'movie' : result.type === 'episode' ? 'episode' : 'series';
+    const typeName = this.selectedType()?.name
+      ?? (result.metadata.type === 'movie' ? 'movie' : result.metadata.type === 'episode' ? 'episode' : 'series');
     const typeId = this.itemTypes().find(t => t.name === typeName)?.id ?? null;
 
+    const meta = result.metadata;
     this.itemService.addItem(listId, {
-      text: result.name,
+      text: result.title,
       ...(typeId ? { item_type: typeId } : {}),
       metadata: {
-        thetvdb_id: result.tvdb_id,
-        slug: result.slug || undefined,
-        network: result.network || undefined,
-        status: result.status || undefined,
-        image_url: result.image_url || undefined,
-        language: result.primary_language || this.tvdbLanguage(),
-        service_url: result.service_url || undefined,
-        ...(result.year ? { year: parseInt(result.year, 10) || undefined } : {}),
+        thetvdb_id: meta.thetvdb_id || undefined,
+        type: meta.type || undefined,
+        slug: meta.slug || undefined,
+        network: meta.network || undefined,
+        status: meta.status || undefined,
+        image_url: result.image_url || meta.image_url || undefined,
+        language: meta.language || this.tvdbLanguage(),
+        service_url: result.service_url || meta.service_url || undefined,
+        ...(meta.year ? { year: parseInt(meta.year, 10) || undefined } : {}),
       },
       position,
     }).subscribe({
@@ -710,7 +714,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
         this.items.update(items => [...items, item]);
         this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
         this.closeAddPanel();
-        this.toastr.success(`"${result.name}" aggiunto!`, 'Aggiunto');
+        this.toastr.success(`"${result.title}" aggiunto!`, 'Aggiunto');
       },
       error: () => this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore')
     });
@@ -725,12 +729,16 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return name === 'series' || name === 'movie' || name === 'episode';
   }
 
-  bookMeta(item: Item): { author?: string; isbn?: string; cover_url?: string; year?: number | null } {
-    return (item.metadata ?? {}) as { author?: string; isbn?: string; cover_url?: string; year?: number | null };
+  bookMeta(item: Item): { author?: string; isbn?: string; cover_url?: string; year?: number | null; service_url?: string } {
+    return (item.metadata ?? {}) as { author?: string; isbn?: string; cover_url?: string; year?: number | null; service_url?: string };
   }
 
-  tvdbMeta(item: Item): { image_url?: string; network?: string; status?: string; year?: number } {
-    return (item.metadata ?? {}) as { image_url?: string; network?: string; status?: string; year?: number };
+  tvdbMeta(item: Item): { image_url?: string; network?: string; status?: string; year?: number; service_url?: string; type?: string } {
+    return (item.metadata ?? {}) as { image_url?: string; network?: string; status?: string; year?: number; service_url?: string; type?: string };
+  }
+
+  openDetail(item: Item): void {
+    this.detailItem.update(current => current?.id === item.id ? null : item);
   }
 
   get hasBookItems(): boolean {
