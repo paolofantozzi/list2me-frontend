@@ -44,6 +44,7 @@
               ></nb-user>
               <div class="activity-content">
                 <div class="activity-description">
+                  <span class="activity-category-badge">{{ categoryLabel(activity.verb) }}</span>
                   <strong>{{ activity.actor.username }}</strong>
                   <span class="activity-verb"> {{ verbLabel(activity.verb) }} </span>
                   @let link = targetLink(activity);
@@ -54,8 +55,26 @@
                   }
                 </div>
                 <span class="activity-time">{{ activity.created_at | date:'medium' }}</span>
+
+                @if (isExpanded(activity.id)) {
+                  <div class="activity-details">
+                    @for (d of activityDetails(activity); track d.label) {
+                      <div class="activity-detail-row">
+                        <span class="activity-detail-label">{{ d.label }}</span>
+                        <span class="activity-detail-value">{{ d.value }}</span>
+                      </div>
+                    }
+                  </div>
+                }
               </div>
               <nb-icon [icon]="activityIcon(activity.verb)" class="activity-type-icon"></nb-icon>
+              @if (activityDetails(activity).length > 0) {
+                <button nbButton ghost size="tiny" class="activity-expand-btn"
+                        (click)="toggleExpand(activity.id)"
+                        [title]="isExpanded(activity.id) ? 'Nascondi dettagli' : 'Mostra dettagli'">
+                  <nb-icon [icon]="isExpanded(activity.id) ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
+                </button>
+              }
             </div>
           </nb-list-item>
         }

@@ -26,6 +26,7 @@ export class DashboardComponent implements OnInit {
   activities = signal<Activity[]>([]);
   loading = signal(true);
   error = signal('');
+  expandedIds = signal<Set<string>>(new Set());
 
   constructor(private activityService: ActivityService) {}
 
@@ -87,16 +88,87 @@ export class DashboardComponent implements OnInit {
     return map[verb] ?? verb;
   }
 
+  private readonly itemVerbs = new Set(['added_item', 'updated_item', 'removed_item']);
+
+  categoryLabel(verb: string): string {
+    const map: Record<string, string> = {
+      created_list: 'Lista',
+      updated_list: 'Lista',
+      deleted_list: 'Lista',
+      forked_list: 'Lista',
+      followed_list: 'Lista',
+      shared_list: 'Lista',
+      reported_list: 'Lista',
+      added_item: 'Elemento',
+      updated_item: 'Elemento',
+      removed_item: 'Elemento',
+      followed_user: 'Utente',
+      created_group: 'Gruppo',
+      joined_group: 'Gruppo',
+      suggested_change: 'Suggerimento',
+      accepted_suggestion: 'Suggerimento',
+    };
+    return map[verb] ?? 'Attività';
+  }
+
   targetName(activity: Activity): string {
-    const extra = activity.extra_data as Record<string, string> | null;
-    if (!extra) return '';
+    const extra = (activity.extra_data ?? {}) as Record<string, string>;
+    if (this.itemVerbs.has(activity.verb)) {
+      return extra['text'] ?? extra['list_title'] ?? '';
+    }
+    if (activity.verb === 'followed_user') {
+      return extra['username'] ?? '';
+    }
+    if (activity.verb === 'created_group' || activity.verb === 'joined_group') {
+      return extra['name'] ?? '';
+    }
     return extra['title'] ?? extra['list_title'] ?? extra['name'] ?? extra['username'] ?? '';
   }
 
   targetLink(activity: Activity): string | null {
+    const extra = (activity.extra_data ?? {}) as Record<string, string>;
+    if (extra['list_id']) {
+      return `/pages/lists/${extra['list_id']}`;
+    }
     if (activity.target_type === 'list' && activity.target_object_id) {
       return `/pages/lists/${activity.target_object_id}`;
     }
     return null;
+  }
+
+  private readonly detailFieldLabels: Record<string, string> = {
+    title: 'Titolo',
+    list_title: 'Lista',
+    text: 'Elemento',
+    name: 'Nome',
+    username: 'Utente',
+    shared_with_username: 'Condiviso con',
+    reported_to_username: 'Segnalato a',
+    suggested_by_username: 'Proposto da',
+    source_title: 'Lista originale',
+    description: 'Descrizione',
+  };
+
+  activityDetails(activity: Activity): { label: string; value: string }[] {
+    const extra = (activity.extra_data ?? {}) as Record<string, unknown>;
+    return Object.entries(extra)
+      .filter(([key, value]) => key !== 'list_id' && value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => ({ label: this.detailFieldLabels[key] ?? key, value: String(value) }));
+  }
+
+  toggleExpand(id: string): void {
+    this.expandedIds.update(set => {
+      const next = new Set(set);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  isExpanded(id: string): boolean {
+    return this.expandedIds().has(id);
   }
 }
