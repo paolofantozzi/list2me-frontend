@@ -207,6 +207,12 @@ npm test             # Vitest
 
 ---
 
+## Confini del workspace
+
+- **Non eseguire modifiche in altri workspace** (es. `/home/antigravity/workspace/list2me-backend`). Questa istanza di Claude Code opera solo su `list2me-frontend`.
+- Se per completare un task servono modifiche in un altro workspace, **non applicarle direttamente**: crea (o aggiorna, se già esiste) un file `TODO.md` nella root di quel workspace, descrivendo chiaramente le modifiche richieste.
+- Allo stesso modo, potresti trovare in questa cartella (`list2me-frontend`) un file `TODO.md` creato da un'altra istanza di Claude Code con richieste di modifiche da implementare qui — controllalo se presente e tienine conto nel lavoro.
+
 ## Note importanti
 
 - Il deploy avviene automaticamente al push su `main` via GitHub Actions.

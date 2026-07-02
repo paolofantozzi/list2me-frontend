@@ -267,7 +267,7 @@
               @for (type of itemTypes(); track type.id) {
                 <div class="type-picker-item" (click)="selectItemType(type)" role="button" tabindex="0"
                      (keyup.enter)="selectItemType(type)">
-                  <nb-icon [icon]="type.icon || getDefaultIcon(type.name)" class="type-picker-icon"></nb-icon>
+                  <nb-icon [icon]="pickIcon(type)" class="type-picker-icon"></nb-icon>
                   <span class="type-picker-label">{{ type.label }}</span>
                 </div>
               }
@@ -623,6 +623,77 @@
       </nb-card>
     }
 
+    <!-- ── MusicBrainz search panel ──────────────────────────────────────────── -->
+    @if (showMusicSearch() && isOwner) {
+      <nb-card class="add-item-card music-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon [icon]="selectedType()?.name === 'artist' ? 'mic-outline' : selectedType()?.name === 'track' ? 'music-outline' : 'recording-outline'"></nb-icon>
+          @if (selectedType()?.name === 'artist') {
+            Cerca artista su MusicBrainz
+          } @else if (selectedType()?.name === 'track') {
+            Cerca brano su MusicBrainz
+          } @else {
+            Cerca album su MusicBrainz
+          }
+        </nb-card-header>
+        <nb-card-body>
+          <div class="book-search-input-wrap">
+            <input nbInput fullWidth #musicInput
+                   [value]="musicQuery()"
+                   [placeholder]="selectedType()?.name === 'artist' ? 'Nome artista...' : selectedType()?.name === 'track' ? 'Titolo del brano...' : 'Titolo dell\'album...'"
+                   (input)="onMusicQueryChange(musicInput.value)" />
+            @if (musicSearchLoading()) {
+              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+            }
+          </div>
+
+          @if (musicResults().length > 0) {
+            <div class="book-results">
+              @for (result of musicResults(); track $index) {
+                <div class="book-result" (click)="addMusicItem(result)" role="button" tabindex="0"
+                     (keyup.enter)="addMusicItem(result)">
+                  @if (result.image_url) {
+                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
+                  } @else {
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon [icon]="selectedType()?.name === 'artist' ? 'mic-outline' : selectedType()?.name === 'track' ? 'music-outline' : 'recording-outline'"></nb-icon>
+                    </div>
+                  }
+                  <div class="book-result-info">
+                    <p class="book-result-title">{{ result.title }}</p>
+                    @if (result.subtitle) {
+                      <p class="book-result-meta">{{ result.subtitle }}</p>
+                    }
+                    @if (result.service_url) {
+                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
+                         class="result-service-link" (click)="$event.stopPropagation()">
+                        <nb-icon icon="external-link-outline"></nb-icon> MusicBrainz
+                      </a>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+            </div>
+          } @else if (musicQuery().trim().length >= 2 && !musicSearchLoading()) {
+            <p class="book-no-results">Nessun risultato trovato per "{{ musicQuery() }}".</p>
+          }
+
+          <div class="panel-attribution">
+            Ricerca fornita da <a href="https://musicbrainz.org" target="_blank" rel="noopener noreferrer">MusicBrainz</a>
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
     <!-- ── Add item form ──────────────────────────────────────────────────── -->
     @if (showAddItem() && isOwner) {
       <nb-card class="add-item-card" accent="primary">
@@ -819,6 +890,27 @@
                           <span class="item-type-badge">{{ item.item_type_detail?.label }}</span>
                         </div>
                       </div>
+                    } @else if (isMusicItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        @if (musicMeta(item).image_url) {
+                          <img [src]="musicMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon [icon]="musicIcon(item)"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ item.item_type_detail.label }}</span> }
+                            @if (musicMeta(item).artist_name) { {{ musicMeta(item).artist_name }} }
+                            @if (musicMeta(item).album_name) { · {{ musicMeta(item).album_name }} }
+                            @if (musicMeta(item).first_release_date) { · {{ musicMeta(item).first_release_date }} }
+                            @if (musicMeta(item).country) { · {{ musicMeta(item).country }} }
+                          </p>
+                        </div>
+                      </div>
                     } @else {
                       <div class="item-text">
                         <p class="item-title">{{ item.text || '(vuoto)' }}</p>
@@ -887,7 +979,7 @@
                   </div>
 
                   <!-- ── Item detail panel ──────────────────────────────── -->
-                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || (isImageItem(item) && item.image))) {
+                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || (isImageItem(item) && item.image))) {
                     <div class="item-detail">
                       @if (isBookItem(item)) {
                         <div class="item-detail-grid">
@@ -967,6 +1059,64 @@
                         <div class="item-detail-image-full">
                           <img [src]="item.image" [alt]="item.text" loading="lazy">
                         </div>
+                      } @else if (isMusicItem(item)) {
+                        <div class="item-detail-grid">
+                          @if (musicMeta(item).image_url) {
+                            <img [src]="musicMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
+                          }
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (item.item_type_detail) {
+                              <p class="item-detail-row">
+                                <nb-icon [icon]="musicIcon(item)"></nb-icon>
+                                {{ item.item_type_detail.label }}
+                              </p>
+                            }
+                            @if (musicMeta(item).artist_name) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="mic-outline"></nb-icon>
+                                {{ musicMeta(item).artist_name }}
+                              </p>
+                            }
+                            @if (musicMeta(item).album_name) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="recording-outline"></nb-icon>
+                                {{ musicMeta(item).album_name }}
+                              </p>
+                            }
+                            @if (musicMeta(item).first_release_date) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="calendar-outline"></nb-icon>
+                                {{ musicMeta(item).first_release_date }}
+                              </p>
+                            }
+                            @if (musicMeta(item).country) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="globe-2-outline"></nb-icon>
+                                {{ musicMeta(item).country }}
+                              </p>
+                            }
+                            @if (musicMeta(item).life_span_begin) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="calendar-outline"></nb-icon>
+                                {{ musicMeta(item).life_span_begin }}@if (musicMeta(item).life_span_end) { – {{ musicMeta(item).life_span_end }} }
+                              </p>
+                            }
+                            @if (musicMeta(item).track_number) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="hash-outline"></nb-icon>
+                                Traccia {{ musicMeta(item).track_number }}
+                              </p>
+                            }
+                            @if (musicMeta(item).service_url) {
+                              <a [href]="musicMeta(item).service_url" target="_blank" rel="noopener noreferrer"
+                                 class="item-detail-link">
+                                <nb-icon icon="external-link-outline"></nb-icon>
+                                Apri su MusicBrainz
+                              </a>
+                            }
+                          </div>
+                        </div>
                       }
                     </div>
                   }
@@ -982,9 +1132,13 @@
           @if (hasBookItems) {
             <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">OpenLibrary</a>
           }
-          @if (hasBookItems && hasTvdbItems) { · }
+          @if (hasBookItems && (hasTvdbItems || hasMusicItems)) { · }
           @if (hasTvdbItems) {
             <a href="https://thetvdb.com" target="_blank" rel="noopener noreferrer">TheTVDB</a>
+          }
+          @if (hasTvdbItems && hasMusicItems) { · }
+          @if (hasMusicItems) {
+            <a href="https://musicbrainz.org" target="_blank" rel="noopener noreferrer">MusicBrainz</a>
           }
         </nb-card-footer>
       }

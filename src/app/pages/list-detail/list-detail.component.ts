@@ -15,11 +15,16 @@ import { ItemService } from '../../services/item.service';
 import { ItemTypeService } from '../../services/item-type.service';
 import { BookService } from '../../services/book.service';
 import { TvdbService } from '../../services/tvdb.service';
+import { MusicBrainzService } from '../../services/musicbrainz.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
 import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
 import { TvdbSearchResult, TvdbEpisode, TvdbEpisodesPage } from '../../models/tvdb.model';
+import { MusicBrainzEntityType, MusicBrainzSearchResult } from '../../models/musicbrainz.model';
 import { AuthService } from '../../services/auth.service';
+
+// Tipi di item nascosti dal picker (funzionalità dismesse ma ancora supportate dal backend).
+const HIDDEN_ITEM_TYPES = new Set(['board_game', 'rpg']);
 
 @Component({
   selector: 'app-list-detail',
@@ -81,6 +86,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   tvdbLanguage = signal('ita');
   tvdbType = signal('');
 
+  // MusicBrainz search
+  showMusicSearch = signal(false);
+  musicQuery = signal('');
+  musicResults = signal<MusicBrainzSearchResult[]>([]);
+  musicSearchLoading = signal(false);
+
   // Image item creation panel
   showImagePanel = signal(false);
   pendingImageCaption = signal('');
@@ -128,6 +139,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   private bookSearch$ = new Subject<string>();
   private tvdbSearch$ = new Subject<string>();
+  private musicSearch$ = new Subject<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -137,6 +149,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private itemTypeService: ItemTypeService,
     private bookService: BookService,
     private tvdbService: TvdbService,
+    private musicBrainzService: MusicBrainzService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private auth: AuthService
@@ -164,7 +177,10 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
     this.itemTypesLoading.set(true);
     this.itemTypeService.getItemTypes().subscribe({
-      next: resp => { this.itemTypes.set(resp.results); this.itemTypesLoading.set(false); },
+      next: resp => {
+        this.itemTypes.set(resp.results.filter(t => !HIDDEN_ITEM_TYPES.has(t.name)));
+        this.itemTypesLoading.set(false);
+      },
       error: () => this.itemTypesLoading.set(false),
     });
 
@@ -203,11 +219,31 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.tvdbResults.set(results);
       this.tvdbSearchLoading.set(false);
     });
+
+    this.musicSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.musicSearchLoading.set(true);
+        const type = (this.selectedType()?.name as MusicBrainzEntityType) ?? 'artist';
+        return this.musicBrainzService.search(q, type).pipe(
+          catchError(() => {
+            this.musicSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.musicResults.set(results);
+      this.musicSearchLoading.set(false);
+    });
   }
 
   ngOnDestroy(): void {
     this.bookSearch$.complete();
     this.tvdbSearch$.complete();
+    this.musicSearch$.complete();
   }
 
   loadList(id: string): void {
@@ -498,6 +534,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
+    this.showMusicSearch.set(false);
     this.showImagePanel.set(false);
     this.showEditions.set(false);
     this.showNewChildList.set(false);
@@ -515,6 +552,10 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.tvdbResults.set([]);
       this.tvdbQuery.set('');
       this.tvdbType.set(type.name === 'episode' ? 'series' : type.name);
+    } else if (['artist', 'album', 'track'].includes(type.name)) {
+      this.showMusicSearch.set(true);
+      this.musicResults.set([]);
+      this.musicQuery.set('');
     } else if (type.name === 'image') {
       this.showImagePanel.set(true);
       this.pendingImageCaption.set('');
@@ -531,8 +572,24 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       movie: 'film-outline',
       episode: 'play-circle-outline',
       text: 'edit-2-outline',
+      artist: 'mic-outline',
+      album: 'recording-outline',
+      track: 'music-outline',
     };
     return icons[name] ?? 'list-outline';
+  }
+
+  // Il backend valorizza `icon` con nomi generici (es. "mic", "disc") non presenti
+  // nel pacchetto Eva Icons usato dal frontend, che richiede il suffisso "-outline".
+  private readonly iconNameFixes: Record<string, string> = {
+    mic: 'mic-outline',
+    disc: 'recording-outline',
+    music: 'music-outline',
+  };
+
+  pickIcon(type: ItemType): string {
+    const icon = type.icon ? (this.iconNameFixes[type.icon] ?? type.icon) : undefined;
+    return icon || this.getDefaultIcon(type.name);
   }
 
   backToTypePicker(): void {
@@ -540,6 +597,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
+    this.showMusicSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -547,6 +605,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.bookQuery.set('');
     this.tvdbResults.set([]);
     this.tvdbQuery.set('');
+    this.musicResults.set([]);
+    this.musicQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
@@ -565,6 +625,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showAddItem.set(false);
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
+    this.showMusicSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -572,6 +633,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.bookQuery.set('');
     this.tvdbResults.set([]);
     this.tvdbQuery.set('');
+    this.musicResults.set([]);
+    this.musicQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.pendingImageCaption.set('');
@@ -853,6 +916,50 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── MusicBrainz search ───────────────────────────────────────────────────────
+
+  onMusicQueryChange(q: string): void {
+    this.musicQuery.set(q);
+    if (q.trim().length < 2) {
+      this.musicResults.set([]);
+      this.musicSearchLoading.set(false);
+      return;
+    }
+    this.musicSearch$.next(q.trim());
+  }
+
+  addMusicItem(result: MusicBrainzSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? null;
+
+    this.itemService.addItem(listId, {
+      text: result.title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        ...result.metadata,
+        image_url: (result.metadata['image_url'] as string | undefined) ?? result.image_url ?? undefined,
+        service_url: (result.metadata['service_url'] as string | undefined) ?? result.service_url ?? undefined,
+      },
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${result.title}" aggiunto!`, 'Aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore')
+    });
+  }
+
+  musicIcon(item: Item): string {
+    const name = item.item_type_detail?.name;
+    if (name === 'artist') return 'mic-outline';
+    if (name === 'track') return 'music-outline';
+    return 'recording-outline';
+  }
+
   isBookItem(item: Item): boolean {
     return !!(item.metadata?.['cover_url'] || item.metadata?.['author'] || item.item_type_detail?.name === 'book');
   }
@@ -860,6 +967,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   isTvdbItem(item: Item): boolean {
     const name = item.item_type_detail?.name;
     return name === 'series' || name === 'movie' || name === 'episode';
+  }
+
+  isMusicItem(item: Item): boolean {
+    const name = item.item_type_detail?.name;
+    return name === 'artist' || name === 'album' || name === 'track';
   }
 
   onImageFileChange(event: Event): void {
@@ -958,6 +1070,30 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return (item.metadata ?? {}) as { image_url?: string; network?: string; status?: string; year?: number; service_url?: string; type?: string };
   }
 
+  musicMeta(item: Item): {
+    image_url?: string;
+    artist_name?: string;
+    album_name?: string;
+    first_release_date?: string;
+    country?: string;
+    life_span_begin?: string;
+    life_span_end?: string;
+    track_number?: string;
+    service_url?: string;
+  } {
+    return (item.metadata ?? {}) as {
+      image_url?: string;
+      artist_name?: string;
+      album_name?: string;
+      first_release_date?: string;
+      country?: string;
+      life_span_begin?: string;
+      life_span_end?: string;
+      track_number?: string;
+      service_url?: string;
+    };
+  }
+
   openDetail(item: Item): void {
     this.detailItem.update(current => current?.id === item.id ? null : item);
   }
@@ -970,8 +1106,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return this.items().some(item => this.isTvdbItem(item));
   }
 
+  get hasMusicItems(): boolean {
+    return this.items().some(item => this.isMusicItem(item));
+  }
+
   get hasExternalItems(): boolean {
-    return this.hasBookItems || this.hasTvdbItems;
+    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems;
   }
 
   get isOwner(): boolean {
