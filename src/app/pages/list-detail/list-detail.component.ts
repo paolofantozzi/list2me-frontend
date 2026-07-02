@@ -592,6 +592,29 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return icon || this.getDefaultIcon(type.name);
   }
 
+  // Il backend valorizza `label` sempre in inglese (es. "Board Game"); l'interfaccia è in italiano.
+  private readonly typeLabelTranslations: Record<string, string> = {
+    text: 'Testo',
+    link: 'Link',
+    book: 'Libro',
+    board_game: 'Gioco da tavolo',
+    rpg: 'Gioco di ruolo',
+    movie: 'Film',
+    series: 'Serie TV',
+    episode: 'Episodio',
+    image: 'Immagine',
+    artist: 'Artista',
+    album: 'Album',
+    track: 'Brano',
+    artwork: "Opera d'arte",
+    art_artist: 'Artista',
+  };
+
+  typeLabel(type: { name: string; label: string } | null | undefined): string {
+    if (!type) return '';
+    return this.typeLabelTranslations[type.name] ?? type.label;
+  }
+
   backToTypePicker(): void {
     this.selectedType.set(null);
     this.showAddItem.set(false);
