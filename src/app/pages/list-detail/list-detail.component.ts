@@ -16,12 +16,15 @@ import { ItemTypeService } from '../../services/item-type.service';
 import { BookService } from '../../services/book.service';
 import { TvdbService } from '../../services/tvdb.service';
 import { MusicBrainzService } from '../../services/musicbrainz.service';
+import { PlaceService } from '../../services/place.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
 import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
 import { TvdbSearchResult, TvdbEpisode, TvdbEpisodesPage } from '../../models/tvdb.model';
 import { MusicBrainzEntityType, MusicBrainzSearchResult } from '../../models/musicbrainz.model';
+import { PlaceSearchResult } from '../../models/place.model';
 import { AuthService } from '../../services/auth.service';
+import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
 
 // Tipi di item nascosti dal picker (funzionalità dismesse ma ancora supportate dal backend).
 const HIDDEN_ITEM_TYPES = new Set(['board_game', 'rpg']);
@@ -44,6 +47,7 @@ const HIDDEN_ITEM_TYPES = new Set(['board_game', 'rpg']);
     NbAlertModule,
     NbTagModule,
     NbSelectModule,
+    PlaceMapComponent,
   ],
   templateUrl: './list-detail.component.html',
   styleUrl: './list-detail.component.scss'
@@ -91,6 +95,18 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   musicQuery = signal('');
   musicResults = signal<MusicBrainzSearchResult[]>([]);
   musicSearchLoading = signal(false);
+
+  // Place search (Nominatim)
+  showPlaceSearch = signal(false);
+  placeQuery = signal('');
+  placeResults = signal<PlaceSearchResult[]>([]);
+  placeSearchLoading = signal(false);
+  placeManualMode = signal(false);
+  placePickedLat = signal<number | null>(null);
+  placePickedLon = signal<number | null>(null);
+  placeReverseResult = signal<PlaceSearchResult | null>(null);
+  placeReverseLoading = signal(false);
+  placeAddLoading = signal(false);
 
   // Image item creation panel
   showImagePanel = signal(false);
@@ -140,6 +156,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   private bookSearch$ = new Subject<string>();
   private tvdbSearch$ = new Subject<string>();
   private musicSearch$ = new Subject<string>();
+  private placeSearch$ = new Subject<string>();
+  private placeCoords$ = new Subject<{ lat: number; lon: number }>();
 
   constructor(
     private route: ActivatedRoute,
@@ -150,6 +168,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private bookService: BookService,
     private tvdbService: TvdbService,
     private musicBrainzService: MusicBrainzService,
+    private placeService: PlaceService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private auth: AuthService
@@ -238,12 +257,48 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.musicResults.set(results);
       this.musicSearchLoading.set(false);
     });
+
+    this.placeSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.placeSearchLoading.set(true);
+        return this.placeService.search(q).pipe(
+          catchError(() => {
+            this.placeSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.placeResults.set(results);
+      this.placeSearchLoading.set(false);
+    });
+
+    this.placeCoords$.pipe(
+      debounceTime(500),
+      switchMap(({ lat, lon }) => {
+        this.placeReverseLoading.set(true);
+        return this.placeService.reverse(lat, lon).pipe(
+          catchError(() => {
+            this.placeReverseLoading.set(false);
+            return of(null);
+          })
+        );
+      })
+    ).subscribe(result => {
+      this.placeReverseResult.set(result);
+      this.placeReverseLoading.set(false);
+    });
   }
 
   ngOnDestroy(): void {
     this.bookSearch$.complete();
     this.tvdbSearch$.complete();
     this.musicSearch$.complete();
+    this.placeSearch$.complete();
+    this.placeCoords$.complete();
   }
 
   loadList(id: string): void {
@@ -535,6 +590,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
     this.showMusicSearch.set(false);
+    this.showPlaceSearch.set(false);
     this.showImagePanel.set(false);
     this.showEditions.set(false);
     this.showNewChildList.set(false);
@@ -556,6 +612,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.showMusicSearch.set(true);
       this.musicResults.set([]);
       this.musicQuery.set('');
+    } else if (type.name === 'place') {
+      this.showPlaceSearch.set(true);
+      this.placeResults.set([]);
+      this.placeQuery.set('');
+      this.resetPlaceManualState();
     } else if (type.name === 'image') {
       this.showImagePanel.set(true);
       this.pendingImageCaption.set('');
@@ -575,16 +636,18 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       artist: 'mic-outline',
       album: 'recording-outline',
       track: 'music-outline',
+      place: 'pin-outline',
     };
     return icons[name] ?? 'list-outline';
   }
 
-  // Il backend valorizza `icon` con nomi generici (es. "mic", "disc") non presenti
+  // Il backend valorizza `icon` con nomi generici (es. "mic", "disc", "map-pin") non presenti
   // nel pacchetto Eva Icons usato dal frontend, che richiede il suffisso "-outline".
   private readonly iconNameFixes: Record<string, string> = {
     mic: 'mic-outline',
     disc: 'recording-outline',
     music: 'music-outline',
+    'map-pin': 'pin-outline',
   };
 
   pickIcon(type: ItemType): string {
@@ -608,6 +671,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     track: 'Brano',
     artwork: "Opera d'arte",
     art_artist: 'Artista',
+    place: 'Luogo',
   };
 
   typeLabel(type: { name: string; label: string } | null | undefined): string {
@@ -621,6 +685,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
     this.showMusicSearch.set(false);
+    this.showPlaceSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -630,6 +695,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.tvdbQuery.set('');
     this.musicResults.set([]);
     this.musicQuery.set('');
+    this.placeResults.set([]);
+    this.placeQuery.set('');
+    this.resetPlaceManualState();
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
@@ -649,6 +717,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showBookSearch.set(false);
     this.showTvdbSearch.set(false);
     this.showMusicSearch.set(false);
+    this.showPlaceSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -658,6 +727,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.tvdbQuery.set('');
     this.musicResults.set([]);
     this.musicQuery.set('');
+    this.placeResults.set([]);
+    this.placeQuery.set('');
+    this.resetPlaceManualState();
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.pendingImageCaption.set('');
@@ -997,6 +1069,91 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return name === 'artist' || name === 'album' || name === 'track';
   }
 
+  // ── Place search (Nominatim) ────────────────────────────────────────────────
+
+  onPlaceQueryChange(q: string): void {
+    this.placeQuery.set(q);
+    if (q.trim().length < 2) {
+      this.placeResults.set([]);
+      this.placeSearchLoading.set(false);
+      return;
+    }
+    this.placeSearch$.next(q.trim());
+  }
+
+  addPlaceItem(result: PlaceSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'place')?.id ?? null;
+    const meta = result.metadata;
+
+    this.itemService.addItem(listId, {
+      text: result.title || meta.display_name,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        display_name: meta.display_name,
+        address: meta.address,
+        latitude: meta.latitude,
+        longitude: meta.longitude,
+        osm_id: meta.osm_id,
+        osm_type: meta.osm_type,
+        place_id: meta.place_id,
+        category: meta.category,
+        place_type: meta.place_type,
+        service_url: meta.service_url || result.service_url || undefined,
+      },
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${item.text}" aggiunto!`, 'Luogo aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere il luogo.', 'Errore')
+    });
+  }
+
+  togglePlaceManualMode(): void {
+    this.placeManualMode.update(v => !v);
+    this.placeReverseResult.set(null);
+  }
+
+  onPlaceMapPositionChange(pos: { lat: number; lon: number }): void {
+    this.placePickedLat.set(pos.lat);
+    this.placePickedLon.set(pos.lon);
+    this.placeReverseResult.set(null);
+    this.placeCoords$.next(pos);
+  }
+
+  onPlaceManualCoordChange(): void {
+    const lat = this.placePickedLat();
+    const lon = this.placePickedLon();
+    if (lat == null || lon == null || Number.isNaN(lat) || Number.isNaN(lon)) return;
+    this.placeReverseResult.set(null);
+    this.placeCoords$.next({ lat, lon });
+  }
+
+  onPlaceLatInput(value: string): void {
+    const lat = value.trim() === '' ? null : parseFloat(value);
+    this.placePickedLat.set(lat != null && !Number.isNaN(lat) ? lat : null);
+    this.onPlaceManualCoordChange();
+  }
+
+  onPlaceLonInput(value: string): void {
+    const lon = value.trim() === '' ? null : parseFloat(value);
+    this.placePickedLon.set(lon != null && !Number.isNaN(lon) ? lon : null);
+    this.onPlaceManualCoordChange();
+  }
+
+  private resetPlaceManualState(): void {
+    this.placeManualMode.set(false);
+    this.placePickedLat.set(null);
+    this.placePickedLon.set(null);
+    this.placeReverseResult.set(null);
+    this.placeReverseLoading.set(false);
+  }
+
   onImageFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     const prev = this.pendingImagePreviewUrl();
@@ -1049,6 +1206,20 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   isImageItem(item: Item): boolean {
     return item.item_type_detail?.name === 'image';
+  }
+
+  isPlaceItem(item: Item): boolean {
+    return item.item_type_detail?.name === 'place';
+  }
+
+  // Miniatura statica (singola tile OSM) per l'anteprima nella riga elemento;
+  // evita di istanziare una mappa Leaflet interattiva per ogni elemento della lista.
+  placeTileUrl(lat: number, lon: number, zoom = 15): string {
+    const n = Math.pow(2, zoom);
+    const x = Math.floor(((lon + 180) / 360) * n);
+    const latRad = (lat * Math.PI) / 180;
+    const y = Math.floor(((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n);
+    return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
   }
 
   uploadItemImage(item: Item, event: Event): void {
@@ -1117,6 +1288,26 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  placeMeta(item: Item): {
+    display_name?: string;
+    address?: Record<string, string>;
+    latitude?: number;
+    longitude?: number;
+    category?: string;
+    place_type?: string;
+    service_url?: string;
+  } {
+    return (item.metadata ?? {}) as {
+      display_name?: string;
+      address?: Record<string, string>;
+      latitude?: number;
+      longitude?: number;
+      category?: string;
+      place_type?: string;
+      service_url?: string;
+    };
+  }
+
   openDetail(item: Item): void {
     this.detailItem.update(current => current?.id === item.id ? null : item);
   }
@@ -1133,8 +1324,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return this.items().some(item => this.isMusicItem(item));
   }
 
+  get hasPlaceItems(): boolean {
+    return this.items().some(item => this.isPlaceItem(item));
+  }
+
   get hasExternalItems(): boolean {
-    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems;
+    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems;
   }
 
   get isOwner(): boolean {

@@ -122,14 +122,16 @@ Il backend Django è in `/home/antigravity/workspace/list2me-backend` e si avvia
 
 **Comandi backend:**
 
+> **Nota architettura:** `docker-compose.yml` targetizza `linux/arm64` di default. Su host x86_64 (amd64) — come questa macchina — va aggiunto in overlay `docker-compose.x86_64.yml`, che riporta la piattaforma di ogni servizio a `linux/amd64`; senza, la build fallisce con `exec format error`. Aggiungere `-f docker-compose.yml -f docker-compose.x86_64.yml` a ogni comando `docker compose` (vedi esempi sotto).
+
 ```bash
 cd /home/antigravity/workspace/list2me-backend
 
-docker compose up -d          # avvia tutti i servizi in background
-docker compose up -d api      # avvia solo api (+ dipendenze)
-docker compose logs -f api    # segui i log dell'API
-docker compose down           # ferma tutto
-docker compose exec api python manage.py shell  # Django shell
+docker compose -f docker-compose.yml -f docker-compose.x86_64.yml up -d          # avvia tutti i servizi in background
+docker compose -f docker-compose.yml -f docker-compose.x86_64.yml up -d api      # avvia solo api (+ dipendenze)
+docker compose -f docker-compose.yml -f docker-compose.x86_64.yml logs -f api    # segui i log dell'API
+docker compose -f docker-compose.yml -f docker-compose.x86_64.yml down           # ferma tutto
+docker compose -f docker-compose.yml -f docker-compose.x86_64.yml exec api python manage.py shell  # Django shell
 ```
 
 Il container `api` esegue automaticamente `python manage.py migrate` all'avvio prima di lanciare gunicorn. Il codice è montato come volume (`- .:/app`), quindi le modifiche al codice Python sono ricaricate in tempo reale (`--reload`).

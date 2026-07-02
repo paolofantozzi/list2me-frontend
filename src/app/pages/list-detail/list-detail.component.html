@@ -694,6 +694,130 @@
       </nb-card>
     }
 
+    <!-- ── Place search panel (Nominatim) ─────────────────────────────────── -->
+    @if (showPlaceSearch() && isOwner) {
+      <nb-card class="add-item-card place-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="pin-outline"></nb-icon>
+          Cerca un luogo
+        </nb-card-header>
+        <nb-card-body>
+          @if (!placeManualMode()) {
+            <div class="book-search-input-wrap">
+              <input nbInput fullWidth #placeInput
+                     [value]="placeQuery()"
+                     placeholder="Nome del luogo o indirizzo..."
+                     (input)="onPlaceQueryChange(placeInput.value)" />
+              @if (placeSearchLoading()) {
+                <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+              }
+            </div>
+
+            @if (placeResults().length > 0) {
+              <div class="book-results">
+                @for (result of placeResults(); track $index) {
+                  <div class="book-result" (click)="addPlaceItem(result)" role="button" tabindex="0"
+                       (keyup.enter)="addPlaceItem(result)">
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon icon="pin-outline"></nb-icon>
+                    </div>
+                    <div class="book-result-info">
+                      <p class="book-result-title">{{ result.title }}</p>
+                      @if (result.subtitle) {
+                        <p class="book-result-meta">{{ result.subtitle }}</p>
+                      }
+                      @if (result.service_url) {
+                        <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
+                           class="result-service-link" (click)="$event.stopPropagation()">
+                          <nb-icon icon="external-link-outline"></nb-icon> OpenStreetMap
+                        </a>
+                      }
+                    </div>
+                    <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                  </div>
+                }
+              </div>
+            } @else if (placeQuery().trim().length >= 2 && !placeSearchLoading()) {
+              <p class="book-no-results">Nessun risultato trovato per "{{ placeQuery() }}".</p>
+            }
+
+            <div class="place-manual-toggle">
+              <button nbButton ghost size="small" type="button" (click)="togglePlaceManualMode()">
+                <nb-icon icon="pin-outline"></nb-icon>
+                Inserisci coordinate manualmente
+              </button>
+            </div>
+          } @else {
+            <div class="place-manual-coords">
+              <div class="form-group">
+                <label class="label">Latitudine</label>
+                <input nbInput fullWidth type="number" step="any" #latInput
+                       [value]="placePickedLat() ?? ''"
+                       placeholder="es. 41.9028"
+                       (input)="onPlaceLatInput(latInput.value)" />
+              </div>
+              <div class="form-group">
+                <label class="label">Longitudine</label>
+                <input nbInput fullWidth type="number" step="any" #lonInput
+                       [value]="placePickedLon() ?? ''"
+                       placeholder="es. 12.4964"
+                       (input)="onPlaceLonInput(lonInput.value)" />
+              </div>
+            </div>
+
+            <div class="place-picker-map">
+              <app-place-map
+                [latitude]="placePickedLat()"
+                [longitude]="placePickedLon()"
+                [interactive]="true"
+                (positionChange)="onPlaceMapPositionChange($event)">
+              </app-place-map>
+            </div>
+            <p class="place-picker-hint">Clicca sulla mappa o trascina il pin per selezionare un punto.</p>
+
+            @if (placeReverseLoading()) {
+              <div class="loading-center"><nb-spinner status="info" size="medium"></nb-spinner></div>
+            } @else if (placeReverseResult()) {
+              <div class="book-result book-result--static">
+                <div class="book-result-cover book-result-cover--placeholder">
+                  <nb-icon icon="pin-outline"></nb-icon>
+                </div>
+                <div class="book-result-info">
+                  <p class="book-result-title">{{ placeReverseResult()!.title }}</p>
+                  @if (placeReverseResult()!.subtitle) {
+                    <p class="book-result-meta">{{ placeReverseResult()!.subtitle }}</p>
+                  }
+                </div>
+                <button nbButton status="primary" size="small" type="button" (click)="addPlaceItem(placeReverseResult()!)">
+                  <nb-icon icon="plus-outline"></nb-icon>
+                  Aggiungi
+                </button>
+              </div>
+            }
+
+            <div class="place-manual-toggle">
+              <button nbButton ghost size="small" type="button" (click)="togglePlaceManualMode()">
+                <nb-icon icon="search-outline"></nb-icon>
+                Torna alla ricerca testuale
+              </button>
+            </div>
+          }
+
+          <div class="panel-attribution">
+            Ricerca fornita da <a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener noreferrer">Nominatim / OpenStreetMap</a>
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
     <!-- ── Add item form ──────────────────────────────────────────────────── -->
     @if (showAddItem() && isOwner) {
       <nb-card class="add-item-card" accent="primary">
@@ -911,6 +1035,26 @@
                           </p>
                         </div>
                       </div>
+                    } @else if (isPlaceItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        @if (placeMeta(item).latitude != null && placeMeta(item).longitude != null) {
+                          <img [src]="placeTileUrl(placeMeta(item).latitude!, placeMeta(item).longitude!)"
+                               [alt]="item.text" class="book-cover place-cover-thumb" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon icon="pin-outline"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
+                            @if (placeMeta(item).category) { {{ placeMeta(item).category }} }
+                            @if (placeMeta(item).place_type) { · {{ placeMeta(item).place_type }} }
+                          </p>
+                        </div>
+                      </div>
                     } @else {
                       <div class="item-text">
                         <p class="item-title">{{ item.text || '(vuoto)' }}</p>
@@ -979,7 +1123,7 @@
                   </div>
 
                   <!-- ── Item detail panel ──────────────────────────────── -->
-                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || (isImageItem(item) && item.image))) {
+                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || (isImageItem(item) && item.image))) {
                     <div class="item-detail">
                       @if (isBookItem(item)) {
                         <div class="item-detail-grid">
@@ -1117,6 +1261,40 @@
                             }
                           </div>
                         </div>
+                      } @else if (isPlaceItem(item)) {
+                        <div class="item-detail-grid item-detail-grid--place">
+                          @if (placeMeta(item).latitude != null && placeMeta(item).longitude != null) {
+                            <div class="item-detail-map">
+                              <app-place-map
+                                [latitude]="placeMeta(item).latitude!"
+                                [longitude]="placeMeta(item).longitude!">
+                              </app-place-map>
+                            </div>
+                          }
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ placeMeta(item).display_name || item.text }}</p>
+                            @if (placeMeta(item).category) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="pricetags-outline"></nb-icon>
+                                {{ placeMeta(item).category }}
+                                @if (placeMeta(item).place_type) { · {{ placeMeta(item).place_type }} }
+                              </p>
+                            }
+                            @if (placeMeta(item).latitude != null && placeMeta(item).longitude != null) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="navigation-2-outline"></nb-icon>
+                                {{ placeMeta(item).latitude! | number: '1.5-5' }}, {{ placeMeta(item).longitude! | number: '1.5-5' }}
+                              </p>
+                            }
+                            @if (placeMeta(item).service_url) {
+                              <a [href]="placeMeta(item).service_url" target="_blank" rel="noopener noreferrer"
+                                 class="item-detail-link">
+                                <nb-icon icon="external-link-outline"></nb-icon>
+                                Apri su OpenStreetMap
+                              </a>
+                            }
+                          </div>
+                        </div>
                       }
                     </div>
                   }
@@ -1139,6 +1317,10 @@
           @if (hasTvdbItems && hasMusicItems) { · }
           @if (hasMusicItems) {
             <a href="https://musicbrainz.org" target="_blank" rel="noopener noreferrer">MusicBrainz</a>
+          }
+          @if (hasMusicItems && hasPlaceItems) { · }
+          @if (hasPlaceItems) {
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>
           }
         </nb-card-footer>
       }

@@ -1108,3 +1108,63 @@ $warning-100: #fff8e6;
     object-fit: contain;
   }
 }
+
+// ── Place search / manual coordinate panel ────────────────────────────────────
+
+.place-search-card {
+  margin-bottom: 1.5rem;
+}
+
+.place-manual-toggle {
+  margin-bottom: 1rem;
+}
+
+.place-manual-coords {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  .form-group {
+    flex: 1;
+    margin-bottom: 0;
+  }
+}
+
+.place-picker-map {
+  height: 260px;
+  margin-bottom: 0.5rem;
+  border: 1px solid $border;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.place-picker-hint {
+  margin: 0 0 1rem;
+  font-size: 0.8125rem;
+  color: $text-hint;
+}
+
+.book-result--static {
+  cursor: default;
+  margin-bottom: 1rem;
+}
+
+// ── Place items ────────────────────────────────────────────────────────────────
+
+.place-cover-thumb {
+  object-fit: cover;
+  background: $border;
+}
+
+.item-detail-grid--place {
+  align-items: stretch;
+}
+
+.item-detail-map {
+  width: 160px;
+  min-width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
