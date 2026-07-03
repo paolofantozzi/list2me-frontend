@@ -67,20 +67,36 @@ export class LoginComponent implements OnInit {
     this.auth.login(this.form.value).subscribe({
       next: () => this.router.navigate(['/pages/dashboard']),
       error: (err) => {
-        const details = err?.error?.error?.details;
-        const nonFieldErrors: string[] = details?.non_field_errors ?? [];
-        const isUnverified = nonFieldErrors.some((msg: string) =>
-          msg.toLowerCase().includes('verified') || msg.toLowerCase().includes('verif')
-        );
-        if (isUnverified) {
-          this.emailNotVerified.set(true);
-          this.error.set('');
-        } else {
-          this.error.set('Email o password non validi. Riprova.');
-        }
+        this.handleLoginError(err);
         this.loading.set(false);
       }
     });
+  }
+
+  private handleLoginError(err: any): void {
+    if (err?.status === 0) {
+      this.error.set('Impossibile contattare il server. Controlla la connessione e riprova.');
+      return;
+    }
+
+    if (err?.status === 429) {
+      this.error.set('Troppi tentativi di accesso. Riprova tra qualche minuto.');
+      return;
+    }
+
+    const details = err?.error?.error?.details;
+    const nonFieldErrors: string[] = details?.non_field_errors ?? [];
+    const combined = nonFieldErrors.join(' ').toLowerCase();
+
+    if (combined.includes('verif')) {
+      this.emailNotVerified.set(true);
+    } else if (combined.includes('disabled')) {
+      this.error.set('Il tuo account è stato disabilitato. Contatta l\'assistenza.');
+    } else if (nonFieldErrors.length > 0) {
+      this.error.set('Email o password non validi. Riprova.');
+    } else {
+      this.error.set('Si è verificato un errore imprevisto. Riprova più tardi.');
+    }
   }
 
   resendVerification(): void {
