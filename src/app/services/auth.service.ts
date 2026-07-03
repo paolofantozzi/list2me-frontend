@@ -129,7 +129,7 @@ export class AuthService {
     this._currentUser.set(jwt.user);
   }
 
-  private clearSession(): void {
+  clearSession(): void {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);

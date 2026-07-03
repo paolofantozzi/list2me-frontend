@@ -24,12 +24,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return next(retryReq);
           }),
           catchError(refreshError => {
+            auth.clearSession();
             router.navigate(['/auth/login']);
             return throwError(() => refreshError);
           })
         );
       }
       if (error.status === 401) {
+        auth.clearSession();
         router.navigate(['/auth/login']);
       }
       return throwError(() => error);
