@@ -18,3 +18,12 @@ export interface GroupMember {
   invited_by: UserPublic;
   created_at: string;
 }
+
+export interface GroupInvite {
+  id: string;
+  group: Group;
+  role: 'admin' | 'member';
+  status: 'pending';
+  invited_by: UserPublic;
+  created_at: string;
+}

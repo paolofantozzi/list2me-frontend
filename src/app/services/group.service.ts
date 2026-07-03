@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE } from './auth.service';
-import { Group, GroupMember } from '../models/group.model';
+import { Group, GroupInvite, GroupMember } from '../models/group.model';
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
@@ -10,6 +10,14 @@ export class GroupService {
 
   getGroups(): Observable<Group[]> {
     return this.http.get<Group[]>(`${API_BASE}/groups/`);
+  }
+
+  /**
+   * Pending group invitations for the current user.
+   * Requires `GET /api/v1/groups/invites/` on the backend — see list2me-backend/TODO.md.
+   */
+  getPendingInvites(): Observable<GroupInvite[]> {
+    return this.http.get<GroupInvite[]>(`${API_BASE}/groups/invites/`);
   }
 
   createGroup(data: Partial<Group>): Observable<Group> {

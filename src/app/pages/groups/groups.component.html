@@ -37,6 +37,55 @@
     </nb-card>
   }
 
+  @if (pendingInvites().length > 0) {
+    <div class="section-header">
+      <h2 class="section-title">Inviti in sospeso</h2>
+      <span class="section-count">{{ pendingInvites().length }}</span>
+    </div>
+    <div class="groups-list">
+      @for (invite of pendingInvites(); track invite.id) {
+        <nb-card class="group-card invite-card" accent="warning">
+          <nb-card-header>
+            <h3 class="group-name">{{ invite.group.name }}</h3>
+          </nb-card-header>
+          <nb-card-body>
+            @if (invite.group.description) {
+              <p class="group-description">{{ invite.group.description }}</p>
+            }
+            <div class="group-meta">
+              <nb-user
+                [name]="invite.invited_by.username"
+                [picture]="invite.invited_by.avatar_url"
+                size="small"
+                caption="Ti ha invitato"
+              ></nb-user>
+            </div>
+          </nb-card-body>
+          <nb-card-footer>
+            <div class="invite-actions">
+              <button nbButton size="small" ghost status="danger"
+                      [disabled]="respondingInviteId() === invite.id"
+                      (click)="declineInvite(invite)">
+                <nb-icon icon="close-outline"></nb-icon>
+                Rifiuta
+              </button>
+              <button nbButton size="small" status="success"
+                      [disabled]="respondingInviteId() === invite.id"
+                      (click)="acceptInvite(invite)">
+                @if (respondingInviteId() === invite.id) {
+                  <nb-spinner size="tiny" status="basic"></nb-spinner>
+                } @else {
+                  <nb-icon icon="checkmark-outline"></nb-icon>
+                }
+                Accetta
+              </button>
+            </div>
+          </nb-card-footer>
+        </nb-card>
+      }
+    </div>
+  }
+
   @if (loading()) {
     <div class="loading-center">
       <nb-spinner status="primary" size="giant"></nb-spinner>

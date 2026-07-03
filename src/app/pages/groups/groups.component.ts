@@ -9,7 +9,7 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } fro
 import { of } from 'rxjs';
 import { GroupService } from '../../services/group.service';
 import { UserService } from '../../services/user.service';
-import { Group, GroupMember } from '../../models/group.model';
+import { Group, GroupInvite, GroupMember } from '../../models/group.model';
 import { UserPublic } from '../../models/user.model';
 import { AuthService } from '../../services/auth.service';
 
@@ -36,6 +36,10 @@ export class GroupsComponent implements OnInit, OnDestroy {
   error = signal('');
   showCreateForm = signal(false);
   createLoading = signal(false);
+
+  pendingInvites = signal<GroupInvite[]>([]);
+  pendingInvitesLoading = signal(false);
+  respondingInviteId = signal<string | null>(null);
 
   // Member management
   managingGroupId = signal<string | null>(null);
@@ -66,6 +70,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadGroups();
+    this.loadPendingInvites();
 
     this.userSearch$.pipe(
       debounceTime(300),
@@ -148,23 +153,47 @@ export class GroupsComponent implements OnInit, OnDestroy {
     return !!user && group.owner.id === user.id;
   }
 
-  acceptInvite(group: Group): void {
-    this.groupService.acceptInvite(group.id).subscribe({
-      next: () => {
-        this.loadGroups();
-        this.toastr.success('Joined group!', 'Success');
+  loadPendingInvites(): void {
+    this.pendingInvitesLoading.set(true);
+    this.groupService.getPendingInvites().subscribe({
+      next: data => {
+        this.pendingInvites.set(Array.isArray(data) ? data : (data as any).results ?? []);
+        this.pendingInvitesLoading.set(false);
       },
-      error: () => this.toastr.danger('Could not accept invite.', 'Error')
+      // The backend endpoint is not deployed everywhere yet — fail silently rather
+      // than showing an error toast for a feature the user didn't ask for.
+      error: () => this.pendingInvitesLoading.set(false),
     });
   }
 
-  declineInvite(group: Group): void {
-    this.groupService.declineInvite(group.id).subscribe({
+  acceptInvite(invite: GroupInvite): void {
+    this.respondingInviteId.set(invite.id);
+    this.groupService.acceptInvite(invite.group.id).subscribe({
       next: () => {
-        this.groups.update(gs => gs.filter(g => g.id !== group.id));
-        this.toastr.success('Invitation declined.', 'Done');
+        this.pendingInvites.update(is => is.filter(i => i.id !== invite.id));
+        this.respondingInviteId.set(null);
+        this.loadGroups();
+        this.toastr.success(`Sei entrato nel gruppo "${invite.group.name}".`, 'Fatto');
       },
-      error: () => this.toastr.danger('Could not decline invite.', 'Error')
+      error: () => {
+        this.respondingInviteId.set(null);
+        this.toastr.danger('Impossibile accettare l\'invito.', 'Errore');
+      }
+    });
+  }
+
+  declineInvite(invite: GroupInvite): void {
+    this.respondingInviteId.set(invite.id);
+    this.groupService.declineInvite(invite.group.id).subscribe({
+      next: () => {
+        this.pendingInvites.update(is => is.filter(i => i.id !== invite.id));
+        this.respondingInviteId.set(null);
+        this.toastr.success('Invito rifiutato.', 'Fatto');
+      },
+      error: () => {
+        this.respondingInviteId.set(null);
+        this.toastr.danger('Impossibile rifiutare l\'invito.', 'Errore');
+      }
     });
   }
 
