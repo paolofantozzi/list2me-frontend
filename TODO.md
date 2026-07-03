@@ -95,3 +95,65 @@ di un elemento via ricerca testuale; aggiunta via pin manuale su mappa con
 reverse geocoding; rendering miniatura e pannello di dettaglio con mappa
 interattiva, marker, indirizzo, categoria, coordinate e link OpenStreetMap;
 nessun errore in console riconducibile al nuovo codice.
+
+---
+
+## Nuovi tipi di elemento: Opera d'arte (`artwork`) e Artista (`art_artist`), via Europeana
+
+Il backend (list2me-backend v0.10.0) ha aggiunto l'integrazione con Europeana
+per opere d'arte e artisti (`GET /api/v1/europeana/search/?q=…&type=artwork|artist`,
+più i dettagli estesi `/europeana/artworks/{record_id}/` e
+`/europeana/artists/{agent_id}/`). I due tipi `artwork` e `art_artist` erano
+già presenti nella traduzione delle etichette (`typeLabelTranslations`) ma non
+avevano né form di ricerca/aggiunta né rendering in lista/dettaglio — la
+funzionalità mancava del tutto lato frontend. **Stato: ✅ Implementato e
+verificato end-to-end (2026-07-03).**
+
+**File nuovi:**
+- `src/app/models/europeana.model.ts` — `EuropeanaEntityType`
+  (`'artwork' | 'artist'`), `EuropeanaSearchResult`.
+- `src/app/services/europeana.service.ts` — `search(q, type, limit)`, stesso
+  pattern hardcoded-per-tipo di `MusicBrainzService`/`PlaceService`.
+
+**File modificati:**
+- `src/app/pages/list-detail/list-detail.component.ts` — signal/subject per
+  la ricerca Europeana, branch in `selectItemType`/`backToTypePicker`/
+  `closeAddPanel`, `onEuropeanaQueryChange`, `addEuropeanaItem`,
+  `isEuropeanaItem`/`europeanaMeta`, icone `palette`→`color-palette-outline`
+  e `brush`→`brush-outline` in `iconNameFixes`/`getDefaultIcon`, label
+  `art_artist` rinominata da `Artista` a **`Artista (arte)`** per
+  disambiguarla dall'omonimo tipo MusicBrainz `artist` nel type picker (con
+  due tile "Artista" identiche l'utente non avrebbe potuto distinguerle).
+- `src/app/pages/list-detail/list-detail.component.html` — pannello di
+  ricerca Europeana (stesso pattern di libro/TVDB/MusicBrainz/luogo), branch
+  `isEuropeanaItem` nella card elemento e nel pannello di dettaglio (campi
+  diversi per `artwork` vs `art_artist`: creatore/anno/mezzo/descrizione/
+  fornitore per le opere, biografia/date/luoghi/professioni per gli artisti),
+  attribuzione Europeana nel footer.
+
+**Nota:** la ricerca artisti di Europeana (Entity API `/suggest`) restituisce
+solo `id` e nome — a differenza di MusicBrainz, i cui risultati di ricerca
+includono già i campi estesi (paese, date). Il pannello di dettaglio
+dell'artista mostrerà quindi solo nome e link a Europeana finché non si
+aggiunge (fuori scope qui) una chiamata a `/europeana/artists/{id}/` dopo la
+selezione — limite dei dati disponibili in fase di ricerca, non un bug.
+
+**Bug preesistente corretto nel percorso:** `addEpisodeItem` inviava
+`text: episode.name` senza fallback; TheTVDB restituisce `name: null` per gli
+episodi privi di traduzione nella lingua richiesta (tipico per gli "special"
+di stagione 0), causando un 422 `VALIDATION_ERROR` dal backend
+("This field may not be null") e nessun elemento aggiunto. Ora usa
+`` `${serie} ${stagione}×${episodio}` `` come fallback quando `name` è vuoto.
+
+**Verifica end-to-end (2026-07-03):** testato con Playwright contro il
+backend locale via Docker. Oltre alla nuova funzionalità Europeana (ricerca
+e aggiunta di un'opera d'arte e di un artista, rendering miniatura/dettaglio),
+è stato eseguito un giro end-to-end completo di regressione su tutti i tipi
+di elemento esistenti (testo, libro/OpenLibrary, film e episodio/TheTVDB,
+artista/album/brano MusicBrainz, luogo via ricerca testuale e via pin
+manuale/reverse geocoding, immagine), oltre a modifica, riordino ed
+eliminazione di elementi e apertura del pannello suggerimenti. Nessun errore
+in console riconducibile al codice applicativo (residuano solo un warning
+Nebular preesistente `NG0100` sul menu laterale e un `ERR_ABORTED` di
+navigazione sulla dashboard, entrambi riproducibili anche su `main` prima di
+queste modifiche).

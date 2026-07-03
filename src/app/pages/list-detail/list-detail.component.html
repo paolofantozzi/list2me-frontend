@@ -818,6 +818,75 @@
       </nb-card>
     }
 
+    <!-- ── Europeana search panel ─────────────────────────────────────────── -->
+    @if (showEuropeanaSearch() && isOwner) {
+      <nb-card class="add-item-card europeana-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon [icon]="selectedType()?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline'"></nb-icon>
+          @if (selectedType()?.name === 'art_artist') {
+            Cerca artista su Europeana
+          } @else {
+            Cerca opera d'arte su Europeana
+          }
+        </nb-card-header>
+        <nb-card-body>
+          <div class="book-search-input-wrap">
+            <input nbInput fullWidth #europeanaInput
+                   [value]="europeanaQuery()"
+                   [placeholder]="selectedType()?.name === 'art_artist' ? 'Nome artista...' : 'Titolo, soggetto...'"
+                   (input)="onEuropeanaQueryChange(europeanaInput.value)" />
+            @if (europeanaSearchLoading()) {
+              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+            }
+          </div>
+
+          @if (europeanaResults().length > 0) {
+            <div class="book-results">
+              @for (result of europeanaResults(); track $index) {
+                <div class="book-result" (click)="addEuropeanaItem(result)" role="button" tabindex="0"
+                     (keyup.enter)="addEuropeanaItem(result)">
+                  @if (result.image_url) {
+                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
+                  } @else {
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon [icon]="selectedType()?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline'"></nb-icon>
+                    </div>
+                  }
+                  <div class="book-result-info">
+                    <p class="book-result-title">{{ result.title }}</p>
+                    @if (result.subtitle) {
+                      <p class="book-result-meta">{{ result.subtitle }}</p>
+                    }
+                    @if (result.service_url) {
+                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
+                         class="result-service-link" (click)="$event.stopPropagation()">
+                        <nb-icon icon="external-link-outline"></nb-icon> Europeana
+                      </a>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+            </div>
+          } @else if (europeanaQuery().trim().length >= 2 && !europeanaSearchLoading()) {
+            <p class="book-no-results">Nessun risultato trovato per "{{ europeanaQuery() }}".</p>
+          }
+
+          <div class="panel-attribution">
+            Ricerca fornita da <a href="https://www.europeana.eu" target="_blank" rel="noopener noreferrer">Europeana</a>
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
     <!-- ── Add item form ──────────────────────────────────────────────────── -->
     @if (showAddItem() && isOwner) {
       <nb-card class="add-item-card" accent="primary">
@@ -1055,6 +1124,25 @@
                           </p>
                         </div>
                       </div>
+                    } @else if (isEuropeanaItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        @if (europeanaMeta(item).image_url) {
+                          <img [src]="europeanaMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon [icon]="item.item_type_detail?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline'"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
+                            @if (europeanaMeta(item).creator) { {{ europeanaMeta(item).creator }} }
+                            @if (europeanaMeta(item).year) { · {{ europeanaMeta(item).year }} }
+                          </p>
+                        </div>
+                      </div>
                     } @else {
                       <div class="item-text">
                         <p class="item-title">{{ item.text || '(vuoto)' }}</p>
@@ -1123,7 +1211,7 @@
                   </div>
 
                   <!-- ── Item detail panel ──────────────────────────────── -->
-                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || (isImageItem(item) && item.image))) {
+                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || (isImageItem(item) && item.image))) {
                     <div class="item-detail">
                       @if (isBookItem(item)) {
                         <div class="item-detail-grid">
@@ -1295,6 +1383,85 @@
                             }
                           </div>
                         </div>
+                      } @else if (isEuropeanaItem(item)) {
+                        <div class="item-detail-grid">
+                          @if (europeanaMeta(item).image_url) {
+                            <img [src]="europeanaMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
+                          }
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (item.item_type_detail) {
+                              <p class="item-detail-row">
+                                <nb-icon [icon]="item.item_type_detail.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline'"></nb-icon>
+                                {{ typeLabel(item.item_type_detail) }}
+                              </p>
+                            }
+                            @if (item.item_type_detail?.name === 'art_artist') {
+                              @if (europeanaMeta(item).biography) {
+                                <p class="item-detail-row">
+                                  <nb-icon icon="file-text-outline"></nb-icon>
+                                  {{ europeanaMeta(item).biography }}
+                                </p>
+                              }
+                              @if (europeanaMeta(item).date_of_birth || europeanaMeta(item).date_of_death) {
+                                <p class="item-detail-row">
+                                  <nb-icon icon="calendar-outline"></nb-icon>
+                                  {{ europeanaMeta(item).date_of_birth }}@if (europeanaMeta(item).date_of_death) { – {{ europeanaMeta(item).date_of_death }} }
+                                </p>
+                              }
+                              @if (europeanaMeta(item).place_of_birth) {
+                                <p class="item-detail-row">
+                                  <nb-icon icon="pin-outline"></nb-icon>
+                                  {{ europeanaMeta(item).place_of_birth }}
+                                </p>
+                              }
+                              @if (europeanaMeta(item).professions?.length) {
+                                <p class="item-detail-row">
+                                  <nb-icon icon="briefcase-outline"></nb-icon>
+                                  {{ europeanaMeta(item).professions!.join(', ') }}
+                                </p>
+                              }
+                            } @else {
+                              @if (europeanaMeta(item).creator) {
+                                <p class="item-detail-row">
+                                  <nb-icon icon="person-outline"></nb-icon>
+                                  {{ europeanaMeta(item).creator }}
+                                </p>
+                              }
+                              @if (europeanaMeta(item).year) {
+                                <p class="item-detail-row">
+                                  <nb-icon icon="calendar-outline"></nb-icon>
+                                  {{ europeanaMeta(item).year }}
+                                </p>
+                              }
+                              @if (europeanaMeta(item).medium) {
+                                <p class="item-detail-row">
+                                  <nb-icon icon="brush-outline"></nb-icon>
+                                  {{ europeanaMeta(item).medium }}
+                                </p>
+                              }
+                              @if (europeanaMeta(item).description) {
+                                <p class="item-detail-row">
+                                  <nb-icon icon="file-text-outline"></nb-icon>
+                                  {{ europeanaMeta(item).description }}
+                                </p>
+                              }
+                              @if (europeanaMeta(item).provider) {
+                                <p class="item-detail-row">
+                                  <nb-icon icon="briefcase-outline"></nb-icon>
+                                  {{ europeanaMeta(item).provider }}
+                                </p>
+                              }
+                            }
+                            @if (europeanaMeta(item).service_url) {
+                              <a [href]="europeanaMeta(item).service_url" target="_blank" rel="noopener noreferrer"
+                                 class="item-detail-link">
+                                <nb-icon icon="external-link-outline"></nb-icon>
+                                Apri su Europeana
+                              </a>
+                            }
+                          </div>
+                        </div>
                       }
                     </div>
                   }
@@ -1321,6 +1488,10 @@
           @if (hasMusicItems && hasPlaceItems) { · }
           @if (hasPlaceItems) {
             <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>
+          }
+          @if (hasPlaceItems && hasEuropeanaItems) { · }
+          @if (hasEuropeanaItems) {
+            <a href="https://www.europeana.eu" target="_blank" rel="noopener noreferrer">Europeana</a>
           }
         </nb-card-footer>
       }

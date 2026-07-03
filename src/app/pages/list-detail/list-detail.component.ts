@@ -17,12 +17,14 @@ import { BookService } from '../../services/book.service';
 import { TvdbService } from '../../services/tvdb.service';
 import { MusicBrainzService } from '../../services/musicbrainz.service';
 import { PlaceService } from '../../services/place.service';
+import { EuropeanaService } from '../../services/europeana.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
 import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
 import { TvdbSearchResult, TvdbEpisode, TvdbEpisodesPage } from '../../models/tvdb.model';
 import { MusicBrainzEntityType, MusicBrainzSearchResult } from '../../models/musicbrainz.model';
 import { PlaceSearchResult } from '../../models/place.model';
+import { EuropeanaEntityType, EuropeanaSearchResult } from '../../models/europeana.model';
 import { AuthService } from '../../services/auth.service';
 import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
 
@@ -108,6 +110,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   placeReverseLoading = signal(false);
   placeAddLoading = signal(false);
 
+  // Europeana search
+  showEuropeanaSearch = signal(false);
+  europeanaQuery = signal('');
+  europeanaResults = signal<EuropeanaSearchResult[]>([]);
+  europeanaSearchLoading = signal(false);
+
   // Image item creation panel
   showImagePanel = signal(false);
   pendingImageCaption = signal('');
@@ -158,6 +166,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   private musicSearch$ = new Subject<string>();
   private placeSearch$ = new Subject<string>();
   private placeCoords$ = new Subject<{ lat: number; lon: number }>();
+  private europeanaSearch$ = new Subject<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -169,6 +178,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private tvdbService: TvdbService,
     private musicBrainzService: MusicBrainzService,
     private placeService: PlaceService,
+    private europeanaService: EuropeanaService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private auth: AuthService
@@ -291,6 +301,25 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.placeReverseResult.set(result);
       this.placeReverseLoading.set(false);
     });
+
+    this.europeanaSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.europeanaSearchLoading.set(true);
+        const type: EuropeanaEntityType = this.selectedType()?.name === 'art_artist' ? 'artist' : 'artwork';
+        return this.europeanaService.search(q, type).pipe(
+          catchError(() => {
+            this.europeanaSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.europeanaResults.set(results);
+      this.europeanaSearchLoading.set(false);
+    });
   }
 
   ngOnDestroy(): void {
@@ -299,6 +328,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.musicSearch$.complete();
     this.placeSearch$.complete();
     this.placeCoords$.complete();
+    this.europeanaSearch$.complete();
   }
 
   loadList(id: string): void {
@@ -591,6 +621,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showTvdbSearch.set(false);
     this.showMusicSearch.set(false);
     this.showPlaceSearch.set(false);
+    this.showEuropeanaSearch.set(false);
     this.showImagePanel.set(false);
     this.showEditions.set(false);
     this.showNewChildList.set(false);
@@ -617,6 +648,10 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.placeResults.set([]);
       this.placeQuery.set('');
       this.resetPlaceManualState();
+    } else if (['artwork', 'art_artist'].includes(type.name)) {
+      this.showEuropeanaSearch.set(true);
+      this.europeanaResults.set([]);
+      this.europeanaQuery.set('');
     } else if (type.name === 'image') {
       this.showImagePanel.set(true);
       this.pendingImageCaption.set('');
@@ -637,6 +672,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       album: 'recording-outline',
       track: 'music-outline',
       place: 'pin-outline',
+      artwork: 'color-palette-outline',
+      art_artist: 'brush-outline',
     };
     return icons[name] ?? 'list-outline';
   }
@@ -648,6 +685,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     disc: 'recording-outline',
     music: 'music-outline',
     'map-pin': 'pin-outline',
+    palette: 'color-palette-outline',
+    brush: 'brush-outline',
   };
 
   pickIcon(type: ItemType): string {
@@ -670,7 +709,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     album: 'Album',
     track: 'Brano',
     artwork: "Opera d'arte",
-    art_artist: 'Artista',
+    art_artist: "Artista (arte)",
     place: 'Luogo',
   };
 
@@ -686,6 +725,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showTvdbSearch.set(false);
     this.showMusicSearch.set(false);
     this.showPlaceSearch.set(false);
+    this.showEuropeanaSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -698,6 +738,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.placeResults.set([]);
     this.placeQuery.set('');
     this.resetPlaceManualState();
+    this.europeanaResults.set([]);
+    this.europeanaQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
@@ -718,6 +760,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showTvdbSearch.set(false);
     this.showMusicSearch.set(false);
     this.showPlaceSearch.set(false);
+    this.showEuropeanaSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -730,6 +773,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.placeResults.set([]);
     this.placeQuery.set('');
     this.resetPlaceManualState();
+    this.europeanaResults.set([]);
+    this.europeanaQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.pendingImageCaption.set('');
@@ -935,8 +980,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const listId = this.list()!.id;
     const position = String(this.items().length + 1);
     const typeId = this.itemTypes().find(t => t.name === 'episode')?.id ?? null;
+    // TheTVDB restituisce `name: null` per gli episodi privi di traduzione nella lingua richiesta
+    // (tipico per gli "special"/season 0): senza fallback il backend rifiuta `text: null`.
+    const text = episode.name || `${this.episodeSeriesName()} ${episode.season_number}×${episode.episode_number}`;
     this.itemService.addItem(listId, {
-      text: episode.name,
+      text,
       ...(typeId ? { item_type: typeId } : {}),
       metadata: {
         thetvdb_id: String(episode.tvdb_id),
@@ -956,7 +1004,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
         this.items.update(items => [...items, item]);
         this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
         this.closeAddPanel();
-        this.toastr.success(`"${episode.name}" aggiunto!`, 'Aggiunto');
+        this.toastr.success(`"${text}" aggiunto!`, 'Aggiunto');
       },
       error: () => this.toastr.danger('Impossibile aggiungere l\'episodio.', 'Errore')
     });
@@ -1154,6 +1202,80 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.placeReverseLoading.set(false);
   }
 
+  // ── Europeana search ─────────────────────────────────────────────────────────
+
+  onEuropeanaQueryChange(q: string): void {
+    this.europeanaQuery.set(q);
+    if (q.trim().length < 2) {
+      this.europeanaResults.set([]);
+      this.europeanaSearchLoading.set(false);
+      return;
+    }
+    this.europeanaSearch$.next(q.trim());
+  }
+
+  addEuropeanaItem(result: EuropeanaSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? null;
+
+    this.itemService.addItem(listId, {
+      text: result.title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        ...result.metadata,
+        image_url: (result.metadata['image_url'] as string | undefined) ?? result.image_url ?? undefined,
+        service_url: (result.metadata['service_url'] as string | undefined) ?? result.service_url ?? undefined,
+      },
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${result.title}" aggiunto!`, 'Aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore')
+    });
+  }
+
+  isEuropeanaItem(item: Item): boolean {
+    const name = item.item_type_detail?.name;
+    return name === 'artwork' || name === 'art_artist';
+  }
+
+  europeanaMeta(item: Item): {
+    image_url?: string;
+    creator?: string;
+    description?: string;
+    year?: string;
+    medium?: string;
+    provider?: string;
+    biography?: string;
+    date_of_birth?: string;
+    date_of_death?: string;
+    place_of_birth?: string;
+    place_of_death?: string;
+    professions?: string[];
+    service_url?: string;
+  } {
+    return (item.metadata ?? {}) as {
+      image_url?: string;
+      creator?: string;
+      description?: string;
+      year?: string;
+      medium?: string;
+      provider?: string;
+      biography?: string;
+      date_of_birth?: string;
+      date_of_death?: string;
+      place_of_birth?: string;
+      place_of_death?: string;
+      professions?: string[];
+      service_url?: string;
+    };
+  }
+
   onImageFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     const prev = this.pendingImagePreviewUrl();
@@ -1328,8 +1450,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return this.items().some(item => this.isPlaceItem(item));
   }
 
+  get hasEuropeanaItems(): boolean {
+    return this.items().some(item => this.isEuropeanaItem(item));
+  }
+
   get hasExternalItems(): boolean {
-    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems;
+    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems;
   }
 
   get isOwner(): boolean {
