@@ -75,6 +75,22 @@ $warning-100: #fff8e6;
   font-weight: 500;
 }
 
+.edit-tags-btn {
+  color: $text-hint;
+}
+
+.tags-edit {
+  margin-top: 0.75rem;
+  max-width: 420px;
+}
+
+.tags-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
 .list-actions {
   display: flex;
   align-items: center;

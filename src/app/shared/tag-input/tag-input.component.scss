@@ -1,0 +1,29 @@
+$primary: #3366ff;
+$primary-100: #ebf2ff;
+$border: #edf0f7;
+
+nb-tag-list {
+  width: 100%;
+}
+
+.tag-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.tag-suggestion {
+  background: $primary-100;
+  color: $primary;
+  border: 1px solid $border;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  cursor: pointer;
+
+  &:hover {
+    background: $primary;
+    color: white;
+  }
+}

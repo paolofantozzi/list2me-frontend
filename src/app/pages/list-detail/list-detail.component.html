@@ -36,10 +36,30 @@
           </div>
         }
 
-        @if (list()!.tags.length) {
+        @if (editingTags()) {
+          <div class="tags-edit">
+            <app-tag-input [tags]="pendingTags()" (tagsChange)="pendingTags.set($event)"></app-tag-input>
+            <div class="tags-edit-actions">
+              <button nbButton ghost size="tiny" type="button" [disabled]="savingTags()" (click)="cancelEditTags()">Annulla</button>
+              <button nbButton status="primary" size="tiny" type="button" [disabled]="savingTags()" (click)="saveTags()">
+                @if (savingTags()) {
+                  <nb-spinner size="tiny" status="basic"></nb-spinner>
+                } @else {
+                  Salva
+                }
+              </button>
+            </div>
+          </div>
+        } @else {
           <div class="list-tags">
             @for (tag of list()!.tags; track tag.id) {
               <span class="tag">{{ tag.name }}</span>
+            }
+            @if (isOwner) {
+              <button nbButton ghost size="tiny" type="button" class="edit-tags-btn" (click)="startEditTags()" title="Modifica tag">
+                <nb-icon icon="edit-2-outline"></nb-icon>
+                @if (!list()!.tags.length) { Aggiungi tag }
+              </button>
             }
           </div>
         }

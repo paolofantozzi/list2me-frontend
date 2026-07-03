@@ -1,0 +1,21 @@
+<nb-tag-list (tagRemove)="removeTag($event.text)">
+  @for (tag of tags; track tag) {
+    <nb-tag [text]="tag" removable status="primary"></nb-tag>
+  }
+  <input
+    type="text"
+    nbTagInput
+    fullWidth
+    placeholder="Aggiungi tag e premi invio..."
+    (tagAdd)="onTagAdd($event)"
+    (input)="onQueryChange($any($event.target).value)"
+    (keydown.enter)="$event.preventDefault()"
+  />
+</nb-tag-list>
+@if (suggestions().length) {
+  <div class="tag-suggestions">
+    @for (s of suggestions(); track s.id) {
+      <button type="button" class="tag-suggestion" (click)="addTag(s.name)">{{ s.name }}</button>
+    }
+  </div>
+}

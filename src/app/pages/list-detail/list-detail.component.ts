@@ -29,6 +29,7 @@ import { EuropeanaEntityType, EuropeanaSearchResult } from '../../models/europea
 import { OpenFoodFactsDomain, OpenFoodFactsSearchResult } from '../../models/openfoodfacts.model';
 import { AuthService } from '../../services/auth.service';
 import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
+import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
 
 // Tipi di item nascosti dal picker (funzionalità dismesse ma ancora supportate dal backend).
 const HIDDEN_ITEM_TYPES = new Set(['board_game', 'rpg']);
@@ -52,6 +53,7 @@ const HIDDEN_ITEM_TYPES = new Set(['board_game', 'rpg']);
     NbTagModule,
     NbSelectModule,
     PlaceMapComponent,
+    TagInputComponent,
   ],
   templateUrl: './list-detail.component.html',
   styleUrl: './list-detail.component.scss'
@@ -157,6 +159,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   // Item detail
   detailItem = signal<Item | null>(null);
+
+  // Tag editing
+  editingTags = signal(false);
+  pendingTags = signal<string[]>([]);
+  savingTags = signal(false);
 
   // Diff / merge
   showDiff = signal(false);
@@ -1659,5 +1666,32 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/pages/lists']);
+  }
+
+  startEditTags(): void {
+    this.pendingTags.set(this.list()!.tags.map(t => t.name));
+    this.editingTags.set(true);
+  }
+
+  cancelEditTags(): void {
+    this.editingTags.set(false);
+  }
+
+  saveTags(): void {
+    const list = this.list();
+    if (!list) return;
+    this.savingTags.set(true);
+    this.listService.updateList(list.id, { tags: this.pendingTags() }).subscribe({
+      next: updated => {
+        this.list.set(updated);
+        this.editingTags.set(false);
+        this.savingTags.set(false);
+        this.toastr.success('Tag aggiornati.', 'Successo');
+      },
+      error: () => {
+        this.toastr.danger('Impossibile aggiornare i tag.', 'Errore');
+        this.savingTags.set(false);
+      }
+    });
   }
 }

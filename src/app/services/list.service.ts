@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE } from './auth.service';
-import { List, Item, ListShare, GroupVisibility, Suggestion, ListDiff } from '../models/list.model';
+import { List, Item, ListShare, GroupVisibility, Suggestion, ListDiff, ListWriteData } from '../models/list.model';
 import { PaginatedResponse } from '../models/common.model';
 
 @Injectable({ providedIn: 'root' })
@@ -15,7 +15,7 @@ export class ListService {
     return this.http.get<PaginatedResponse<List>>(`${API_BASE}/lists/`, { params });
   }
 
-  createList(data: Partial<List>): Observable<List> {
+  createList(data: ListWriteData): Observable<List> {
     return this.http.post<List>(`${API_BASE}/lists/`, data);
   }
 
@@ -23,7 +23,7 @@ export class ListService {
     return this.http.get<List>(`${API_BASE}/lists/${id}/`);
   }
 
-  updateList(id: string, data: Partial<List>): Observable<List> {
+  updateList(id: string, data: ListWriteData): Observable<List> {
     return this.http.patch<List>(`${API_BASE}/lists/${id}/`, data);
   }
 

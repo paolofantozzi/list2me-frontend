@@ -9,6 +9,7 @@ import {
 import { ListService } from '../../services/list.service';
 import { AuthService } from '../../services/auth.service';
 import { List } from '../../models/list.model';
+import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
 
 @Component({
   selector: 'app-lists',
@@ -27,6 +28,7 @@ import { List } from '../../models/list.model';
     NbAlertModule,
     NbTagModule,
     NbCheckboxModule,
+    TagInputComponent,
   ],
   templateUrl: './lists.component.html',
   styleUrl: './lists.component.scss'
@@ -37,6 +39,7 @@ export class ListsComponent implements OnInit {
   error = signal('');
   showCreateForm = signal(false);
   createLoading = signal(false);
+  createTags = signal<string[]>([]);
 
   myLists = computed(() => {
     const uid = this.auth.currentUser()?.id;
@@ -85,10 +88,11 @@ export class ListsComponent implements OnInit {
     if (this.createForm.invalid) return;
     this.createLoading.set(true);
 
-    this.listService.createList(this.createForm.value).subscribe({
+    this.listService.createList({ ...this.createForm.value, tags: this.createTags() }).subscribe({
       next: list => {
         this.lists.update(ls => [list, ...ls]);
         this.createForm.reset({ visibility: 'private' });
+        this.createTags.set([]);
         this.showCreateForm.set(false);
         this.createLoading.set(false);
         this.toastr.success('Lista creata!', 'Successo');

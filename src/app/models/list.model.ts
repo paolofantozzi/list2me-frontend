@@ -5,6 +5,14 @@ import { Group } from './group.model';
 
 export type ListVisibility = 'public' | 'private' | 'group';
 
+/** Payload per creare/aggiornare una lista: i tag sono stringhe, non oggetti Tag. */
+export interface ListWriteData {
+  title?: string;
+  description?: string;
+  visibility?: ListVisibility;
+  tags?: string[];
+}
+
 export interface List {
   id: string;
   title: string;
