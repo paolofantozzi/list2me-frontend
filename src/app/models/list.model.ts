@@ -39,6 +39,9 @@ export interface ChildListDetail {
   items_count: number;
 }
 
+/** Stessa forma di `ChildListDetail` (backend: `ListSummarySerializer`), riusata per `copied_from_list_detail`. */
+export type ListSummary = ChildListDetail;
+
 export interface Item {
   id: string;
   list: string;
@@ -50,6 +53,9 @@ export interface Item {
   image?: string | null;
   child_list?: string | null;
   child_list_detail?: ChildListDetail | null;
+  copied_from_item?: string | null;
+  copied_from_list?: string | null;
+  copied_from_list_detail?: ListSummary | null;
   created_at: string;
   updated_at: string;
 }
@@ -65,6 +71,7 @@ export interface ListShare {
 export interface GroupVisibility {
   id: string;
   group: Group;
+  permission: 'view' | 'edit';
   created_at: string;
 }
 

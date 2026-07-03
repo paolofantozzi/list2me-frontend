@@ -1,0 +1,139 @@
+<div class="share-section">
+  <h3 class="share-section-title">
+    <nb-icon icon="person-outline"></nb-icon>
+    Condividi con utenti
+  </h3>
+
+  @if (sharesLoading()) {
+    <div class="share-loading"><nb-spinner size="small" status="primary"></nb-spinner></div>
+  } @else if (shares().length > 0) {
+    <ul class="share-list">
+      @for (share of shares(); track share.id) {
+        <li class="share-item">
+          <nb-user [name]="share.shared_with.username" [picture]="share.shared_with.avatar_url" size="small"></nb-user>
+          <select class="permission-select" [value]="share.permission"
+                  [disabled]="revokingShareId() === share.id"
+                  (change)="onShareRowPermissionChange(share, $event)">
+            <option value="view">Sola lettura</option>
+            <option value="edit">Modifica</option>
+          </select>
+          <button nbButton ghost size="tiny" status="danger"
+                  [disabled]="revokingShareId() === share.id"
+                  (click)="revokeShare(share)" title="Revoca accesso">
+            @if (revokingShareId() === share.id) {
+              <nb-spinner size="tiny" status="danger"></nb-spinner>
+            } @else {
+              <nb-icon icon="close-outline"></nb-icon>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="share-empty">Nessuna condivisione diretta.</p>
+  }
+
+  <div class="share-add-row">
+    <div class="user-search-wrap">
+      <input nbInput fullWidth #userSearchInput
+             [value]="userSearchQuery()"
+             placeholder="Cerca un utente per username..."
+             (input)="onUserSearchChange(userSearchInput.value)" />
+      @if (userSearchLoading()) {
+        <nb-spinner size="small" status="primary" class="search-spinner"></nb-spinner>
+      }
+    </div>
+    <select class="permission-select" [value]="newSharePermission()" (change)="onSharePermissionSelectChange($event)">
+      <option value="view">Sola lettura</option>
+      <option value="edit">Modifica</option>
+    </select>
+  </div>
+
+  @if (userSearchResults().length > 0) {
+    <ul class="share-list share-list--results">
+      @for (user of userSearchResults(); track user.id) {
+        @if (!isAlreadyShared(user) && user.id !== currentUserId) {
+          <li class="share-item">
+            <nb-user [name]="user.username" [picture]="user.avatar_url" size="small"></nb-user>
+            <button nbButton ghost size="tiny" status="primary"
+                    [disabled]="addingUserId() === user.id"
+                    (click)="shareWithUser(user)" title="Condividi">
+              @if (addingUserId() === user.id) {
+                <nb-spinner size="tiny" status="primary"></nb-spinner>
+              } @else {
+                <nb-icon icon="share-outline"></nb-icon>
+              }
+            </button>
+          </li>
+        }
+      }
+    </ul>
+  } @else if (userSearchQuery().trim().length >= 2 && !userSearchLoading()) {
+    <p class="share-empty">Nessun utente trovato.</p>
+  }
+</div>
+
+<div class="share-section">
+  <h3 class="share-section-title">
+    <nb-icon icon="people-outline"></nb-icon>
+    Condividi con gruppi
+  </h3>
+
+  @if (groupVisibilityLoading()) {
+    <div class="share-loading"><nb-spinner size="small" status="primary"></nb-spinner></div>
+  } @else if (groupVisibilities().length > 0) {
+    <ul class="share-list">
+      @for (gv of groupVisibilities(); track gv.id) {
+        <li class="share-item">
+          <span class="group-name">
+            <nb-icon icon="people-outline"></nb-icon>
+            {{ gv.group.name }}
+          </span>
+          <select class="permission-select" [value]="gv.permission"
+                  [disabled]="revokingGroupVisibilityId() === gv.id"
+                  (change)="onGroupRowPermissionChange(gv, $event)">
+            <option value="view">Sola lettura</option>
+            <option value="edit">Modifica</option>
+          </select>
+          <button nbButton ghost size="tiny" status="danger"
+                  [disabled]="revokingGroupVisibilityId() === gv.id"
+                  (click)="revokeGroupVisibility(gv)" title="Rimuovi visibilità">
+            @if (revokingGroupVisibilityId() === gv.id) {
+              <nb-spinner size="tiny" status="danger"></nb-spinner>
+            } @else {
+              <nb-icon icon="close-outline"></nb-icon>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="share-empty">Nessuna condivisione con gruppi.</p>
+  }
+
+  @if (availableGroups.length > 0) {
+    <div class="share-add-row">
+      <select class="permission-select group-select" [value]="selectedGroupId()" (change)="onSelectedGroupChange($event)">
+        <option value="">Scegli un gruppo...</option>
+        @for (group of availableGroups; track group.id) {
+          <option [value]="group.id">{{ group.name }}</option>
+        }
+      </select>
+      <select class="permission-select" [value]="newGroupPermission()" (change)="onGroupPermissionSelectChange($event)">
+        <option value="view">Sola lettura</option>
+        <option value="edit">Modifica</option>
+      </select>
+      <button nbButton size="tiny" status="primary"
+              [disabled]="!selectedGroupId() || addingGroup()"
+              (click)="addGroupVisibility()">
+        @if (addingGroup()) {
+          <nb-spinner size="tiny" status="basic"></nb-spinner>
+        } @else {
+          <nb-icon icon="plus-outline"></nb-icon> Condividi
+        }
+      </button>
+    </div>
+  } @else if (myGroups().length === 0) {
+    <p class="share-empty">Non fai parte di nessun gruppo.</p>
+  }
+</div>

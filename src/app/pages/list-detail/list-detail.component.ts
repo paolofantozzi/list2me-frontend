@@ -30,6 +30,7 @@ import { OpenFoodFactsDomain, OpenFoodFactsSearchResult } from '../../models/ope
 import { AuthService } from '../../services/auth.service';
 import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
 import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
+import { ListShareComponent } from '../../shared/list-share/list-share.component';
 
 // Tipi di item nascosti dal picker (funzionalità dismesse ma ancora supportate dal backend).
 const HIDDEN_ITEM_TYPES = new Set(['board_game', 'rpg']);
@@ -54,6 +55,7 @@ const HIDDEN_ITEM_TYPES = new Set(['board_game', 'rpg']);
     NbSelectModule,
     PlaceMapComponent,
     TagInputComponent,
+    ListShareComponent,
   ],
   templateUrl: './list-detail.component.html',
   styleUrl: './list-detail.component.scss'
@@ -159,6 +161,16 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   // Item detail
   detailItem = signal<Item | null>(null);
+
+  // Condivisione lista (utenti + gruppi)
+  showSharePanel = signal(false);
+
+  // Copia elemento in un'altra lista
+  copySourceItem = signal<Item | null>(null);
+  copyDestinations = signal<List[]>([]);
+  copyDestinationsLoading = signal(false);
+  copySelectedListId = signal('');
+  copyLoading = signal(false);
 
   // Tag editing
   editingTags = signal(false);
@@ -475,6 +487,54 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Copia elemento in un'altra lista ────────────────────────────────────────────
+
+  openCopyPanel(item: Item): void {
+    this.copySourceItem.set(item);
+    this.copySelectedListId.set('');
+    this.copyDestinations.set([]);
+    this.copyDestinationsLoading.set(true);
+    const currentListId = this.list()!.id;
+    const userId = this.auth.currentUser()?.id;
+    this.listService.getLists().subscribe({
+      next: resp => {
+        const mine = resp.results.filter(l => l.owner.id === userId && l.id !== currentListId);
+        this.copyDestinations.set(mine);
+        this.copyDestinationsLoading.set(false);
+      },
+      error: () => this.copyDestinationsLoading.set(false)
+    });
+  }
+
+  closeCopyPanel(): void {
+    this.copySourceItem.set(null);
+    this.copyDestinations.set([]);
+    this.copySelectedListId.set('');
+  }
+
+  onCopyDestinationChange(event: Event): void {
+    this.copySelectedListId.set((event.target as HTMLSelectElement).value);
+  }
+
+  confirmCopy(): void {
+    const item = this.copySourceItem();
+    const targetListId = this.copySelectedListId();
+    if (!item || !targetListId) return;
+    const sourceListId = this.list()!.id;
+    this.copyLoading.set(true);
+    this.itemService.copyItem(sourceListId, item.id, targetListId).subscribe({
+      next: () => {
+        this.copyLoading.set(false);
+        this.toastr.success(`"${item.text}" copiato nella lista scelta.`, 'Copiato');
+        this.closeCopyPanel();
+      },
+      error: () => {
+        this.copyLoading.set(false);
+        this.toastr.danger('Impossibile copiare l\'elemento: verifica di avere accesso in modifica alla lista di destinazione.', 'Errore');
+      }
+    });
+  }
+
   // ── Reorder ───────────────────────────────────────────────────────────────────
 
   moveItemUp(index: number): void {
@@ -651,6 +711,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       next: () => this.list.update(l => l ? { ...l, is_following: !l.is_following } : l),
       error: () => this.toastr.danger('Operazione fallita.', 'Errore')
     });
+  }
+
+  // ── Condivisione ──────────────────────────────────────────────────────────────
+
+  toggleSharePanel(): void {
+    this.showSharePanel.update(v => !v);
   }
 
   // ── Add item panel flow ────────────────────────────────────────────────────────

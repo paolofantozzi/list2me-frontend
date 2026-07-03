@@ -733,6 +733,27 @@ $warning-100: #fff8e6;
   font-size: 0.75rem;
 }
 
+.copied-from-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.375rem;
+  padding: 0.15rem 0.5rem;
+  background: $border;
+  color: $text-hint;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  width: fit-content;
+
+  nb-icon { font-size: 0.85rem; }
+}
+
+// ── Condivisione / copia elemento ───────────────────────────────────────────────
+
+.share-card, .copy-card {
+  margin-bottom: 1.5rem;
+}
+
 // ── Diff / merge ──────────────────────────────────────────────────────────────
 
 .diff-card {

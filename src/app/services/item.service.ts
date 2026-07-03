@@ -41,4 +41,8 @@ export class ItemService {
   removeItemImage(listId: string, itemId: string): Observable<Item> {
     return this.http.delete<Item>(`${API_BASE}/lists/${listId}/items/${itemId}/image/`);
   }
+
+  copyItem(sourceListId: string, itemId: string, targetListId: string): Observable<Item> {
+    return this.http.post<Item>(`${API_BASE}/lists/${sourceListId}/items/${itemId}/copy/`, { target_list: targetListId });
+  }
 }

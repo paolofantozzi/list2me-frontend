@@ -108,6 +108,10 @@
                 <span class="badge-count">{{ suggestions().length }}</span>
               }
             </button>
+            <button nbButton ghost status="info" (click)="toggleSharePanel()">
+              <nb-icon icon="share-outline"></nb-icon>
+              Condividi
+            </button>
             <button nbButton status="primary" (click)="openAddPanel()">
               <nb-icon icon="plus-outline"></nb-icon>
               Aggiungi elemento
@@ -269,6 +273,65 @@
             }
           }
         </nb-card-body>
+      </nb-card>
+    }
+
+    <!-- ── Share panel ───────────────────────────────────────────────────── -->
+    @if (showSharePanel() && isOwner) {
+      <nb-card class="share-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="share-outline"></nb-icon>
+          Condividi lista
+        </nb-card-header>
+        <nb-card-body>
+          <app-list-share [listId]="list()!.id"></app-list-share>
+        </nb-card-body>
+        <nb-card-footer>
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="showSharePanel.set(false)">Chiudi</button>
+          </div>
+        </nb-card-footer>
+      </nb-card>
+    }
+
+    <!-- ── Copy item panel ───────────────────────────────────────────────── -->
+    @if (copySourceItem()) {
+      <nb-card class="copy-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="copy-outline"></nb-icon>
+          Copia "{{ copySourceItem()!.text || '(senza titolo)' }}" in un'altra lista
+        </nb-card-header>
+        <nb-card-body>
+          @if (copyDestinationsLoading()) {
+            <div class="loading-center"><nb-spinner status="info" size="medium"></nb-spinner></div>
+          } @else if (copyDestinations().length === 0) {
+            <p class="diff-empty">Non hai altre liste tue in cui copiare questo elemento.</p>
+          } @else {
+            <div class="form-group">
+              <label class="label">Lista di destinazione *</label>
+              <select class="tvdb-select" [value]="copySelectedListId()" (change)="onCopyDestinationChange($event)">
+                <option value="">Scegli una lista...</option>
+                @for (l of copyDestinations(); track l.id) {
+                  <option [value]="l.id">{{ l.title }}</option>
+                }
+              </select>
+            </div>
+          }
+        </nb-card-body>
+        <nb-card-footer>
+          <div class="form-actions">
+            <button nbButton type="button" ghost [disabled]="copyLoading()" (click)="closeCopyPanel()">Annulla</button>
+            @if (copyDestinations().length > 0) {
+              <button nbButton status="info" [disabled]="!copySelectedListId() || copyLoading()" (click)="confirmCopy()">
+                @if (copyLoading()) {
+                  <nb-spinner size="tiny" status="basic"></nb-spinner>
+                } @else {
+                  <nb-icon icon="copy-outline"></nb-icon> Copia
+                }
+              </button>
+            }
+          </div>
+        </nb-card-footer>
       </nb-card>
     }
 
@@ -1348,8 +1411,18 @@
                       </div>
                     }
 
-                    @if (isOwner) {
-                      <div class="item-actions">
+                    @if (item.copied_from_list_detail) {
+                      <span class="copied-from-badge" [title]="'Copiato da: ' + item.copied_from_list_detail.title">
+                        <nb-icon icon="copy-outline"></nb-icon>
+                        Copiato da «{{ item.copied_from_list_detail.title }}»
+                      </span>
+                    }
+
+                    <div class="item-actions">
+                      <button nbButton ghost size="tiny" (click)="openCopyPanel(item)" title="Copia in un'altra lista">
+                        <nb-icon icon="copy-outline"></nb-icon>
+                      </button>
+                      @if (isOwner) {
                         @if (isBookItem(item)) {
                           <button nbButton ghost size="tiny"
                                   [disabled]="syncingItemId() === item.id"
@@ -1389,8 +1462,8 @@
                         <button nbButton ghost size="tiny" status="danger" (click)="deleteItem(item)" title="Elimina">
                           <nb-icon icon="trash-2-outline"></nb-icon>
                         </button>
-                      </div>
-                    }
+                      }
+                    </div>
                   </div>
 
                   <!-- ── Item detail panel ──────────────────────────────── -->

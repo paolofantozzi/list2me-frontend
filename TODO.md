@@ -4,6 +4,74 @@
 
 ---
 
+## Condivisione lista (utenti + gruppi, con permesso view/edit) e copia elemento tra liste
+
+Il backend ha aggiunto nel tempo `permission` (`view`/`edit`) su `ListGroupVisibility`
+(v0.19.0, mirror di `ListShare.permission` già esistente) e l'endpoint
+`POST /api/v1/lists/{id}/items/{item_id}/copy/` per copiare un elemento in un'altra
+lista modificabile (v0.18.0). Nessuna delle due funzionalità aveva UI lato frontend:
+gli endpoint di condivisione (`shares/`, `group-visibility/`) esistevano solo come
+metodi di servizio mai richiamati da nessun componente. **Stato: ✅ Implementato e
+verificato end-to-end (2026-07-04).**
+
+**File nuovi:**
+- `src/app/shared/list-share/list-share.component.ts` (+ `.html`, `.scss`) — pannello
+  standalone (`@Input({ required: true }) listId`) con due sezioni: condivisione con
+  utenti (ricerca username, stesso pattern debounced di `groups.component.ts`) e
+  condivisione con gruppi (`nb-select`-like nativo sui gruppi di cui si è membri,
+  via `GroupService.getGroups()`). Entrambe le sezioni mostrano un `<select>` di
+  permesso (`view`/`edit`) per riga; poiché il backend non espone un PATCH su
+  `shares/{id}/` né su `group-visibility/{id}/` (solo GET/POST/DELETE), il cambio di
+  permesso è implementato come revoca + ricreazione (`changeSharePermission`/
+  `changeGroupPermission`).
+
+**File modificati:**
+- `src/app/models/list.model.ts` — `GroupVisibility.permission: 'view' | 'edit'`;
+  `Item.copied_from_item`/`copied_from_list`/`copied_from_list_detail` (nuovo tipo
+  `ListSummary`, alias di `ChildListDetail` — stessa forma restituita dal backend
+  per entrambi i campi `*_detail`).
+- `src/app/services/list.service.ts` — `shareList`/`addGroupVisibility` accettano
+  ora un parametro `permission` (default `'view'`).
+- `src/app/services/item.service.ts` — `copyItem(sourceListId, itemId, targetListId)`
+  → `POST /lists/{sourceListId}/items/{itemId}/copy/` con `{ target_list }`.
+- `src/app/pages/list-detail/list-detail.component.ts`/`.html`/`.scss` — pulsante
+  "Condividi" in header (solo owner) che apre `<app-list-share>`; pulsante "Copia in
+  un'altra lista" su ogni elemento (visibile a chiunque veda la lista, non solo
+  owner, dato che il backend richiede solo accesso in lettura sulla lista sorgente),
+  con pannello di scelta della lista di destinazione limitato alle **liste proprie
+  dell'utente** (`GET /lists/` filtrato client-side su `owner.id === currentUser.id`,
+  escludendo la lista corrente); badge "Copiato da «Titolo»" sulla riga elemento
+  quando `item.copied_from_list_detail` è presente.
+
+**Nota architetturale — scope del picker "copia in":** il backend non espone un
+filtro per "liste in cui ho accesso in modifica" (né dirette via `ListShare` né via
+gruppo), e l'endpoint `shares/`/`group-visibility/` di una lista è leggibile solo dal
+proprietario di quella lista — quindi un utente non-owner non ha modo di scoprire
+lato client se una lista di terzi gli è stata condivisa in modifica, se non
+provandoci e gestendo l'eventuale 403 `LIST_NO_EDIT_ACCESS`. Per questo il picker
+mostra solo le liste proprie dell'utente (sempre garantite modificabili): copre il
+caso d'uso principale ("copio un elemento da una lista pubblica altrui in una mia
+lista"), ma non permette di scegliere come destinazione una lista di terzi condivisa
+in modifica. Un'estensione futura richiederebbe un endpoint backend dedicato
+(es. `GET /lists/?editable=true`).
+
+**Verifica end-to-end (2026-07-04):** testato con Playwright contro il backend
+locale via Docker. Il container `api` era in esecuzione da prima dell'aggiunta della
+migrazione `0015_listitem_copied_from_item_listitem_copied_from_list.py` (v0.18.0);
+come nei casi precedenti, è stato necessario un `docker compose restart api` (nessuna
+modifica al codice) prima che le colonne `copied_from_item`/`copied_from_list`
+esistessero a DB — senza, `GET /lists/{id}/` falliva con 500
+(`ProgrammingError: column lists_listitem.copied_from_item_id does not exist`).
+Confermati con due utenti di test: condivisione di una lista con un utente
+(comparsa nella sua vista "Altre liste"); condivisione con un gruppo con permesso
+`edit`, cambio permesso a `view` tramite il select di riga, e revoca; copia di un
+elemento di testo dalla lista sorgente a una lista di destinazione di proprietà
+dello stesso utente, con badge di provenienza visibile nella lista di destinazione.
+Nessun errore in console riconducibile al nuovo codice (residua solo il warning
+Nebular preesistente `NG0100` sul menu laterale, già presente su `main`).
+
+---
+
 ## Nuovi tipi di elemento: Prodotto alimentare (`food_product`), di bellezza
 ## (`beauty_product`) e altro (`other_product`), via Open Food/Beauty/Products Facts
 

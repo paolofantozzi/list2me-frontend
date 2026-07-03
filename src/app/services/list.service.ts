@@ -59,8 +59,8 @@ export class ListService {
     return this.http.get<ListShare[]>(`${API_BASE}/lists/${listId}/shares/`);
   }
 
-  shareList(listId: string, userId: string): Observable<ListShare> {
-    return this.http.post<ListShare>(`${API_BASE}/lists/${listId}/shares/`, { shared_with_id: userId });
+  shareList(listId: string, userId: string, permission: 'view' | 'edit' = 'view'): Observable<ListShare> {
+    return this.http.post<ListShare>(`${API_BASE}/lists/${listId}/shares/`, { shared_with_id: userId, permission });
   }
 
   revokeShare(listId: string, shareId: string): Observable<void> {
@@ -71,8 +71,8 @@ export class ListService {
     return this.http.get<GroupVisibility[]>(`${API_BASE}/lists/${listId}/group-visibility/`);
   }
 
-  addGroupVisibility(listId: string, groupId: string): Observable<GroupVisibility> {
-    return this.http.post<GroupVisibility>(`${API_BASE}/lists/${listId}/group-visibility/`, { group_id: groupId });
+  addGroupVisibility(listId: string, groupId: string, permission: 'view' | 'edit' = 'view'): Observable<GroupVisibility> {
+    return this.http.post<GroupVisibility>(`${API_BASE}/lists/${listId}/group-visibility/`, { group_id: groupId, permission });
   }
 
   removeGroupVisibility(listId: string, gvId: string): Observable<void> {
