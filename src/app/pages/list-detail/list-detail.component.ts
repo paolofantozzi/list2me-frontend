@@ -18,6 +18,7 @@ import { TvdbService } from '../../services/tvdb.service';
 import { MusicBrainzService } from '../../services/musicbrainz.service';
 import { PlaceService } from '../../services/place.service';
 import { EuropeanaService } from '../../services/europeana.service';
+import { OpenFoodFactsService } from '../../services/openfoodfacts.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
 import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
@@ -25,6 +26,7 @@ import { TvdbSearchResult, TvdbEpisode, TvdbEpisodesPage } from '../../models/tv
 import { MusicBrainzEntityType, MusicBrainzSearchResult } from '../../models/musicbrainz.model';
 import { PlaceSearchResult } from '../../models/place.model';
 import { EuropeanaEntityType, EuropeanaSearchResult } from '../../models/europeana.model';
+import { OpenFoodFactsDomain, OpenFoodFactsSearchResult } from '../../models/openfoodfacts.model';
 import { AuthService } from '../../services/auth.service';
 import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
 
@@ -116,6 +118,17 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   europeanaResults = signal<EuropeanaSearchResult[]>([]);
   europeanaSearchLoading = signal(false);
 
+  // Open Food/Beauty/Products Facts search
+  showProductSearch = signal(false);
+  productQuery = signal('');
+  productResults = signal<OpenFoodFactsSearchResult[]>([]);
+  productSearchLoading = signal(false);
+  productBarcodeMode = signal(false);
+  productBarcode = signal('');
+  productBarcodeResult = signal<OpenFoodFactsSearchResult | null>(null);
+  productBarcodeLoading = signal(false);
+  productBarcodeError = signal('');
+
   // Image item creation panel
   showImagePanel = signal(false);
   pendingImageCaption = signal('');
@@ -167,6 +180,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   private placeSearch$ = new Subject<string>();
   private placeCoords$ = new Subject<{ lat: number; lon: number }>();
   private europeanaSearch$ = new Subject<string>();
+  private productSearch$ = new Subject<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -179,6 +193,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private musicBrainzService: MusicBrainzService,
     private placeService: PlaceService,
     private europeanaService: EuropeanaService,
+    private openFoodFactsService: OpenFoodFactsService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private auth: AuthService
@@ -320,6 +335,24 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.europeanaResults.set(results);
       this.europeanaSearchLoading.set(false);
     });
+
+    this.productSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.productSearchLoading.set(true);
+        return this.openFoodFactsService.search(q, this.productDomain()).pipe(
+          catchError(() => {
+            this.productSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.productResults.set(results);
+      this.productSearchLoading.set(false);
+    });
   }
 
   ngOnDestroy(): void {
@@ -329,6 +362,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.placeSearch$.complete();
     this.placeCoords$.complete();
     this.europeanaSearch$.complete();
+    this.productSearch$.complete();
   }
 
   loadList(id: string): void {
@@ -622,9 +656,20 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showMusicSearch.set(false);
     this.showPlaceSearch.set(false);
     this.showEuropeanaSearch.set(false);
+    this.showProductSearch.set(false);
     this.showImagePanel.set(false);
     this.showEditions.set(false);
     this.showNewChildList.set(false);
+  }
+
+  private readonly productDomains: Record<string, OpenFoodFactsDomain> = {
+    food_product: 'food',
+    beauty_product: 'beauty',
+    other_product: 'product',
+  };
+
+  productDomain(): OpenFoodFactsDomain {
+    return this.productDomains[this.selectedType()?.name ?? ''] ?? 'product';
   }
 
   selectItemType(type: ItemType): void {
@@ -652,6 +697,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.showEuropeanaSearch.set(true);
       this.europeanaResults.set([]);
       this.europeanaQuery.set('');
+    } else if (['food_product', 'beauty_product', 'other_product'].includes(type.name)) {
+      this.showProductSearch.set(true);
+      this.productResults.set([]);
+      this.productQuery.set('');
+      this.resetProductBarcodeState();
     } else if (type.name === 'image') {
       this.showImagePanel.set(true);
       this.pendingImageCaption.set('');
@@ -674,6 +724,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       place: 'pin-outline',
       artwork: 'color-palette-outline',
       art_artist: 'brush-outline',
+      food_product: 'shopping-bag-outline',
+      beauty_product: 'star-outline',
+      other_product: 'cube-outline',
     };
     return icons[name] ?? 'list-outline';
   }
@@ -687,6 +740,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     'map-pin': 'pin-outline',
     palette: 'color-palette-outline',
     brush: 'brush-outline',
+    utensils: 'shopping-bag-outline',
+    sparkles: 'star-outline',
+    package: 'cube-outline',
   };
 
   pickIcon(type: ItemType): string {
@@ -711,6 +767,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     artwork: "Opera d'arte",
     art_artist: "Artista (arte)",
     place: 'Luogo',
+    food_product: 'Prodotto alimentare',
+    beauty_product: 'Prodotto di bellezza',
+    other_product: 'Altro prodotto',
   };
 
   typeLabel(type: { name: string; label: string } | null | undefined): string {
@@ -726,6 +785,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showMusicSearch.set(false);
     this.showPlaceSearch.set(false);
     this.showEuropeanaSearch.set(false);
+    this.showProductSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -740,6 +800,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.resetPlaceManualState();
     this.europeanaResults.set([]);
     this.europeanaQuery.set('');
+    this.productResults.set([]);
+    this.productQuery.set('');
+    this.resetProductBarcodeState();
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
@@ -761,6 +824,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showMusicSearch.set(false);
     this.showPlaceSearch.set(false);
     this.showEuropeanaSearch.set(false);
+    this.showProductSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -1276,6 +1340,131 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  // ── Open Food/Beauty/Products Facts search ────────────────────────────────────
+
+  productSearchTitle(): string {
+    const name = this.selectedType()?.name;
+    if (name === 'food_product') return 'Cerca un prodotto alimentare';
+    if (name === 'beauty_product') return 'Cerca un prodotto di bellezza';
+    return 'Cerca un prodotto';
+  }
+
+  productSearchIcon(): string {
+    const name = this.selectedType()?.name;
+    if (name === 'food_product') return 'shopping-bag-outline';
+    if (name === 'beauty_product') return 'star-outline';
+    return 'cube-outline';
+  }
+
+  onProductQueryChange(q: string): void {
+    this.productQuery.set(q);
+    if (q.trim().length < 2) {
+      this.productResults.set([]);
+      this.productSearchLoading.set(false);
+      return;
+    }
+    this.productSearch$.next(q.trim());
+  }
+
+  toggleProductBarcodeMode(): void {
+    this.productBarcodeMode.update(v => !v);
+    this.productBarcodeResult.set(null);
+    this.productBarcodeError.set('');
+  }
+
+  onProductBarcodeInput(value: string): void {
+    this.productBarcode.set(value);
+  }
+
+  lookupProductBarcode(): void {
+    const barcode = this.productBarcode().trim();
+    if (!barcode) return;
+    this.productBarcodeLoading.set(true);
+    this.productBarcodeError.set('');
+    this.productBarcodeResult.set(null);
+    this.openFoodFactsService.fetchByBarcode(barcode, this.productDomain()).subscribe({
+      next: result => {
+        this.productBarcodeResult.set(result);
+        this.productBarcodeLoading.set(false);
+      },
+      error: () => {
+        this.productBarcodeError.set(`Nessun prodotto trovato per il codice "${barcode}".`);
+        this.productBarcodeLoading.set(false);
+      }
+    });
+  }
+
+  private resetProductBarcodeState(): void {
+    this.productBarcodeMode.set(false);
+    this.productBarcode.set('');
+    this.productBarcodeResult.set(null);
+    this.productBarcodeLoading.set(false);
+    this.productBarcodeError.set('');
+  }
+
+  addProductItem(result: OpenFoodFactsSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? null;
+
+    this.itemService.addItem(listId, {
+      text: result.title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: { ...result.metadata } as Record<string, unknown>,
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${result.title}" aggiunto!`, 'Aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore')
+    });
+  }
+
+  isProductItem(item: Item): boolean {
+    const name = item.item_type_detail?.name;
+    return name === 'food_product' || name === 'beauty_product' || name === 'other_product';
+  }
+
+  productIcon(item: Item): string {
+    const name = item.item_type_detail?.name;
+    if (name === 'food_product') return 'shopping-bag-outline';
+    if (name === 'beauty_product') return 'star-outline';
+    return 'cube-outline';
+  }
+
+  productMeta(item: Item): {
+    barcode?: string;
+    brands?: string;
+    quantity?: string;
+    categories?: string;
+    image_url?: string;
+    ingredients_text?: string;
+    labels?: string[];
+    allergens?: string[];
+    nutriscore_grade?: string;
+    nova_group?: number;
+    ecoscore_grade?: string;
+    service_url?: string;
+  } {
+    return (item.metadata ?? {}) as {
+      barcode?: string;
+      brands?: string;
+      quantity?: string;
+      categories?: string;
+      image_url?: string;
+      ingredients_text?: string;
+      labels?: string[];
+      allergens?: string[];
+      nutriscore_grade?: string;
+      nova_group?: number;
+      ecoscore_grade?: string;
+      service_url?: string;
+    };
+  }
+
   onImageFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     const prev = this.pendingImagePreviewUrl();
@@ -1454,8 +1643,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return this.items().some(item => this.isEuropeanaItem(item));
   }
 
+  get hasProductItems(): boolean {
+    return this.items().some(item => this.isProductItem(item));
+  }
+
   get hasExternalItems(): boolean {
-    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems;
+    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems || this.hasProductItems;
   }
 
   get isOwner(): boolean {

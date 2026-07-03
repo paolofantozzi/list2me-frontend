@@ -2,6 +2,70 @@
 
 **Stato: ✅ Completato e verificato end-to-end (2026-07-03).**
 
+---
+
+## Nuovi tipi di elemento: Prodotto alimentare (`food_product`), di bellezza
+## (`beauty_product`) e altro (`other_product`), via Open Food/Beauty/Products Facts
+
+Il backend (list2me-backend v0.15.0) ha aggiunto il supporto per Open Food Facts,
+Open Beauty Facts e Open Products Facts — tre database indipendenti ma con API
+identica (stesso software "Product Opener"), selezionabili tramite un parametro
+`domain` (`food` | `beauty` | `product`) sull'unico endpoint di ricerca condiviso.
+**Stato: ✅ Implementato e verificato end-to-end (2026-07-03).**
+
+**File nuovi:**
+- `src/app/models/openfoodfacts.model.ts` — `OpenFoodFactsDomain`
+  (`'food' | 'beauty' | 'product'`), `OpenFoodFactsResultMetadata`,
+  `OpenFoodFactsSearchResult`.
+- `src/app/services/openfoodfacts.service.ts` — `search(q, domain, limit)` e
+  `fetchByBarcode(barcode, domain)`, stesso pattern hardcoded-per-tipo di
+  `PlaceService`/`EuropeanaService`.
+
+**File modificati:**
+- `src/app/pages/list-detail/list-detail.component.ts` — signal/subject per la
+  ricerca testuale (`showProductSearch`/`productQuery`/`productResults`) e per
+  la modalità alternativa di lookup per codice a barre
+  (`productBarcodeMode`/`productBarcode`/`productBarcodeResult`, sul modello
+  della modalità "coordinate manuali" già usata per `place`); mappa
+  `productDomains` che risolve `food_product`→`food`, `beauty_product`→`beauty`,
+  `other_product`→`product`; branch in `selectItemType`/`backToTypePicker`/
+  `closeAddPanel`, `addProductItem`, `isProductItem`/`productMeta`/`productIcon`,
+  icone `utensils`→`shopping-bag-outline`, `sparkles`→`star-outline`,
+  `package`→`cube-outline` in `iconNameFixes`/`getDefaultIcon`, label italiane
+  "Prodotto alimentare"/"Prodotto di bellezza"/"Altro prodotto".
+- `src/app/pages/list-detail/list-detail.component.html` — pannello di ricerca
+  prodotto (stesso pattern di libro/TVDB/MusicBrainz/luogo/Europeana) con
+  toggle verso una modalità "Cerca per codice a barre" (analoga alla modalità
+  coordinate manuali di `place`, usata per recuperare gli allergeni — presenti
+  solo nella risposta di dettaglio per barcode, non nei risultati di ricerca
+  testuale); branch `isProductItem` nella card elemento (con badge Nutri-Score/
+  NOVA/Eco-Score solo per `food_product`) e nel pannello di dettaglio
+  (marca, quantità, categorie, barcode, ingredienti, etichette, allergeni),
+  attribuzione Open Food Facts nel footer.
+- `src/app/pages/list-detail/list-detail.component.scss` — stili per il
+  pannello di ricerca prodotto e per i badge Nutri-Score/Eco-Score colorati
+  (verde/giallo/arancio/rosso secondo lo schema ufficiale A–E).
+
+**Nota:** il lookup per codice a barre richiede di selezionare il `domain`
+corretto (il tipo di elemento scelto nel type picker) — un barcode alimentare
+cercato con il tipo "Altro prodotto" restituisce correttamente un errore 502
+dal backend (`OPENFOODFACTS_FETCH_ERROR`), dato che i tre database sono
+indipendenti; comportamento verificato e non un bug.
+
+**Verifica end-to-end (2026-07-03):** testato con Playwright contro il backend
+locale via Docker. Il container `api` era in esecuzione da prima dell'aggiunta
+della migrazione `0012_add_openfoodfacts_item_types.py`; è stato necessario un
+`docker compose restart api` (nessuna modifica al codice del backend, solo
+riavvio del container per far eseguire la migrazione già presente nel
+repository) prima che i tre nuovi tipi comparissero in `GET /item-types/`.
+Confermati: le tre tile nel type picker; ricerca testuale su tutti e tre i
+domini (`food`/`beauty`/`product`) con risultati e aggiunta elemento; modalità
+codice a barre con successo (barcode Nutella `3017620422003` su dominio
+`food`, badge Nutri-Score E / NOVA 4 e allergeni visibili nel pannello di
+dettaglio) e con fallimento atteso su dominio sbagliato; nessun errore in
+console riconducibile al nuovo codice (residua solo il warning Nebular
+preesistente `NG0100`, già presente su `main`).
+
 ## Nuovo tipo di elemento: Luogo (`place`), con mappa
 
 Il backend (list2me-backend v0.12.0) ha aggiunto il supporto per i luoghi come

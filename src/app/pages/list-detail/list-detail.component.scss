@@ -1168,3 +1168,45 @@ $warning-100: #fff8e6;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
+
+// ── Open Food/Beauty/Products Facts search panel ──────────────────────────────
+
+.product-search-card {
+  margin-bottom: 1.5rem;
+}
+
+// ── Product items ────────────────────────────────────────────────────────────────
+
+.item-detail-row--wrap {
+  align-items: flex-start;
+
+  nb-icon { margin-top: 0.125rem; }
+}
+
+.item-detail-row--warning {
+  color: $danger;
+  font-weight: 600;
+}
+
+.product-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.3rem 0 0;
+}
+
+.product-badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: $border;
+  color: $text-basic;
+
+  &.nutri-badge--a { background: #1e8f4e; color: #fff; }
+  &.nutri-badge--b { background: #7ab648; color: #fff; }
+  &.nutri-badge--c { background: $warning; color: #fff; }
+  &.nutri-badge--d { background: #ee8100; color: #fff; }
+  &.nutri-badge--e { background: $danger; color: #fff; }
+}

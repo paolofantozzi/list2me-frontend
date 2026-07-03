@@ -887,6 +887,133 @@
       </nb-card>
     }
 
+    <!-- ── Open Food/Beauty/Products Facts search panel ─────────────────────── -->
+    @if (showProductSearch() && isOwner) {
+      <nb-card class="add-item-card product-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon [icon]="productSearchIcon()"></nb-icon>
+          {{ productSearchTitle() }}
+        </nb-card-header>
+        <nb-card-body>
+          @if (!productBarcodeMode()) {
+            <div class="book-search-input-wrap">
+              <input nbInput fullWidth #productInput
+                     [value]="productQuery()"
+                     placeholder="Nome del prodotto o marca..."
+                     (input)="onProductQueryChange(productInput.value)" />
+              @if (productSearchLoading()) {
+                <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+              }
+            </div>
+
+            @if (productResults().length > 0) {
+              <div class="book-results">
+                @for (result of productResults(); track $index) {
+                  <div class="book-result" (click)="addProductItem(result)" role="button" tabindex="0"
+                       (keyup.enter)="addProductItem(result)">
+                    @if (result.image_url) {
+                      <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
+                    } @else {
+                      <div class="book-result-cover book-result-cover--placeholder">
+                        <nb-icon [icon]="productSearchIcon()"></nb-icon>
+                      </div>
+                    }
+                    <div class="book-result-info">
+                      <p class="book-result-title">{{ result.title }}</p>
+                      @if (result.subtitle) {
+                        <p class="book-result-meta">{{ result.subtitle }}</p>
+                      }
+                      @if (result.service_url) {
+                        <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
+                           class="result-service-link" (click)="$event.stopPropagation()">
+                          <nb-icon icon="external-link-outline"></nb-icon> Open Food Facts
+                        </a>
+                      }
+                    </div>
+                    <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                  </div>
+                }
+              </div>
+            } @else if (productQuery().trim().length >= 2 && !productSearchLoading()) {
+              <p class="book-no-results">Nessun risultato trovato per "{{ productQuery() }}".</p>
+            }
+
+            <div class="place-manual-toggle">
+              <button nbButton ghost size="small" type="button" (click)="toggleProductBarcodeMode()">
+                <nb-icon icon="hash-outline"></nb-icon>
+                Cerca per codice a barre
+              </button>
+            </div>
+          } @else {
+            <div class="form-group">
+              <label class="label">Codice a barre</label>
+              <input nbInput fullWidth #barcodeInput
+                     [value]="productBarcode()"
+                     placeholder="es. 3017620422003"
+                     (input)="onProductBarcodeInput(barcodeInput.value)"
+                     (keyup.enter)="lookupProductBarcode()" />
+            </div>
+            <div class="form-actions">
+              <button nbButton status="primary" size="small" type="button"
+                      [disabled]="!productBarcode().trim() || productBarcodeLoading()"
+                      (click)="lookupProductBarcode()">
+                @if (productBarcodeLoading()) {
+                  <nb-spinner size="tiny" status="basic"></nb-spinner>
+                } @else {
+                  Cerca
+                }
+              </button>
+            </div>
+
+            @if (productBarcodeError()) {
+              <p class="book-no-results">{{ productBarcodeError() }}</p>
+            }
+
+            @if (productBarcodeResult()) {
+              <div class="book-result book-result--static">
+                @if (productBarcodeResult()!.image_url) {
+                  <img [src]="productBarcodeResult()!.image_url" [alt]="productBarcodeResult()!.title" class="book-result-cover" loading="lazy">
+                } @else {
+                  <div class="book-result-cover book-result-cover--placeholder">
+                    <nb-icon [icon]="productSearchIcon()"></nb-icon>
+                  </div>
+                }
+                <div class="book-result-info">
+                  <p class="book-result-title">{{ productBarcodeResult()!.title }}</p>
+                  @if (productBarcodeResult()!.subtitle) {
+                    <p class="book-result-meta">{{ productBarcodeResult()!.subtitle }}</p>
+                  }
+                </div>
+                <button nbButton status="primary" size="small" type="button" (click)="addProductItem(productBarcodeResult()!)">
+                  <nb-icon icon="plus-outline"></nb-icon>
+                  Aggiungi
+                </button>
+              </div>
+            }
+
+            <div class="place-manual-toggle">
+              <button nbButton ghost size="small" type="button" (click)="toggleProductBarcodeMode()">
+                <nb-icon icon="search-outline"></nb-icon>
+                Torna alla ricerca testuale
+              </button>
+            </div>
+          }
+
+          <div class="panel-attribution">
+            Dati forniti da <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener noreferrer">Open Food Facts</a>
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
     <!-- ── Add item form ──────────────────────────────────────────────────── -->
     @if (showAddItem() && isOwner) {
       <nb-card class="add-item-card" accent="primary">
@@ -1143,6 +1270,42 @@
                           </p>
                         </div>
                       </div>
+                    } @else if (isProductItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        @if (productMeta(item).image_url) {
+                          <img [src]="productMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon [icon]="productIcon(item)"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
+                            @if (productMeta(item).brands) { {{ productMeta(item).brands }} }
+                            @if (productMeta(item).quantity) { · {{ productMeta(item).quantity }} }
+                          </p>
+                          @if (productMeta(item).nutriscore_grade || productMeta(item).nova_group || productMeta(item).ecoscore_grade) {
+                            <p class="product-badges">
+                              @if (productMeta(item).nutriscore_grade) {
+                                <span class="product-badge" [class]="'nutri-badge--' + productMeta(item).nutriscore_grade">
+                                  Nutri-Score {{ productMeta(item).nutriscore_grade!.toUpperCase() }}
+                                </span>
+                              }
+                              @if (productMeta(item).nova_group) {
+                                <span class="product-badge">NOVA {{ productMeta(item).nova_group }}</span>
+                              }
+                              @if (productMeta(item).ecoscore_grade) {
+                                <span class="product-badge" [class]="'nutri-badge--' + productMeta(item).ecoscore_grade">
+                                  Eco-Score {{ productMeta(item).ecoscore_grade!.toUpperCase() }}
+                                </span>
+                              }
+                            </p>
+                          }
+                        </div>
+                      </div>
                     } @else {
                       <div class="item-text">
                         <p class="item-title">{{ item.text || '(vuoto)' }}</p>
@@ -1211,7 +1374,7 @@
                   </div>
 
                   <!-- ── Item detail panel ──────────────────────────────── -->
-                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || (isImageItem(item) && item.image))) {
+                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || isProductItem(item) || (isImageItem(item) && item.image))) {
                     <div class="item-detail">
                       @if (isBookItem(item)) {
                         <div class="item-detail-grid">
@@ -1462,6 +1625,81 @@
                             }
                           </div>
                         </div>
+                      } @else if (isProductItem(item)) {
+                        <div class="item-detail-grid">
+                          @if (productMeta(item).image_url) {
+                            <img [src]="productMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
+                          }
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (productMeta(item).brands) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="pricetags-outline"></nb-icon>
+                                {{ productMeta(item).brands }}
+                              </p>
+                            }
+                            @if (productMeta(item).quantity) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="cube-outline"></nb-icon>
+                                {{ productMeta(item).quantity }}
+                              </p>
+                            }
+                            @if (productMeta(item).categories) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="grid-outline"></nb-icon>
+                                {{ productMeta(item).categories }}
+                              </p>
+                            }
+                            @if (productMeta(item).barcode) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="hash-outline"></nb-icon>
+                                {{ productMeta(item).barcode }}
+                              </p>
+                            }
+                            @if (productMeta(item).nutriscore_grade || productMeta(item).nova_group || productMeta(item).ecoscore_grade) {
+                              <p class="product-badges">
+                                @if (productMeta(item).nutriscore_grade) {
+                                  <span class="product-badge" [class]="'nutri-badge--' + productMeta(item).nutriscore_grade">
+                                    Nutri-Score {{ productMeta(item).nutriscore_grade!.toUpperCase() }}
+                                  </span>
+                                }
+                                @if (productMeta(item).nova_group) {
+                                  <span class="product-badge">NOVA {{ productMeta(item).nova_group }}</span>
+                                }
+                                @if (productMeta(item).ecoscore_grade) {
+                                  <span class="product-badge" [class]="'nutri-badge--' + productMeta(item).ecoscore_grade">
+                                    Eco-Score {{ productMeta(item).ecoscore_grade!.toUpperCase() }}
+                                  </span>
+                                }
+                              </p>
+                            }
+                            @if (productMeta(item).ingredients_text) {
+                              <p class="item-detail-row item-detail-row--wrap">
+                                <nb-icon icon="file-text-outline"></nb-icon>
+                                {{ productMeta(item).ingredients_text }}
+                              </p>
+                            }
+                            @if (productMeta(item).labels?.length) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="pricetags-outline"></nb-icon>
+                                {{ productMeta(item).labels!.join(', ') }}
+                              </p>
+                            }
+                            @if (productMeta(item).allergens?.length) {
+                              <p class="item-detail-row item-detail-row--warning">
+                                <nb-icon icon="alert-triangle-outline"></nb-icon>
+                                Allergeni: {{ productMeta(item).allergens!.join(', ') }}
+                              </p>
+                            }
+                            @if (productMeta(item).service_url) {
+                              <a [href]="productMeta(item).service_url" target="_blank" rel="noopener noreferrer"
+                                 class="item-detail-link">
+                                <nb-icon icon="external-link-outline"></nb-icon>
+                                Apri su Open Food Facts
+                              </a>
+                            }
+                          </div>
+                        </div>
                       }
                     </div>
                   }
@@ -1492,6 +1730,10 @@
           @if (hasPlaceItems && hasEuropeanaItems) { · }
           @if (hasEuropeanaItems) {
             <a href="https://www.europeana.eu" target="_blank" rel="noopener noreferrer">Europeana</a>
+          }
+          @if (hasEuropeanaItems && hasProductItems) { · }
+          @if (hasProductItems) {
+            <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener noreferrer">Open Food Facts</a>
           }
         </nb-card-footer>
       }
