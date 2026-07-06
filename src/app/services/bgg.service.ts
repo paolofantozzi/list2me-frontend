@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { API_BASE } from './auth.service';
-import { BGGSearchResult, BGGSearchType } from '../models/bgg.model';
+import { BGGGameDetail, BGGSearchResult, BGGSearchType } from '../models/bgg.model';
 
 @Injectable({ providedIn: 'root' })
 export class BggService {
@@ -15,5 +15,9 @@ export class BggService {
         params: { q, type, limit: limit.toString() },
       })
       .pipe(map(resp => resp.results ?? []));
+  }
+
+  getGame(gameId: number): Observable<BGGGameDetail> {
+    return this.http.get<BGGGameDetail>(`${API_BASE}/bgg/games/${gameId}/`);
   }
 }

@@ -1471,20 +1471,68 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const listId = this.list()!.id;
     const position = String(this.items().length + 1);
     const typeId = this.selectedType()?.id ?? null;
+    const bggId = result.metadata.bgg_id;
 
-    this.itemService.addItem(listId, {
-      text: result.title,
-      ...(typeId ? { item_type: typeId } : {}),
-      metadata: result.metadata,
-      position,
-    }).subscribe({
-      next: item => {
-        this.items.update(items => [...items, item]);
-        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
-        this.closeAddPanel();
-        this.toastr.success(`"${result.title}" aggiunto!`, 'Aggiunto');
+    const create = (imageUrl: string | undefined) => {
+      this.itemService.addItem(listId, {
+        text: result.title,
+        ...(typeId ? { item_type: typeId } : {}),
+        metadata: {
+          ...result.metadata,
+          image_url: imageUrl,
+        },
+        position,
+      }).subscribe({
+        next: item => {
+          this.items.update(items => [...items, item]);
+          this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+          this.closeAddPanel();
+          this.toastr.success(`"${result.title}" aggiunto!`, 'Aggiunto');
+        },
+        error: () => this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore')
+      });
+    };
+
+    // La ricerca BGG non include mai un'immagine: va recuperata dal dettaglio del gioco.
+    if (bggId) {
+      this.bggService.getGame(bggId).subscribe({
+        next: detail => create(detail.image_url || detail.thumbnail_url || undefined),
+        error: () => create(undefined),
+      });
+    } else {
+      create(undefined);
+    }
+  }
+
+  syncBggItem(item: Item): void {
+    const bggId = this.bggMeta(item).bgg_id;
+    if (!bggId) return;
+    const listId = this.list()!.id;
+    this.syncingItemId.set(item.id);
+
+    this.bggService.getGame(bggId).subscribe({
+      next: detail => {
+        this.itemService.updateItem(listId, item.id, {
+          metadata: {
+            ...item.metadata,
+            image_url: detail.image_url || detail.thumbnail_url || undefined,
+          },
+        } as Partial<Item>).subscribe({
+          next: updated => {
+            this.items.update(items => items.map(i => i.id === updated.id ? updated : i));
+            this.syncingItemId.set(null);
+            this.toastr.success('Dati aggiornati da BoardGameGeek.', 'Sincronizzato');
+          },
+          error: () => {
+            this.syncingItemId.set(null);
+            this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+          }
+        });
       },
-      error: () => this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore')
+      error: () => {
+        this.syncingItemId.set(null);
+        this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+      }
     });
   }
 
@@ -1501,11 +1549,13 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     bgg_id?: number;
     year_published?: number;
     service_url?: string;
+    image_url?: string;
   } {
     return (item.metadata ?? {}) as {
       bgg_id?: number;
       year_published?: number;
       service_url?: string;
+      image_url?: string;
     };
   }
 

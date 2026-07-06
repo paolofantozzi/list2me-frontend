@@ -11,3 +11,13 @@ export interface BGGSearchResult {
     service_url: string;
   };
 }
+
+export interface BGGGameDetail {
+  bgg_id: number | null;
+  type: string;
+  name: string;
+  thumbnail_url: string | null;
+  image_url: string | null;
+  year_published: number | null;
+  service_url: string;
+}

@@ -1392,9 +1392,13 @@
                     } @else if (isBggItem(item)) {
                       <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
                            (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        <div class="book-cover book-cover--placeholder">
-                          <nb-icon [icon]="bggIcon(item)"></nb-icon>
-                        </div>
+                        @if (bggMeta(item).image_url) {
+                          <img [src]="bggMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon [icon]="bggIcon(item)"></nb-icon>
+                          </div>
+                        }
                         <div class="item-text">
                           <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
                           <p class="book-meta">
@@ -1517,6 +1521,18 @@
                                   [disabled]="syncingItemId() === item.id"
                                   (click)="syncBookItem(item)"
                                   title="Aggiorna da OpenLibrary">
+                            @if (syncingItemId() === item.id) {
+                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                            } @else {
+                              <nb-icon icon="refresh-outline"></nb-icon>
+                            }
+                          </button>
+                        }
+                        @if (isBggItem(item)) {
+                          <button nbButton ghost size="tiny"
+                                  [disabled]="syncingItemId() === item.id"
+                                  (click)="syncBggItem(item)"
+                                  title="Aggiorna da BoardGameGeek">
                             @if (syncingItemId() === item.id) {
                               <nb-spinner size="tiny" status="info"></nb-spinner>
                             } @else {
@@ -1696,6 +1712,9 @@
                         </div>
                       } @else if (isBggItem(item)) {
                         <div class="item-detail-grid">
+                          @if (bggMeta(item).image_url) {
+                            <img [src]="bggMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
+                          }
                           <div class="item-detail-info">
                             <p class="item-detail-title">{{ item.text }}</p>
                             @if (item.item_type_detail) {
