@@ -1269,3 +1269,20 @@ $warning-100: #fff8e6;
   &.nutri-badge--d { background: #ee8100; color: #fff; }
   &.nutri-badge--e { background: $danger; color: #fff; }
 }
+
+// ── Video game items (IGDB) ───────────────────────────────────────────────────
+
+.video-game-screenshots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+.video-game-screenshot {
+  width: 100px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}

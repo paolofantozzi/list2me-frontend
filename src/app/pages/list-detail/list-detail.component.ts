@@ -20,6 +20,7 @@ import { PlaceService } from '../../services/place.service';
 import { EuropeanaService } from '../../services/europeana.service';
 import { OpenFoodFactsService } from '../../services/openfoodfacts.service';
 import { BggService } from '../../services/bgg.service';
+import { IgdbService } from '../../services/igdb.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
 import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
@@ -29,6 +30,7 @@ import { PlaceSearchResult } from '../../models/place.model';
 import { EuropeanaEntityType, EuropeanaSearchResult } from '../../models/europeana.model';
 import { OpenFoodFactsDomain, OpenFoodFactsSearchResult } from '../../models/openfoodfacts.model';
 import { BGGSearchType, BGGSearchResult } from '../../models/bgg.model';
+import { IGDBSearchResult } from '../../models/igdb.model';
 import { AuthService } from '../../services/auth.service';
 import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
 import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
@@ -127,6 +129,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   bggResults = signal<BGGSearchResult[]>([]);
   bggSearchLoading = signal(false);
 
+  // IGDB search (video_game)
+  showVideoGameSearch = signal(false);
+  videoGameQuery = signal('');
+  videoGameResults = signal<IGDBSearchResult[]>([]);
+  videoGameSearchLoading = signal(false);
+
   // Open Food/Beauty/Products Facts search
   showProductSearch = signal(false);
   productQuery = signal('');
@@ -206,6 +214,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   private europeanaSearch$ = new Subject<string>();
   private productSearch$ = new Subject<string>();
   private bggSearch$ = new Subject<string>();
+  private videoGameSearch$ = new Subject<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -220,6 +229,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private europeanaService: EuropeanaService,
     private openFoodFactsService: OpenFoodFactsService,
     private bggService: BggService,
+    private igdbService: IgdbService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private auth: AuthService
@@ -398,6 +408,24 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.bggResults.set(results);
       this.bggSearchLoading.set(false);
     });
+
+    this.videoGameSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.videoGameSearchLoading.set(true);
+        return this.igdbService.search(q).pipe(
+          catchError(() => {
+            this.videoGameSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.videoGameResults.set(results);
+      this.videoGameSearchLoading.set(false);
+    });
   }
 
   ngOnDestroy(): void {
@@ -409,6 +437,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.europeanaSearch$.complete();
     this.productSearch$.complete();
     this.bggSearch$.complete();
+    this.videoGameSearch$.complete();
   }
 
   loadList(id: string): void {
@@ -758,6 +787,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showEuropeanaSearch.set(false);
     this.showProductSearch.set(false);
     this.showBggSearch.set(false);
+    this.showVideoGameSearch.set(false);
     this.showImagePanel.set(false);
     this.showEditions.set(false);
     this.showNewChildList.set(false);
@@ -793,6 +823,10 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.showBggSearch.set(true);
       this.bggResults.set([]);
       this.bggQuery.set('');
+    } else if (type.name === 'video_game') {
+      this.showVideoGameSearch.set(true);
+      this.videoGameResults.set([]);
+      this.videoGameQuery.set('');
     } else if (type.name === 'place') {
       this.showPlaceSearch.set(true);
       this.placeResults.set([]);
@@ -834,6 +868,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       other_product: 'cube-outline',
       board_game: 'shuffle-outline',
       rpg: 'book-open-outline',
+      video_game: 'monitor-outline',
     };
     return icons[name] ?? 'list-outline';
   }
@@ -852,6 +887,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     package: 'cube-outline',
     dice: 'shuffle-outline',
     'book-open': 'book-open-outline',
+    'gamepad-2': 'monitor-outline',
   };
 
   pickIcon(type: ItemType): string {
@@ -879,6 +915,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     food_product: 'Prodotto alimentare',
     beauty_product: 'Prodotto di bellezza',
     other_product: 'Altro prodotto',
+    video_game: 'Videogioco',
   };
 
   typeLabel(type: { name: string; label: string } | null | undefined): string {
@@ -896,6 +933,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showEuropeanaSearch.set(false);
     this.showProductSearch.set(false);
     this.showBggSearch.set(false);
+    this.showVideoGameSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -915,6 +953,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.resetProductBarcodeState();
     this.bggResults.set([]);
     this.bggQuery.set('');
+    this.videoGameResults.set([]);
+    this.videoGameQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
@@ -938,6 +978,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showEuropeanaSearch.set(false);
     this.showProductSearch.set(false);
     this.showBggSearch.set(false);
+    this.showVideoGameSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -954,6 +995,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.europeanaQuery.set('');
     this.bggResults.set([]);
     this.bggQuery.set('');
+    this.videoGameResults.set([]);
+    this.videoGameQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.pendingImageCaption.set('');
@@ -1559,6 +1602,120 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  // ── IGDB search (video_game) ──────────────────────────────────────────────────
+
+  onVideoGameQueryChange(q: string): void {
+    this.videoGameQuery.set(q);
+    if (q.trim().length < 2) {
+      this.videoGameResults.set([]);
+      this.videoGameSearchLoading.set(false);
+      return;
+    }
+    this.videoGameSearch$.next(q.trim());
+  }
+
+  addVideoGameItem(result: IGDBSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'video_game')?.id ?? null;
+
+    this.itemService.addItem(listId, {
+      text: result.title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        ...result.metadata,
+        image_url: (result.metadata['image_url'] as string | undefined) ?? result.image_url ?? undefined,
+        service_url: (result.metadata['service_url'] as string | undefined) ?? result.service_url ?? undefined,
+      },
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${result.title}" aggiunto!`, 'Videogioco aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere il videogioco.', 'Errore')
+    });
+  }
+
+  // La ricerca IGDB restituisce solo dati minimali (piattaforme, generi, anno); il
+  // dettaglio esteso (trama, screenshot, sviluppatori, editori, voto) è disponibile
+  // solo su GET /igdb/games/{id}/, richiamato qui per arricchire l'elemento già aggiunto.
+  syncVideoGameItem(item: Item): void {
+    const igdbId = this.videoGameMeta(item).igdb_id;
+    if (!igdbId) return;
+    const listId = this.list()!.id;
+    this.syncingItemId.set(item.id);
+
+    this.igdbService.getGame(igdbId).subscribe({
+      next: detail => {
+        this.itemService.updateItem(listId, item.id, {
+          metadata: {
+            ...item.metadata,
+            ...detail,
+          },
+        } as Partial<Item>).subscribe({
+          next: updated => {
+            this.items.update(items => items.map(i => i.id === updated.id ? updated : i));
+            this.syncingItemId.set(null);
+            this.toastr.success('Dati aggiornati da IGDB.', 'Sincronizzato');
+          },
+          error: () => {
+            this.syncingItemId.set(null);
+            this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+          }
+        });
+      },
+      error: () => {
+        this.syncingItemId.set(null);
+        this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+      }
+    });
+  }
+
+  isVideoGameItem(item: Item): boolean {
+    return item.item_type_detail?.name === 'video_game';
+  }
+
+  videoGameMeta(item: Item): {
+    igdb_id?: number;
+    slug?: string;
+    platforms?: string[];
+    genres?: string[];
+    first_release_date?: string;
+    image_url?: string;
+    service_url?: string;
+    summary?: string;
+    storyline?: string;
+    screenshots?: string[];
+    game_modes?: string[];
+    themes?: string[];
+    developers?: string[];
+    publishers?: string[];
+    rating?: number;
+    aggregated_rating?: number;
+  } {
+    return (item.metadata ?? {}) as {
+      igdb_id?: number;
+      slug?: string;
+      platforms?: string[];
+      genres?: string[];
+      first_release_date?: string;
+      image_url?: string;
+      service_url?: string;
+      summary?: string;
+      storyline?: string;
+      screenshots?: string[];
+      game_modes?: string[];
+      themes?: string[];
+      developers?: string[];
+      publishers?: string[];
+      rating?: number;
+      aggregated_rating?: number;
+    };
+  }
+
   // ── Open Food/Beauty/Products Facts search ────────────────────────────────────
 
   productSearchTitle(): string {
@@ -1870,8 +2027,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return this.items().some(item => this.isBggItem(item));
   }
 
+  get hasVideoGameItems(): boolean {
+    return this.items().some(item => this.isVideoGameItem(item));
+  }
+
   get hasExternalItems(): boolean {
-    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems || this.hasProductItems || this.hasBggItems;
+    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems || this.hasProductItems || this.hasBggItems || this.hasVideoGameItems;
   }
 
   externalAttributions(): { name: string; url: string }[] {
@@ -1883,6 +2044,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       { name: 'Europeana', url: 'https://www.europeana.eu', present: this.hasEuropeanaItems },
       { name: 'Open Food Facts', url: 'https://world.openfoodfacts.org', present: this.hasProductItems },
       { name: 'BoardGameGeek', url: 'https://boardgamegeek.com', present: this.hasBggItems },
+      { name: 'IGDB', url: 'https://www.igdb.com', present: this.hasVideoGameItems },
     ];
     return sources.filter(s => s.present).map(({ name, url }) => ({ name, url }));
   }

@@ -1,6 +1,65 @@
 # TODO — richieste da list2me-backend
 
-**Stato: ✅ Completato e verificato end-to-end (2026-07-03).**
+**Stato: ✅ Completato e verificato end-to-end (2026-07-06).**
+
+---
+
+## Nuovo tipo di elemento: Videogioco (`video_game`), via IGDB
+
+Il backend (list2me-backend v0.24.0) ha aggiunto l'integrazione con IGDB (v4 API,
+autenticato via Twitch OAuth2 client-credentials): `GET /api/v1/igdb/search/?q=…`
+(ricerca minimale: titolo, sottotitolo piattaforme/anno, immagine copertina) e
+`GET /api/v1/igdb/games/{id}/` (dettaglio esteso: trama, screenshot, generi,
+piattaforme, modalità di gioco, temi, sviluppatori, editori, data di uscita,
+voto). Il nuovo tipo di sistema `video_game` non aveva form di ricerca/aggiunta
+né rendering — la funzionalità mancava del tutto lato frontend. **Stato:
+✅ Implementato e verificato end-to-end (2026-07-06).**
+
+**File nuovi:**
+- `src/app/models/igdb.model.ts` — `IGDBSearchResult` (stesso formato uniforme
+  degli altri servizi esterni: `title`/`subtitle`/`image_url`/`service_url`/
+  `metadata`), `IGDBGameDetail` (dettaglio esteso di `/igdb/games/{id}/`).
+- `src/app/services/igdb.service.ts` — `search(q, limit)`, `getGame(gameId)`,
+  stesso pattern hardcoded-per-tipo di `BggService`/`EuropeanaService`.
+
+**File modificati:**
+- `src/app/pages/list-detail/list-detail.component.ts` — signal/subject per la
+  ricerca IGDB (`showVideoGameSearch`/`videoGameQuery`/`videoGameResults`),
+  branch in `selectItemType`/`backToTypePicker`/`closeAddPanel`,
+  `onVideoGameQueryChange`, `addVideoGameItem` (usa direttamente i campi
+  restituiti dalla ricerca — a differenza di BGG, la ricerca IGDB include già
+  un'immagine di copertina, quindi nessuna chiamata di dettaglio aggiuntiva è
+  necessaria in fase di aggiunta), `syncVideoGameItem` (pulsante di
+  sincronizzazione stile BGG/OpenLibrary che richiama `GET /igdb/games/{id}/`
+  per arricchire un elemento già aggiunto con i campi non presenti nella
+  ricerca: trama, screenshot, sviluppatori, editori, voto), `isVideoGameItem`/
+  `videoGameMeta`, icona `gamepad-2` → `monitor-outline` (Eva Icons non ha
+  un'icona "controller"; stesso trattamento già riservato a `dice`→
+  `shuffle-outline` e `map-pin`→`pin-outline`), label italiana "Videogioco".
+- `src/app/pages/list-detail/list-detail.component.html` — pannello di ricerca
+  IGDB (stesso pattern di libro/TVDB/MusicBrainz/BGG/Europeana), branch
+  `isVideoGameItem` nella card elemento (copertina, piattaforme, anno) e nel
+  pannello di dettaglio (piattaforme, generi, data di uscita, sviluppatori,
+  editori, voto, trama, galleria screenshot dopo sincronizzazione, link a
+  IGDB), pulsante di sincronizzazione accanto a quello di BGG, attribuzione
+  IGDB nel footer.
+- `src/app/pages/list-detail/list-detail.component.scss` — stili per la
+  galleria screenshot (`.video-game-screenshots`/`.video-game-screenshot`).
+
+**Verifica end-to-end (2026-07-06):** il container `api` era in esecuzione da
+prima dell'aggiunta della migrazione del nuovo tipo `video_game`; come nei casi
+precedenti, è stato necessario un `docker compose restart api` (nessuna
+modifica al codice, solo riavvio per eseguire la migrazione e leggere
+`IGDB_CLIENT_ID`/`IGDB_CLIENT_SECRET` da `.env`) prima che il tipo comparisse
+in `GET /item-types/`. Testato con Playwright contro il backend locale via
+Docker: tile "Videogioco" nel type picker; ricerca testuale reale su IGDB
+("zelda", 10 risultati con copertina); aggiunta di un elemento (The Legend of
+Zelda, 1986) con rendering miniatura/card; apertura pannello di dettaglio con
+piattaforme/genere/data; sincronizzazione via pulsante dedicato con
+arricchimento riuscito (sviluppatore Nintendo R&D4, editori, voto 81/100,
+trama, screenshot); footer di attribuzione con la fonte IGDB. Nessun errore in
+console riconducibile al nuovo codice (residua solo il warning Nebular
+preesistente `NG0100` sul menu laterale, già presente su `main`).
 
 ---
 
