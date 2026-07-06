@@ -19,6 +19,7 @@ import { MusicBrainzService } from '../../services/musicbrainz.service';
 import { PlaceService } from '../../services/place.service';
 import { EuropeanaService } from '../../services/europeana.service';
 import { OpenFoodFactsService } from '../../services/openfoodfacts.service';
+import { BggService } from '../../services/bgg.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
 import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
@@ -27,13 +28,11 @@ import { MusicBrainzEntityType, MusicBrainzSearchResult } from '../../models/mus
 import { PlaceSearchResult } from '../../models/place.model';
 import { EuropeanaEntityType, EuropeanaSearchResult } from '../../models/europeana.model';
 import { OpenFoodFactsDomain, OpenFoodFactsSearchResult } from '../../models/openfoodfacts.model';
+import { BGGSearchType, BGGSearchResult } from '../../models/bgg.model';
 import { AuthService } from '../../services/auth.service';
 import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
 import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
 import { ListShareComponent } from '../../shared/list-share/list-share.component';
-
-// Tipi di item nascosti dal picker (funzionalità dismesse ma ancora supportate dal backend).
-const HIDDEN_ITEM_TYPES = new Set(['board_game', 'rpg']);
 
 @Component({
   selector: 'app-list-detail',
@@ -122,6 +121,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   europeanaResults = signal<EuropeanaSearchResult[]>([]);
   europeanaSearchLoading = signal(false);
 
+  // BoardGameGeek search (board_game / rpg)
+  showBggSearch = signal(false);
+  bggQuery = signal('');
+  bggResults = signal<BGGSearchResult[]>([]);
+  bggSearchLoading = signal(false);
+
   // Open Food/Beauty/Products Facts search
   showProductSearch = signal(false);
   productQuery = signal('');
@@ -200,6 +205,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   private placeCoords$ = new Subject<{ lat: number; lon: number }>();
   private europeanaSearch$ = new Subject<string>();
   private productSearch$ = new Subject<string>();
+  private bggSearch$ = new Subject<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -213,6 +219,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private placeService: PlaceService,
     private europeanaService: EuropeanaService,
     private openFoodFactsService: OpenFoodFactsService,
+    private bggService: BggService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private auth: AuthService
@@ -241,7 +248,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.itemTypesLoading.set(true);
     this.itemTypeService.getItemTypes().subscribe({
       next: resp => {
-        this.itemTypes.set(resp.results.filter(t => !HIDDEN_ITEM_TYPES.has(t.name)));
+        this.itemTypes.set(resp.results);
         this.itemTypesLoading.set(false);
       },
       error: () => this.itemTypesLoading.set(false),
@@ -372,6 +379,25 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.productResults.set(results);
       this.productSearchLoading.set(false);
     });
+
+    this.bggSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.bggSearchLoading.set(true);
+        const type: BGGSearchType = this.selectedType()?.name === 'rpg' ? 'rpgitem' : 'boardgame';
+        return this.bggService.search(q, type).pipe(
+          catchError(() => {
+            this.bggSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.bggResults.set(results);
+      this.bggSearchLoading.set(false);
+    });
   }
 
   ngOnDestroy(): void {
@@ -382,6 +408,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.placeCoords$.complete();
     this.europeanaSearch$.complete();
     this.productSearch$.complete();
+    this.bggSearch$.complete();
   }
 
   loadList(id: string): void {
@@ -730,6 +757,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showPlaceSearch.set(false);
     this.showEuropeanaSearch.set(false);
     this.showProductSearch.set(false);
+    this.showBggSearch.set(false);
     this.showImagePanel.set(false);
     this.showEditions.set(false);
     this.showNewChildList.set(false);
@@ -761,6 +789,10 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.showMusicSearch.set(true);
       this.musicResults.set([]);
       this.musicQuery.set('');
+    } else if (['board_game', 'rpg'].includes(type.name)) {
+      this.showBggSearch.set(true);
+      this.bggResults.set([]);
+      this.bggQuery.set('');
     } else if (type.name === 'place') {
       this.showPlaceSearch.set(true);
       this.placeResults.set([]);
@@ -800,6 +832,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       food_product: 'shopping-bag-outline',
       beauty_product: 'star-outline',
       other_product: 'cube-outline',
+      board_game: 'shuffle-outline',
+      rpg: 'book-open-outline',
     };
     return icons[name] ?? 'list-outline';
   }
@@ -816,6 +850,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     utensils: 'shopping-bag-outline',
     sparkles: 'star-outline',
     package: 'cube-outline',
+    dice: 'shuffle-outline',
+    'book-open': 'book-open-outline',
   };
 
   pickIcon(type: ItemType): string {
@@ -859,6 +895,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showPlaceSearch.set(false);
     this.showEuropeanaSearch.set(false);
     this.showProductSearch.set(false);
+    this.showBggSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -876,6 +913,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.productResults.set([]);
     this.productQuery.set('');
     this.resetProductBarcodeState();
+    this.bggResults.set([]);
+    this.bggQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
@@ -898,6 +937,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showPlaceSearch.set(false);
     this.showEuropeanaSearch.set(false);
     this.showProductSearch.set(false);
+    this.showBggSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -912,6 +952,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.resetPlaceManualState();
     this.europeanaResults.set([]);
     this.europeanaQuery.set('');
+    this.bggResults.set([]);
+    this.bggQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.pendingImageCaption.set('');
@@ -1413,6 +1455,60 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  // ── BoardGameGeek search ──────────────────────────────────────────────────────
+
+  onBggQueryChange(q: string): void {
+    this.bggQuery.set(q);
+    if (q.trim().length < 2) {
+      this.bggResults.set([]);
+      this.bggSearchLoading.set(false);
+      return;
+    }
+    this.bggSearch$.next(q.trim());
+  }
+
+  addBggItem(result: BGGSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? null;
+
+    this.itemService.addItem(listId, {
+      text: result.title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: result.metadata,
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${result.title}" aggiunto!`, 'Aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere l\'elemento.', 'Errore')
+    });
+  }
+
+  isBggItem(item: Item): boolean {
+    const name = item.item_type_detail?.name;
+    return name === 'board_game' || name === 'rpg';
+  }
+
+  bggIcon(item: Item): string {
+    return item.item_type_detail?.name === 'rpg' ? 'book-open-outline' : 'shuffle-outline';
+  }
+
+  bggMeta(item: Item): {
+    bgg_id?: number;
+    year_published?: number;
+    service_url?: string;
+  } {
+    return (item.metadata ?? {}) as {
+      bgg_id?: number;
+      year_published?: number;
+      service_url?: string;
+    };
+  }
+
   // ── Open Food/Beauty/Products Facts search ────────────────────────────────────
 
   productSearchTitle(): string {
@@ -1720,8 +1816,25 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return this.items().some(item => this.isProductItem(item));
   }
 
+  get hasBggItems(): boolean {
+    return this.items().some(item => this.isBggItem(item));
+  }
+
   get hasExternalItems(): boolean {
-    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems || this.hasProductItems;
+    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems || this.hasProductItems || this.hasBggItems;
+  }
+
+  externalAttributions(): { name: string; url: string }[] {
+    const sources: { name: string; url: string; present: boolean }[] = [
+      { name: 'OpenLibrary', url: 'https://openlibrary.org', present: this.hasBookItems },
+      { name: 'TheTVDB', url: 'https://thetvdb.com', present: this.hasTvdbItems },
+      { name: 'MusicBrainz', url: 'https://musicbrainz.org', present: this.hasMusicItems },
+      { name: 'OpenStreetMap', url: 'https://www.openstreetmap.org/copyright', present: this.hasPlaceItems },
+      { name: 'Europeana', url: 'https://www.europeana.eu', present: this.hasEuropeanaItems },
+      { name: 'Open Food Facts', url: 'https://world.openfoodfacts.org', present: this.hasProductItems },
+      { name: 'BoardGameGeek', url: 'https://boardgamegeek.com', present: this.hasBggItems },
+    ];
+    return sources.filter(s => s.present).map(({ name, url }) => ({ name, url }));
   }
 
   get isOwner(): boolean {

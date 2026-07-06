@@ -667,6 +667,21 @@ $warning-100: #fff8e6;
   }
 }
 
+.powered-by-bgg-logo {
+  height: 20px;
+  width: auto;
+  display: block;
+}
+
+.powered-by-bgg-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+
+  &:hover { opacity: 1; }
+}
+
 .items-attribution {
   font-size: 0.75rem;
   color: $text-hint;

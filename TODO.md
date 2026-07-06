@@ -4,6 +4,82 @@
 
 ---
 
+## Riattivazione tipi "Gioco da tavolo" (`board_game`) e "Gioco di ruolo" (`rpg`), via BoardGameGeek
+
+I due tipi `board_game` e `rpg` erano presenti come `ItemType` di sistema fin dal
+primo commit, ma non hanno mai avuto un form di ricerca/aggiunta dedicato lato
+frontend; dal commit "Musicbrainz integration" (2026-07-02) venivano nascosti dal
+type picker tramite `HIDDEN_ITEM_TYPES` in attesa che il backend implementasse
+un'integrazione reale. Il backend ha ora aggiunto BoardGameGeek (XML API2):
+`GET /api/v1/bgg/search/?q=…&type=boardgame|rpgitem`, `GET /api/v1/bgg/games/{id}/`
+(dettaglio esteso con versioni localizzate) e `GET /api/v1/bgg/languages/`.
+**Stato: ✅ Implementato (ricerca + aggiunta) e verificato end-to-end (2026-07-06).**
+
+**File nuovi:**
+- `src/app/models/bgg.model.ts` — `BGGSearchType` (`'boardgame' | 'rpgitem'`),
+  `BGGSearchResult` (i risultati di ricerca BGG espongono solo `bgg_id`,
+  `year_published`, `service_url` in `metadata`; `image_url` è sempre `null` per
+  costruzione lato backend — BGG non restituisce immagini nei risultati di ricerca).
+- `src/app/services/bgg.service.ts` — `search(q, type, limit)`, stesso pattern
+  hardcoded-per-tipo di `EuropeanaService`/`MusicBrainzService`.
+
+**File modificati:**
+- `src/app/pages/list-detail/list-detail.component.ts` — rimossa la costante
+  `HIDDEN_ITEM_TYPES` e il filtro in `ngOnInit` (i due tipi tornano visibili nel
+  type picker); signal/subject per la ricerca BGG (`showBggSearch`/`bggQuery`/
+  `bggResults`), branch in `selectItemType`/`backToTypePicker`/`closeAddPanel`,
+  `onBggQueryChange`, `addBggItem` (usa direttamente i campi minimali restituiti
+  dalla ricerca, senza chiamare il dettaglio esteso `/bgg/games/{id}/` — coerente
+  con il resto della pagina, che non arricchisce mai i risultati di ricerca con
+  una fetch aggiuntiva se non per i figli di una serie TV), `isBggItem`/`bggMeta`/
+  `bggIcon` (`shuffle-outline` per `board_game`, `book-open-outline` per `rpg` —
+  Eva Icons non ha un'icona "dado"), label italiane "Gioco da tavolo"/"Gioco di
+  ruolo" (già presenti in `typeLabelTranslations` da prima).
+- `src/app/pages/list-detail/list-detail.component.html` — pannello di ricerca BGG
+  (stesso pattern di libro/TVDB/MusicBrainz/Europeana/prodotto), branch `isBggItem`
+  nella card elemento (nessuna miniatura, solo icona — `image_url` sempre `null`
+  in ricerca) e nel pannello di dettaglio (anno, link a BoardGameGeek).
+- `public/images/powered-by-bgg.png` — logo ufficiale "Powered by BGG" (fornito
+  dall'utente, non generato), mostrato sia nel pannello di ricerca sia nel
+  pannello di dettaglio elemento (sotto il link "Apri su BoardGameGeek"), ognuno
+  come link a boardgamegeek.com. Referenziato con path assoluto (`/images/...`)
+  anziché relativo, perché la pagina vive sotto `/pages/lists/{id}` — un path
+  relativo si sarebbe risolto in modo errato rispetto alla route corrente.
+- **Bug preesistente corretto nel percorso:** il footer di attribuzione
+  (`items-attribution`) concatenava le fonti con una catena di `@if` a coppie
+  adiacenti (`hasX && hasY`), che ometteva il separatore " · " ogni volta che due
+  fonti presenti non erano adiacenti nella catena (es. solo libro + BGG, senza
+  TVDB/MusicBrainz/Luogo/Europeana/Prodotto in mezzo) — riscontrato durante il
+  test end-to-end di questa funzionalità. Sostituito con `externalAttributions()`
+  (metodo che restituisce l'elenco delle fonti effettivamente presenti) e un
+  `@for` con separatore basato su `$last`, che gestisce correttamente qualunque
+  combinazione di fonti.
+
+**Nota:** la ricerca BGG restituisce metadata minimale (`bgg_id`, `year_published`,
+`service_url`); i campi ricchi dello schema (`min_players`, `categories`,
+`mechanics`, `designers`, `publisher`, `language`, `thumbnail_url`, versioni
+localizzate) richiederebbero una chiamata aggiuntiva a `GET /bgg/games/{id}/` in
+fase di aggiunta — non implementata qui per coerenza con il resto della pagina,
+che non arricchisce mai i risultati di ricerca con una fetch di dettaglio (lo
+stesso limite esiste già per l'artista Europeana, vedi sezione sotto). Un'estensione
+futura per popolare giocatori/tempo di gioco/versioni localizzate userebbe
+`bggService` con una chiamata a `fetch_game` dopo la selezione del risultato.
+
+**Verifica end-to-end (2026-07-06):** testato con Playwright contro il backend
+locale via Docker (richiede l'overlay `docker-compose.x86_64.yml` e
+`BGG_API_KEY` configurata in `.env`, vedi `CLAUDE.md`). Confermati: le due tile
+"Gioco da tavolo"/"Gioco di ruolo" nel type picker; ricerca testuale reale su
+BoardGameGeek per entrambi i tipi (`type=boardgame`/`type=rpgitem`); aggiunta di
+un elemento per tipo (Catan, 1995; un gioco di ruolo del 1998); rendering
+miniatura/card con icona dedicata e anno; pannello di dettaglio con link
+"Apri su BoardGameGeek"; footer di attribuzione con la fonte BoardGameGeek,
+incluso il caso non-adiacente (libro + BGG) dopo il fix del bug preesistente
+sopra descritto. Nessun errore in console riconducibile al codice applicativo
+(residua solo il warning Nebular preesistente `NG0100` sul menu laterale, già
+presente su `main`).
+
+---
+
 ## Condivisione lista (utenti + gruppi, con permesso view/edit) e copia elemento tra liste
 
 Il backend ha aggiunto nel tempo `permission` (`view`/`edit`) su `ListGroupVisibility`

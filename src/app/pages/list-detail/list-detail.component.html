@@ -777,6 +777,77 @@
       </nb-card>
     }
 
+    <!-- ── BoardGameGeek search panel ─────────────────────────────────────── -->
+    @if (showBggSearch() && isOwner) {
+      <nb-card class="add-item-card bgg-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon [icon]="selectedType()?.name === 'rpg' ? 'book-open-outline' : 'shuffle-outline'"></nb-icon>
+          @if (selectedType()?.name === 'rpg') {
+            Cerca gioco di ruolo su BoardGameGeek
+          } @else {
+            Cerca gioco da tavolo su BoardGameGeek
+          }
+        </nb-card-header>
+        <nb-card-body>
+          <div class="book-search-input-wrap">
+            <input nbInput fullWidth #bggInput
+                   [value]="bggQuery()"
+                   placeholder="Titolo del gioco..."
+                   (input)="onBggQueryChange(bggInput.value)" />
+            @if (bggSearchLoading()) {
+              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+            }
+          </div>
+
+          @if (bggResults().length > 0) {
+            <div class="book-results">
+              @for (result of bggResults(); track $index) {
+                <div class="book-result" (click)="addBggItem(result)" role="button" tabindex="0"
+                     (keyup.enter)="addBggItem(result)">
+                  @if (result.image_url) {
+                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
+                  } @else {
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon [icon]="selectedType()?.name === 'rpg' ? 'book-open-outline' : 'shuffle-outline'"></nb-icon>
+                    </div>
+                  }
+                  <div class="book-result-info">
+                    <p class="book-result-title">{{ result.title }}</p>
+                    @if (result.subtitle) {
+                      <p class="book-result-meta">{{ result.subtitle }}</p>
+                    }
+                    @if (result.service_url) {
+                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
+                         class="result-service-link" (click)="$event.stopPropagation()">
+                        <nb-icon icon="external-link-outline"></nb-icon> BoardGameGeek
+                      </a>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+            </div>
+          } @else if (bggQuery().trim().length >= 2 && !bggSearchLoading()) {
+            <p class="book-no-results">Nessun risultato trovato per "{{ bggQuery() }}".</p>
+          }
+
+          <div class="panel-attribution">
+            <a href="https://boardgamegeek.com" target="_blank" rel="noopener noreferrer">
+              <img src="/images/powered-by-bgg.png" alt="Powered by BGG" class="powered-by-bgg-logo">
+            </a>
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
     <!-- ── Place search panel (Nominatim) ─────────────────────────────────── -->
     @if (showPlaceSearch() && isOwner) {
       <nb-card class="add-item-card place-search-card" accent="info">
@@ -1314,6 +1385,20 @@
                           </p>
                         </div>
                       </div>
+                    } @else if (isBggItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        <div class="book-cover book-cover--placeholder">
+                          <nb-icon [icon]="bggIcon(item)"></nb-icon>
+                        </div>
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
+                            @if (bggMeta(item).year_published) { {{ bggMeta(item).year_published }} }
+                          </p>
+                        </div>
+                      </div>
                     } @else if (isPlaceItem(item)) {
                       <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
                            (keyup.enter)="openDetail(item)" title="Mostra dettagli">
@@ -1467,7 +1552,7 @@
                   </div>
 
                   <!-- ── Item detail panel ──────────────────────────────── -->
-                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || isProductItem(item) || (isImageItem(item) && item.image))) {
+                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || isProductItem(item) || isBggItem(item) || (isImageItem(item) && item.image))) {
                     <div class="item-detail">
                       @if (isBookItem(item)) {
                         <div class="item-detail-grid">
@@ -1603,6 +1688,34 @@
                                 Apri su MusicBrainz
                               </a>
                             }
+                          </div>
+                        </div>
+                      } @else if (isBggItem(item)) {
+                        <div class="item-detail-grid">
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (item.item_type_detail) {
+                              <p class="item-detail-row">
+                                <nb-icon [icon]="bggIcon(item)"></nb-icon>
+                                {{ typeLabel(item.item_type_detail) }}
+                              </p>
+                            }
+                            @if (bggMeta(item).year_published) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="calendar-outline"></nb-icon>
+                                {{ bggMeta(item).year_published }}
+                              </p>
+                            }
+                            @if (bggMeta(item).service_url) {
+                              <a [href]="bggMeta(item).service_url" target="_blank" rel="noopener noreferrer"
+                                 class="item-detail-link">
+                                <nb-icon icon="external-link-outline"></nb-icon>
+                                Apri su BoardGameGeek
+                              </a>
+                            }
+                            <a href="https://boardgamegeek.com" target="_blank" rel="noopener noreferrer" class="powered-by-bgg-link">
+                              <img src="/images/powered-by-bgg.png" alt="Powered by BGG" class="powered-by-bgg-logo">
+                            </a>
                           </div>
                         </div>
                       } @else if (isPlaceItem(item)) {
@@ -1805,28 +1918,9 @@
       @if (hasExternalItems) {
         <nb-card-footer class="items-attribution">
           Dati provenienti da:
-          @if (hasBookItems) {
-            <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">OpenLibrary</a>
-          }
-          @if (hasBookItems && (hasTvdbItems || hasMusicItems)) { · }
-          @if (hasTvdbItems) {
-            <a href="https://thetvdb.com" target="_blank" rel="noopener noreferrer">TheTVDB</a>
-          }
-          @if (hasTvdbItems && hasMusicItems) { · }
-          @if (hasMusicItems) {
-            <a href="https://musicbrainz.org" target="_blank" rel="noopener noreferrer">MusicBrainz</a>
-          }
-          @if (hasMusicItems && hasPlaceItems) { · }
-          @if (hasPlaceItems) {
-            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>
-          }
-          @if (hasPlaceItems && hasEuropeanaItems) { · }
-          @if (hasEuropeanaItems) {
-            <a href="https://www.europeana.eu" target="_blank" rel="noopener noreferrer">Europeana</a>
-          }
-          @if (hasEuropeanaItems && hasProductItems) { · }
-          @if (hasProductItems) {
-            <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener noreferrer">Open Food Facts</a>
+          @for (source of externalAttributions(); track source.name; let last = $last) {
+            <a [href]="source.url" target="_blank" rel="noopener noreferrer">{{ source.name }}</a>
+            @if (!last) { · }
           }
         </nb-card-footer>
       }
