@@ -4,6 +4,87 @@
 
 ---
 
+## Bug: `authInterceptor` allega un token stale/non valido anche alle richieste di login, bloccando il login (incluso Google)
+
+**Stato: ✅ Corretto e verificato end-to-end (2026-07-06).**
+
+Segnalato dall'utente: il login con Google fallisce con
+`401 AUTH_INVALID_CREDENTIALS` e messaggio `"User not found"` /
+`code: "user_not_found"`. Diagnosticato lato backend: quel messaggio proviene
+esattamente da `rest_framework_simplejwt.authentication.JWTAuthentication.get_user()`
+(l'utente indicato dal claim `user_id` del token non esiste più nel DB), **non**
+da un problema nel flusso OAuth di Google in sé
+(`apps/accounts/views.py::GoogleLoginView`, `apps/accounts/adapters.py`, entrambi
+verificati lato backend e corretti).
+
+**Causa nel frontend:** `src/app/interceptors/auth.interceptor.ts` allega
+l'header `Authorization: Bearer <token>` a **ogni** richiesta HTTP in uscita,
+prendendo il token da `localStorage` (`AuthService.getAccessToken()`) senza
+alcuna eccezione — comprese le chiamate agli endpoint pubblici di autenticazione
+(`POST /auth/login/`, `POST /auth/register/`, `POST /auth/google/`,
+`POST /auth/token/refresh/`, `POST /auth/password/reset/`, ecc., vedi
+`src/app/services/auth.service.ts`). Il backend applica `JWTAuthentication`
+globalmente su **tutte** le richieste (non solo su quelle con
+`permission_classes` che richiedono autenticazione: l'autenticazione DRF viene
+valutata prima del controllo dei permessi) — quindi se in `localStorage` è
+rimasto un `access_token` non più valido (scaduto, oppure riferito a uno
+`user_id` che non esiste più nel DB — es. dopo un reset/ripristino del
+database, vedi l'incidente di perdita dati del 2026-07-03), **qualunque**
+richiesta, incluso il login stesso, viene rifiutata con 401 prima ancora che
+la logica dell'endpoint (login, login Google, ecc.) venga eseguita. In pratica
+un token stale in `localStorage` impedisce definitivamente di rifare login,
+anche con credenziali/Google validi, finché non si svuota manualmente lo
+storage del browser.
+
+**Fix suggerito:** in `authInterceptor`, non allegare l'header `Authorization`
+alle richieste verso gli endpoint di autenticazione pubblici (login, register,
+google, token/refresh, password reset, verify-email) — ad es. con una whitelist
+di path o escludendo le richieste per cui non è ancora presente una sessione
+autenticata valida. In alternativa/aggiunta, quando una richiesta va in 401 con
+`code: "user_not_found"` o `"user_inactive"` (utente non più valido, a
+differenza di un token semplicemente scaduto) l'interceptor dovrebbe chiamare
+`auth.clearSession()` senza tentare il refresh (il refresh token sarà
+comunque legato allo stesso utente inesistente).
+
+**Fix implementato:** in `src/app/interceptors/auth.interceptor.ts` aggiunta
+una whitelist `PUBLIC_AUTH_PATHS` (login, register, resend-email,
+verify-email, google, token/refresh, password/reset, password/reset/confirm);
+`isPublicAuthRequest()` verifica l'URL della richiesta e, se corrisponde, il
+token in `localStorage` non viene allegato affatto (indipendentemente dal
+fatto che sia stale o meno) e l'intero blocco `catchError` di
+refresh-automatico/`clearSession`+redirect viene bypassato per queste
+richieste (l'errore viene propagato as-is al chiamante, es. `login.component`,
+che già gestisce i propri stati di errore — evitava anche un effetto
+collaterale preesistente per cui un tentativo di login con password errata,
+in presenza di un refresh token in storage, veniva "agganciato" dal retry
+automatico dell'interceptor invece di restituire subito l'errore di
+credenziali non valide al componente). Non è stata implementata la
+whitelist di `code`/messaggio per `user_not_found`/`user_inactive` (fix
+"in alternativa/aggiunta" nella proposta sopra): verificato lato backend
+(`apps/core/exceptions.py::custom_exception_handler`) che tutte le
+`AuthenticationFailed` — incluso "User not found" da
+`JWTAuthentication.get_user()` — vengono normalizzate allo stesso
+`code: "AUTH_INVALID_CREDENTIALS"` (il messaggio testuale differisce ma non è
+un identificatore stabile su cui basare logica applicativa); la whitelist dei
+path pubblici già risolve al 100% il bug segnalato (token stale che blocca il
+login), quindi questa parte opzionale è stata omessa per evitare di introdurre
+pattern-matching fragile su stringhe di messaggio.
+
+**Verifica end-to-end (2026-07-06):** riprodotto il bug con Playwright contro
+il backend locale via Docker impostando in `localStorage` un access/refresh
+token sintatticamente valido ma con `user_id` inesistente e firma non valida,
+poi tentando il login con credenziali corrette di un utente reale: prima del
+fix la richiesta `POST /auth/login/` sarebbe stata rifiutata con 401 dal
+backend per il token stale allegato, impedendo il login; dopo il fix la
+richiesta parte senza header `Authorization`, riceve `200` e l'utente atterra
+correttamente su `/pages/dashboard`. Verificato anche via network log che
+nessun header `Authorization` viene allegato alle chiamate verso gli endpoint
+pubblici elencati in `PUBLIC_AUTH_PATHS`. Nessun errore in console
+riconducibile al fix (residua solo il warning Nebular preesistente `NG0100`
+sul menu laterale, già presente su `main`).
+
+---
+
 ## Riattivazione tipi "Gioco da tavolo" (`board_game`) e "Gioco di ruolo" (`rpg`), via BoardGameGeek
 
 I due tipi `board_game` e `rpg` erano presenti come `ItemType` di sistema fin dal
