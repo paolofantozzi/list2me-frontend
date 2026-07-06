@@ -1762,6 +1762,9 @@
                           <button nbButton ghost size="tiny" status="warning" (click)="unlinkChildList(item)" title="Scollega sotto-lista">
                             <nb-icon icon="link-2-outline"></nb-icon>
                           </button>
+                          <button nbButton ghost size="tiny" status="danger" (click)="deleteChildList(item)" title="Elimina sotto-lista definitivamente">
+                            <nb-icon icon="trash-2-outline"></nb-icon>
+                          </button>
                         }
                         <button nbButton ghost size="tiny" (click)="startEditItem(item)" title="Modifica">
                           <nb-icon icon="edit-2-outline"></nb-icon>

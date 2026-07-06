@@ -251,6 +251,72 @@ $danger: #ff3d71;
   }
 }
 
+// ── Pannello sottoliste ───────────────────────────────────────────────────────
+
+.sublists-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.625rem;
+  color: $primary;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  nb-icon { font-size: 1rem; }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.sublists-panel {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  background: $primary-100;
+  border-radius: 8px;
+  cursor: default;
+}
+
+.sublists-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: $text-hint;
+}
+
+.sublist-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0;
+  font-size: 0.8125rem;
+  color: $text-basic;
+
+  & + .sublist-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.6);
+  }
+
+  nb-icon:first-child {
+    font-size: 0.95rem;
+    color: $primary;
+    flex-shrink: 0;
+  }
+}
+
+.sublist-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.sublist-count {
+  color: $text-hint;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
 .visibility-options {
   display: flex;
   gap: 1.5rem;

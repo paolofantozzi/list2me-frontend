@@ -1127,6 +1127,22 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  deleteChildList(item: Item): void {
+    const detail = item.child_list_detail;
+    if (!detail) return;
+    if (!confirm(`Eliminare definitivamente la sotto-lista "${detail.title}"? L'operazione non è reversibile.`)) return;
+
+    this.listService.deleteList(detail.id).subscribe({
+      next: () => {
+        this.items.update(items => items.map(i =>
+          i.id === item.id ? { ...i, child_list: null, child_list_detail: null } : i
+        ));
+        this.toastr.success('Sotto-lista eliminata.', 'Eliminata');
+      },
+      error: () => this.toastr.danger('Impossibile eliminare la sotto-lista (solo il proprietario può farlo).', 'Errore')
+    });
+  }
+
   // ── Book editions ─────────────────────────────────────────────────────────────
 
   openEditions(book: BookResult): void {

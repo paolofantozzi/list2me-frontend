@@ -109,6 +109,7 @@
                   }
                 </div>
               }
+              <ng-container *ngTemplateOutlet="sublistsPanel; context: { list, canEdit: true }"></ng-container>
             </nb-card-body>
             <nb-card-footer>
               <div class="list-stats">
@@ -205,6 +206,7 @@
           }
         </div>
       }
+      <ng-container *ngTemplateOutlet="sublistsPanel; context: { list, canEdit: canEdit(list) }"></ng-container>
     </nb-card-body>
     <nb-card-footer>
       <div class="list-stats">
@@ -238,4 +240,40 @@
       </div>
     </nb-card-footer>
   </nb-card>
+</ng-template>
+
+<!-- ── Template condiviso per il pannello sottoliste ────────────────────────── -->
+<ng-template #sublistsPanel let-list="list" let-canEditList="canEdit">
+  <div class="sublists-toggle" (click)="toggleSublists(list, $event)">
+    <nb-icon [icon]="isSublistsExpanded(list.id) ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
+    Sottoliste
+  </div>
+  @if (isSublistsExpanded(list.id)) {
+    <div class="sublists-panel" (click)="$event.stopPropagation()">
+      @if (sublistsLoading().has(list.id)) {
+        <nb-spinner size="small" status="primary"></nb-spinner>
+      } @else if ((sublists()[list.id] ?? []).length === 0) {
+        <p class="sublists-empty">Nessuna sottolista.</p>
+      } @else {
+        @for (entry of sublists()[list.id]; track entry.item.id) {
+          <div class="sublist-row">
+            <nb-icon [icon]="entry.detail.visibility === 'public' ? 'globe-2-outline' : entry.detail.visibility === 'group' ? 'people-outline' : 'lock-outline'"></nb-icon>
+            <span class="sublist-title">{{ entry.detail.title }}</span>
+            <span class="sublist-count">{{ entry.detail.items_count }} el.</span>
+            <button nbButton ghost size="tiny" (click)="openSublist(entry.detail.id, $event)" title="Apri sottolista">
+              <nb-icon icon="arrow-forward-outline"></nb-icon>
+            </button>
+            @if (canEditList) {
+              <button nbButton ghost size="tiny" status="warning" (click)="unlinkSublist(list.id, entry, $event)" title="Scollega dalla lista">
+                <nb-icon icon="link-2-outline"></nb-icon>
+              </button>
+              <button nbButton ghost size="tiny" status="danger" (click)="deleteSublist(list.id, entry, $event)" title="Elimina sottolista definitivamente">
+                <nb-icon icon="trash-2-outline"></nb-icon>
+              </button>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
 </ng-template>

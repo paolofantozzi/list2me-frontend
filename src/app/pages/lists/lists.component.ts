@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule, NbBadgeModule,
@@ -8,9 +8,15 @@ import {
   NbToastrService, NbAlertModule, NbTagModule, NbCheckboxModule
 } from '@nebular/theme';
 import { ListService } from '../../services/list.service';
+import { ItemService } from '../../services/item.service';
 import { AuthService } from '../../services/auth.service';
-import { List } from '../../models/list.model';
+import { List, Item, ChildListDetail } from '../../models/list.model';
 import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
+
+interface SublistEntry {
+  item: Item;
+  detail: ChildListDetail;
+}
 
 @Component({
   selector: 'app-lists',
@@ -71,13 +77,93 @@ export class ListsComponent implements OnInit {
     return list.my_permission === 'edit';
   }
 
+  // ── Sottoliste (child list) ──────────────────────────────────────────────
+  expandedSublists = signal<Set<string>>(new Set());
+  sublistsLoading = signal<Set<string>>(new Set());
+  sublists = signal<Record<string, SublistEntry[]>>({});
+
+  isSublistsExpanded(listId: string): boolean {
+    return this.expandedSublists().has(listId);
+  }
+
+  toggleSublists(list: List, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const id = list.id;
+    const expanded = new Set(this.expandedSublists());
+    if (expanded.has(id)) {
+      expanded.delete(id);
+      this.expandedSublists.set(expanded);
+      return;
+    }
+    expanded.add(id);
+    this.expandedSublists.set(expanded);
+
+    if (this.sublists()[id] !== undefined) return;
+
+    this.sublistsLoading.update(s => new Set(s).add(id));
+    this.itemService.getItems(id).subscribe({
+      next: items => {
+        const entries: SublistEntry[] = items
+          .filter((i): i is Item & { child_list_detail: ChildListDetail } => !!i.child_list_detail)
+          .map(item => ({ item, detail: item.child_list_detail }));
+        this.sublists.update(s => ({ ...s, [id]: entries }));
+        this.sublistsLoading.update(s => { const n = new Set(s); n.delete(id); return n; });
+      },
+      error: () => {
+        this.sublistsLoading.update(s => { const n = new Set(s); n.delete(id); return n; });
+        this.toastr.danger('Impossibile caricare le sottoliste.', 'Errore');
+      }
+    });
+  }
+
+  openSublist(childId: string, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.router.navigate(['/pages/lists', childId]);
+  }
+
+  unlinkSublist(parentListId: string, entry: SublistEntry, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.itemService.updateItem(parentListId, entry.item.id, { child_list: null }).subscribe({
+      next: () => {
+        this.sublists.update(s => ({
+          ...s,
+          [parentListId]: (s[parentListId] ?? []).filter(e => e.item.id !== entry.item.id)
+        }));
+        this.toastr.success('Sottolista scollegata.', 'Successo');
+      },
+      error: () => this.toastr.danger('Impossibile scollegare la sottolista.', 'Errore')
+    });
+  }
+
+  deleteSublist(parentListId: string, entry: SublistEntry, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!confirm(`Eliminare definitivamente la sottolista "${entry.detail.title}"? L'operazione non è reversibile.`)) return;
+
+    this.listService.deleteList(entry.detail.id).subscribe({
+      next: () => {
+        this.sublists.update(s => ({
+          ...s,
+          [parentListId]: (s[parentListId] ?? []).filter(e => e.item.id !== entry.item.id)
+        }));
+        this.toastr.success('Sottolista eliminata.', 'Eliminata');
+      },
+      error: () => this.toastr.danger('Impossibile eliminare la sottolista (solo il proprietario può farlo).', 'Errore')
+    });
+  }
+
   createForm: FormGroup;
 
   constructor(
     private listService: ListService,
+    private itemService: ItemService,
     private auth: AuthService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
+    private router: Router,
   ) {
     this.createForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
