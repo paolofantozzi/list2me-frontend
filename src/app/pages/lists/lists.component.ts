@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -15,6 +16,7 @@ import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
   selector: 'app-lists',
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     RouterLink,
     ReactiveFormsModule,
     NbCardModule,
@@ -46,10 +48,28 @@ export class ListsComponent implements OnInit {
     return this.lists().filter(l => l.owner.id === uid);
   });
 
-  otherLists = computed(() => {
+  // Una lista non propria con visibility 'private' è raggiungibile solo perché
+  // condivisa direttamente con l'utente (vedi le regole di accesso di GET /lists/
+  // nello schema OpenAPI): è l'unico modo, oltre a owner/gruppo/pubblica, per cui
+  // può comparire nella risposta.
+  groupLists = computed(() => {
     const uid = this.auth.currentUser()?.id;
-    return this.lists().filter(l => l.owner.id !== uid);
+    return this.lists().filter(l => l.owner.id !== uid && l.visibility === 'group');
   });
+
+  publicLists = computed(() => {
+    const uid = this.auth.currentUser()?.id;
+    return this.lists().filter(l => l.owner.id !== uid && l.visibility === 'public');
+  });
+
+  sharedLists = computed(() => {
+    const uid = this.auth.currentUser()?.id;
+    return this.lists().filter(l => l.owner.id !== uid && l.visibility === 'private');
+  });
+
+  canEdit(list: List): boolean {
+    return list.my_permission === 'edit';
+  }
 
   createForm: FormGroup;
 

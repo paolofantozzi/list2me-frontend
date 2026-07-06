@@ -26,6 +26,8 @@ export interface List {
   fork_point_version?: number | null;
   is_fork: boolean;
   is_following?: boolean;
+  /** Permesso effettivo dell'utente corrente su questa lista ('edit' anche per il proprietario). */
+  my_permission: 'view' | 'edit';
   items?: Item[];
   created_at: string;
   updated_at: string;

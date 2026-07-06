@@ -1843,6 +1843,16 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return !!list && !!user && list.owner.id === user.id;
   }
 
+  /**
+   * Permesso di modifica sui contenuti (elementi, tag) — vero anche per un
+   * utente non proprietario con `my_permission: 'edit'` (condivisione diretta o
+   * di gruppo). Distinto da `isOwner`, che resta riservato alle azioni
+   * amministrative (condivisione, fork/diff/merge, gestione suggerimenti).
+   */
+  get canEdit(): boolean {
+    return this.list()?.my_permission === 'edit';
+  }
+
   goBack(): void {
     this.router.navigate(['/pages/lists']);
   }

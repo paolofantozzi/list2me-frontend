@@ -64,6 +64,7 @@
 
     <!-- ── Le mie liste ────────────────────────────────────────────────────── -->
     <div class="section-header">
+      <nb-icon icon="person-outline" class="section-icon"></nb-icon>
       <h2 class="section-title">Le mie liste</h2>
       <span class="section-count">{{ myLists().length }}</span>
     </div>
@@ -115,6 +116,10 @@
                   <nb-icon icon="checkmark-square-outline"></nb-icon>
                   {{ list.items_count }} {{ list.items_count === 1 ? 'elemento' : 'elementi' }}
                 </span>
+                <span class="stat stat--editable" title="Sei il proprietario: puoi modificarla liberamente">
+                  <nb-icon icon="edit-2-outline"></nb-icon>
+                  Modificabile
+                </span>
                 @if (list.is_fork) {
                   <span class="stat">
                     <nb-icon icon="copy-outline"></nb-icon>
@@ -128,64 +133,109 @@
       </div>
     }
 
-    <!-- ── Liste di altri utenti ───────────────────────────────────────────── -->
-    @if (otherLists().length > 0) {
+    <!-- ── Liste dei miei gruppi ───────────────────────────────────────────── -->
+    @if (groupLists().length > 0) {
       <div class="section-header section-header--others">
-        <h2 class="section-title">Liste di altri utenti</h2>
-        <span class="section-count">{{ otherLists().length }}</span>
+        <nb-icon icon="people-outline" class="section-icon"></nb-icon>
+        <h2 class="section-title">Liste dei miei gruppi</h2>
+        <span class="section-count">{{ groupLists().length }}</span>
       </div>
       <div class="lists-grid">
-        @for (list of otherLists(); track list.id) {
-          <nb-card [routerLink]="['/pages/lists', list.id]" class="list-card list-card--other">
-            <nb-card-header>
-              <div class="list-card-header">
-                <div class="list-title-row">
-                  <h3 class="list-title">{{ list.title }}</h3>
-                  <nb-icon [icon]="list.visibility === 'public' ? 'globe-2-outline' : list.visibility === 'group' ? 'people-outline' : 'lock-outline'"
-                           class="visibility-icon"
-                           [title]="list.visibility === 'public' ? 'Pubblica' : list.visibility === 'group' ? 'Gruppo' : 'Privata'"></nb-icon>
-                </div>
-              </div>
-            </nb-card-header>
-            <nb-card-body>
-              <div class="list-owner-row">
-                <nb-icon icon="person-outline" class="owner-icon"></nb-icon>
-                <span class="owner-name">{{ list.owner.username }}</span>
-              </div>
-              @if (list.description) {
-                <p class="list-description">{{ list.description }}</p>
-              }
-              @if (list.tags.length) {
-                <div class="list-tags">
-                  @for (tag of list.tags; track tag.id) {
-                    <span class="tag">{{ tag.name }}</span>
-                  }
-                </div>
-              }
-            </nb-card-body>
-            <nb-card-footer>
-              <div class="list-stats">
-                <span class="stat">
-                  <nb-icon icon="checkmark-square-outline"></nb-icon>
-                  {{ list.items_count }} {{ list.items_count === 1 ? 'elemento' : 'elementi' }}
-                </span>
-                @if (list.is_following) {
-                  <span class="stat stat--following">
-                    <nb-icon icon="heart"></nb-icon>
-                    Seguita
-                  </span>
-                }
-                @if (list.is_fork) {
-                  <span class="stat">
-                    <nb-icon icon="copy-outline"></nb-icon>
-                    Fork
-                  </span>
-                }
-              </div>
-            </nb-card-footer>
-          </nb-card>
+        @for (list of groupLists(); track list.id) {
+          <ng-container *ngTemplateOutlet="otherListCard; context: { list }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ── Liste condivise con te ──────────────────────────────────────────── -->
+    @if (sharedLists().length > 0) {
+      <div class="section-header section-header--others">
+        <nb-icon icon="share-outline" class="section-icon"></nb-icon>
+        <h2 class="section-title">Condivise con te</h2>
+        <span class="section-count">{{ sharedLists().length }}</span>
+      </div>
+      <div class="lists-grid">
+        @for (list of sharedLists(); track list.id) {
+          <ng-container *ngTemplateOutlet="otherListCard; context: { list }"></ng-container>
+        }
+      </div>
+    }
+
+    <!-- ── Liste pubbliche ─────────────────────────────────────────────────── -->
+    @if (publicLists().length > 0) {
+      <div class="section-header section-header--others">
+        <nb-icon icon="globe-2-outline" class="section-icon"></nb-icon>
+        <h2 class="section-title">Liste pubbliche</h2>
+        <span class="section-count">{{ publicLists().length }}</span>
+      </div>
+      <div class="lists-grid">
+        @for (list of publicLists(); track list.id) {
+          <ng-container *ngTemplateOutlet="otherListCard; context: { list }"></ng-container>
         }
       </div>
     }
   }
 </div>
+
+<!-- ── Template condiviso per le card di liste non proprie ─────────────────── -->
+<ng-template #otherListCard let-list="list">
+  <nb-card [routerLink]="['/pages/lists', list.id]" class="list-card list-card--other">
+    <nb-card-header>
+      <div class="list-card-header">
+        <div class="list-title-row">
+          <h3 class="list-title">{{ list.title }}</h3>
+          <nb-icon [icon]="list.visibility === 'public' ? 'globe-2-outline' : list.visibility === 'group' ? 'people-outline' : 'lock-outline'"
+                   class="visibility-icon"
+                   [title]="list.visibility === 'public' ? 'Pubblica' : list.visibility === 'group' ? 'Gruppo' : 'Privata'"></nb-icon>
+        </div>
+      </div>
+    </nb-card-header>
+    <nb-card-body>
+      <div class="list-owner-row">
+        <nb-icon icon="person-outline" class="owner-icon"></nb-icon>
+        <span class="owner-name">{{ list.owner.username }}</span>
+      </div>
+      @if (list.description) {
+        <p class="list-description">{{ list.description }}</p>
+      }
+      @if (list.tags.length) {
+        <div class="list-tags">
+          @for (tag of list.tags; track tag.id) {
+            <span class="tag">{{ tag.name }}</span>
+          }
+        </div>
+      }
+    </nb-card-body>
+    <nb-card-footer>
+      <div class="list-stats">
+        <span class="stat">
+          <nb-icon icon="checkmark-square-outline"></nb-icon>
+          {{ list.items_count }} {{ list.items_count === 1 ? 'elemento' : 'elementi' }}
+        </span>
+        @if (canEdit(list)) {
+          <span class="stat stat--editable" title="Puoi modificare questa lista">
+            <nb-icon icon="edit-2-outline"></nb-icon>
+            Modificabile
+          </span>
+        } @else {
+          <span class="stat stat--readonly" title="Puoi solo visualizzarla">
+            <nb-icon icon="eye-outline"></nb-icon>
+            Sola lettura
+          </span>
+        }
+        @if (list.is_following) {
+          <span class="stat stat--following">
+            <nb-icon icon="heart"></nb-icon>
+            Seguita
+          </span>
+        }
+        @if (list.is_fork) {
+          <span class="stat">
+            <nb-icon icon="copy-outline"></nb-icon>
+            Fork
+          </span>
+        }
+      </div>
+    </nb-card-footer>
+  </nb-card>
+</ng-template>

@@ -55,7 +55,7 @@
             @for (tag of list()!.tags; track tag.id) {
               <span class="tag">{{ tag.name }}</span>
             }
-            @if (isOwner) {
+            @if (canEdit) {
               <button nbButton ghost size="tiny" type="button" class="edit-tags-btn" (click)="startEditTags()" title="Modifica tag">
                 <nb-icon icon="edit-2-outline"></nb-icon>
                 @if (!list()!.tags.length) { Aggiungi tag }
@@ -86,10 +86,12 @@
               <nb-icon icon="copy-outline"></nb-icon>
               Fork
             </button>
-            <button nbButton ghost status="warning" (click)="toggleSuggestions()">
-              <nb-icon icon="bulb-outline"></nb-icon>
-              Suggerisci
-            </button>
+            @if (!canEdit) {
+              <button nbButton ghost status="warning" (click)="toggleSuggestions()">
+                <nb-icon icon="bulb-outline"></nb-icon>
+                Suggerisci
+              </button>
+            }
             <button nbButton ghost status="danger" size="small" (click)="reportList()" title="Segnala lista">
               <nb-icon icon="flag-outline"></nb-icon>
             </button>
@@ -112,6 +114,8 @@
               <nb-icon icon="share-outline"></nb-icon>
               Condividi
             </button>
+          }
+          @if (canEdit) {
             <button nbButton status="primary" (click)="openAddPanel()">
               <nb-icon icon="plus-outline"></nb-icon>
               Aggiungi elemento
@@ -336,7 +340,7 @@
     }
 
     <!-- ── Type picker panel ─────────────────────────────────────────────── -->
-    @if (showTypePicker() && isOwner) {
+    @if (showTypePicker() && canEdit) {
       <nb-card class="add-item-card type-picker-card" accent="primary">
         <nb-card-header>
           <nb-icon icon="plus-circle-outline"></nb-icon>
@@ -366,7 +370,7 @@
     }
 
     <!-- ── Book search panel ──────────────────────────────────────────────── -->
-    @if (showBookSearch() && isOwner) {
+    @if (showBookSearch() && canEdit) {
       <nb-card class="add-item-card book-search-card" accent="info">
         <nb-card-header>
           <nb-icon icon="book-outline"></nb-icon>
@@ -444,7 +448,7 @@
     }
 
     <!-- ── Image item panel ──────────────────────────────────────────────────── -->
-    @if (showImagePanel() && isOwner) {
+    @if (showImagePanel() && canEdit) {
       <nb-card class="add-item-card image-panel-card" accent="warning">
         <nb-card-header>
           <nb-icon icon="image-outline"></nb-icon>
@@ -493,7 +497,7 @@
     }
 
     <!-- ── Book editions panel ──────────────────────────────────────────────── -->
-    @if (showEditions() && isOwner && editionsBook()) {
+    @if (showEditions() && canEdit && editionsBook()) {
       <nb-card class="add-item-card editions-card" accent="info">
         <nb-card-header>
           <nb-icon icon="layers-outline"></nb-icon>
@@ -545,7 +549,7 @@
     }
 
     <!-- ── TVDB search panel ─────────────────────────────────────────────────── -->
-    @if (showTvdbSearch() && isOwner) {
+    @if (showTvdbSearch() && canEdit) {
       <nb-card class="add-item-card tvdb-search-card" accent="info">
         <nb-card-header>
           <nb-icon icon="tv-outline"></nb-icon>
@@ -634,7 +638,7 @@
       </nb-card>
     }
 
-    @if (showEpisodePicker() && isOwner) {
+    @if (showEpisodePicker() && canEdit) {
       <nb-card class="add-item-card tvdb-search-card" accent="info">
         <nb-card-header>
           <nb-icon icon="play-circle-outline"></nb-icon>
@@ -707,7 +711,7 @@
     }
 
     <!-- ── MusicBrainz search panel ──────────────────────────────────────────── -->
-    @if (showMusicSearch() && isOwner) {
+    @if (showMusicSearch() && canEdit) {
       <nb-card class="add-item-card music-search-card" accent="info">
         <nb-card-header>
           <nb-icon [icon]="selectedType()?.name === 'artist' ? 'mic-outline' : selectedType()?.name === 'track' ? 'music-outline' : 'recording-outline'"></nb-icon>
@@ -778,7 +782,7 @@
     }
 
     <!-- ── BoardGameGeek search panel ─────────────────────────────────────── -->
-    @if (showBggSearch() && isOwner) {
+    @if (showBggSearch() && canEdit) {
       <nb-card class="add-item-card bgg-search-card" accent="info">
         <nb-card-header>
           <nb-icon [icon]="selectedType()?.name === 'rpg' ? 'book-open-outline' : 'shuffle-outline'"></nb-icon>
@@ -849,7 +853,7 @@
     }
 
     <!-- ── Place search panel (Nominatim) ─────────────────────────────────── -->
-    @if (showPlaceSearch() && isOwner) {
+    @if (showPlaceSearch() && canEdit) {
       <nb-card class="add-item-card place-search-card" accent="info">
         <nb-card-header>
           <nb-icon icon="pin-outline"></nb-icon>
@@ -973,7 +977,7 @@
     }
 
     <!-- ── Europeana search panel ─────────────────────────────────────────── -->
-    @if (showEuropeanaSearch() && isOwner) {
+    @if (showEuropeanaSearch() && canEdit) {
       <nb-card class="add-item-card europeana-search-card" accent="info">
         <nb-card-header>
           <nb-icon [icon]="selectedType()?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline'"></nb-icon>
@@ -1042,7 +1046,7 @@
     }
 
     <!-- ── Open Food/Beauty/Products Facts search panel ─────────────────────── -->
-    @if (showProductSearch() && isOwner) {
+    @if (showProductSearch() && canEdit) {
       <nb-card class="add-item-card product-search-card" accent="info">
         <nb-card-header>
           <nb-icon [icon]="productSearchIcon()"></nb-icon>
@@ -1169,7 +1173,7 @@
     }
 
     <!-- ── Add item form ──────────────────────────────────────────────────── -->
-    @if (showAddItem() && isOwner) {
+    @if (showAddItem() && canEdit) {
       <nb-card class="add-item-card" accent="primary">
         <nb-card-header>Nuovo elemento — {{ typeLabel(selectedType()) || 'Testo libero' }}</nb-card-header>
         <nb-card-body>
@@ -1231,7 +1235,7 @@
         @if (reorderLoading()) {
           <nb-spinner size="tiny" status="primary"></nb-spinner>
         }
-        @if (isOwner && items().length > 1) {
+        @if (canEdit && items().length > 1) {
           <span class="drag-hint">
             <nb-icon icon="move-outline"></nb-icon>
             Trascina per riordinare
@@ -1242,12 +1246,12 @@
         @if (items().length === 0) {
           <div class="empty-state">
             <nb-icon icon="inbox-outline" class="empty-icon"></nb-icon>
-            <p>Nessun elemento. @if (isOwner) { Aggiungine uno qui sopra. }</p>
+            <p>Nessun elemento. @if (canEdit) { Aggiungine uno qui sopra. }</p>
           </div>
         } @else {
           <ol cdkDropList (cdkDropListDropped)="onItemDropped($event)" class="items-list">
             @for (item of items(); track item.id; let i = $index; let first = $first; let last = $last) {
-              <li cdkDrag [cdkDragDisabled]="!isOwner" class="item" [class.item--book]="isBookItem(item)">
+              <li cdkDrag [cdkDragDisabled]="!canEdit" class="item" [class.item--book]="isBookItem(item)">
                 <ng-template cdkDragPlaceholder>
                   <div class="drag-placeholder"></div>
                 </ng-template>
@@ -1289,13 +1293,13 @@
                   </form>
                 } @else {
                   <div class="item-content">
-                    @if (isOwner) {
+                    @if (canEdit) {
                       <div cdkDragHandle class="drag-handle" title="Trascina per riordinare">
                         <nb-icon icon="menu-outline"></nb-icon>
                       </div>
                     }
 
-                    @if (isOwner) {
+                    @if (canEdit) {
                       <div class="item-reorder">
                         <button nbButton ghost size="tiny" [disabled]="first" (click)="moveItemUp(i)" title="Sposta su">
                           <nb-icon icon="arrow-upward-outline"></nb-icon>
@@ -1507,7 +1511,7 @@
                       <button nbButton ghost size="tiny" (click)="openCopyPanel(item)" title="Copia in un'altra lista">
                         <nb-icon icon="copy-outline"></nb-icon>
                       </button>
-                      @if (isOwner) {
+                      @if (canEdit) {
                         @if (isBookItem(item)) {
                           <button nbButton ghost size="tiny"
                                   [disabled]="syncingItemId() === item.id"

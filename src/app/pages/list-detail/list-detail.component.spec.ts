@@ -34,6 +34,7 @@ const makeList = (overrides: Partial<List> = {}): List => ({
   version: 1,
   is_fork: false,
   is_following: false,
+  my_permission: 'edit',
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
   ...overrides,
