@@ -201,6 +201,8 @@ npm test             # Vitest
 | Changelog API | https://api.list2me.it/api/v1/changelog/ |
 | Frontend live | https://www.list2me.it |
 
+**Per implementare le nuove funzionalità del backend, consultare esclusivamente `CHANGELOG.md`, `README.md` e lo schema OpenAPI/Swagger del backend** (`/home/antigravity/workspace/list2me-backend/CHANGELOG.md` e `README.md`, oppure lo schema OpenAPI sopra). Guardare il codice sorgente del backend solo se strettamente necessario (es. per chiarire un comportamento non documentato o ambiguo).
+
 ---
 
 ## Compatibilità e dipendenze critiche
