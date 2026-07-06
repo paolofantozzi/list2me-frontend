@@ -15,6 +15,63 @@
     </nb-card-body>
   </nb-card>
 
+  @if (isAdmin()) {
+    <nb-card class="admin-card" status="warning">
+      <nb-card-header>Amministrazione utenti</nb-card-header>
+      <nb-card-body>
+        <div class="admin-search-wrap">
+          <input nbInput fullWidth [formControl]="adminQueryControl"
+                 placeholder="Cerca per nome utente o nome (anche disattivati)..." />
+          <nb-select [formControl]="adminStatusControl" class="admin-status-select">
+            <nb-option value="all">Tutti</nb-option>
+            <nb-option value="active">Solo attivi</nb-option>
+            <nb-option value="inactive">Solo disattivati</nb-option>
+          </nb-select>
+          @if (adminLoading()) {
+            <nb-spinner size="small" status="warning"></nb-spinner>
+          }
+        </div>
+
+        @if (adminUsers().length > 0) {
+          <span class="results-count">{{ adminTotal() }} {{ adminTotal() === 1 ? 'risultato' : 'risultati' }}</span>
+          <div class="admin-users-list">
+            @for (user of adminUsers(); track user.id) {
+              <div class="admin-user-row">
+                <nb-user [name]="displayName(user)" [picture]="user.avatar_url" [title]="'@' + user.username"></nb-user>
+                @if (!user.is_active) {
+                  <span class="status-badge inactive">Disattivato</span>
+                }
+                @if (!isSelf(user)) {
+                  <div class="admin-actions">
+                    @if (isSuperUser()) {
+                      <button nbButton status="info" size="tiny" ghost (click)="adminPromote(user)">
+                        <nb-icon icon="shield-outline"></nb-icon>
+                        Promuovi ad admin
+                      </button>
+                    }
+                    @if (user.is_active) {
+                      <button nbButton status="danger" size="tiny" ghost (click)="adminDeactivate(user)">
+                        <nb-icon icon="slash-outline"></nb-icon>
+                        Disattiva
+                      </button>
+                    } @else {
+                      <button nbButton status="success" size="tiny" ghost (click)="adminReactivate(user)">
+                        <nb-icon icon="checkmark-circle-outline"></nb-icon>
+                        Riattiva
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else if (!adminLoading()) {
+          <p class="admin-hint">Nessun utente trovato.</p>
+        }
+      </nb-card-body>
+    </nb-card>
+  }
+
   @if (error()) {
     <nb-alert status="danger">{{ error() }}</nb-alert>
   }

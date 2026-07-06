@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE } from './auth.service';
 import { PaginatedResponse } from '../models/common.model';
-import { UserFollowRecord, UserPublic } from '../models/user.model';
+import { AdminUser, UserFollowRecord, UserPublic } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -34,5 +34,29 @@ export class UserService {
 
   getFollowing(userId: string): Observable<UserFollowRecord[]> {
     return this.http.get<UserFollowRecord[]>(`${API_BASE}/users/${userId}/following/`);
+  }
+
+  deactivateUser(userId: string): Observable<void> {
+    return this.http.delete<void>(`${API_BASE}/auth/admin/users/${userId}/`);
+  }
+
+  reactivateUser(userId: string): Observable<void> {
+    return this.http.post<void>(`${API_BASE}/auth/admin/users/${userId}/reactivate/`, {});
+  }
+
+  promoteUser(userId: string): Observable<void> {
+    return this.http.post<void>(`${API_BASE}/auth/admin/users/${userId}/promote/`, {});
+  }
+
+  adminSearchUsers(
+    query?: string,
+    isActive?: boolean,
+    page?: number
+  ): Observable<PaginatedResponse<AdminUser>> {
+    let params = new HttpParams();
+    if (query) params = params.set('search', query);
+    if (isActive !== undefined) params = params.set('is_active', String(isActive));
+    if (page) params = params.set('page', page.toString());
+    return this.http.get<PaginatedResponse<AdminUser>>(`${API_BASE}/auth/admin/users/`, { params });
   }
 }

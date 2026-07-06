@@ -4,6 +4,65 @@
 
 ---
 
+## Gestione utenti da admin (deactivate/reactivate/promote), da backend v0.20.0/v0.21.0/v0.22.0
+
+Il backend ha aggiunto tre endpoint di manutenzione riservati agli admin:
+`DELETE /api/v1/auth/admin/users/{id}/` (disattiva, v0.20.0), `POST
+/api/v1/auth/admin/users/{id}/reactivate/` (riattiva, v0.21.0) e `POST
+/api/v1/auth/admin/users/{id}/promote/` (promuove a `is_staff`, solo superuser,
+v0.21.0). Una prima implementazione frontend (2026-07-06) era rimasta bloccata
+da due gap lato API, entrambi poi risolti in backend v0.22.0 (vedi TODO.md di
+list2me-backend): `UserDetailSerializer` ora espone `is_staff`/`is_superuser`, e
+un nuovo `GET /api/v1/auth/admin/users/` (con filtro `is_active`) permette di
+elencare anche gli account disattivati. **Stato: ✅ Implementato e verificato
+end-to-end contro entrambi i fix (2026-07-06).**
+
+**File modificati:**
+- `src/app/models/user.model.ts` — `UserDetail.is_staff`/`is_superuser` (rimasti
+  opzionali solo per compatibilità con una sessione in `localStorage` salvata
+  prima del backend v0.22.0); nuova interfaccia `AdminUser` (estende
+  `UserPublic` con `is_active`) per i risultati di `GET /auth/admin/users/`.
+- `src/app/services/user.service.ts` — `deactivateUser`, `reactivateUser`,
+  `promoteUser`, `adminSearchUsers(query?, isActive?, page?)` →
+  `GET /auth/admin/users/` con `search`/`is_active` come query param.
+- `src/app/pages/users/users.component.ts`/`.html`/`.scss` — sostituito il primo
+  approccio (pulsanti sparsi sulle card della ricerca pubblica + pannello
+  "inserisci ID a mano" per la riattivazione, quest'ultimo uno stopgap dovuto al
+  gap #2 sopra) con un unico pannello "Amministrazione utenti" in cima alla
+  pagina "Trova utenti" (visibile solo se `currentUser.is_staff`): campo di
+  ricerca (`username`/`first_name`/`last_name`, come la ricerca pubblica) +
+  filtro di stato (`Tutti`/`Solo attivi`/`Solo disattivati`, via `nb-select`)
+  contro il nuovo endpoint admin; ogni riga mostra un badge "Disattivato" se
+  `!is_active` e le azioni pertinenti (Disattiva se attivo, Riattiva se
+  disattivato, Promuovi ad admin se `currentUser.is_superuser`), nessuna azione
+  sulla propria riga; gestione dei tre error code documentati dal backend
+  (`ADMIN_CANNOT_TARGET_SELF`/`ADMIN_TARGET_IS_STAFF` → toast dedicati,
+  generico altrimenti). La ricerca pubblica (grid `users-grid`, per
+  seguire/non seguire) resta invariata e non mostra più azioni admin, per
+  evitare due punti di ingresso diversi per la stessa funzionalità.
+
+**Verifica end-to-end (2026-07-06):** eseguita due volte con Playwright contro
+il backend locale via Docker e due utenti di test (email verificata a mano via
+Django shell, non rilevante per questo test): una prima volta prima del fix
+backend, iniettando `is_staff`/`is_superuser` in `localStorage['list2me_user']`
+per simulare la risposta futura (necessario perché all'epoca il backend non li
+inviava); una seconda volta dopo il fix (v0.22.0), con login reale e nessuna
+manipolazione di `localStorage`, confermando che `POST /auth/login/` include
+ora `is_staff`/`is_superuser` e che il pannello admin appare di conseguenza.
+Confermati in entrambi i giri, contro gli endpoint reali: ricerca+filtro di
+stato (un utente disattivato sparisce con "Solo attivi" e ricompare con "Solo
+disattivati"), disattivazione (badge "Disattivato" compare sulla riga senza
+sparire dalla lista, a differenza della ricerca pubblica), riattivazione
+(badge scompare), promozione ad admin (`204`, `is_staff=True` confermato a
+DB), protezione self-service (nessuna azione sulla propria riga), protezione
+contro la disattivazione di un altro account admin (403
+`ADMIN_TARGET_IS_STAFF`, toast dedicato). Nessun errore in console
+riconducibile al nuovo codice (residua solo il warning Nebular preesistente
+`NG0100` sul menu laterale). Utenti di test rimossi al termine di ogni giro di
+verifica.
+
+---
+
 ## Bug: `authInterceptor` allega un token stale/non valido anche alle richieste di login, bloccando il login (incluso Google)
 
 **Stato: ✅ Corretto e verificato end-to-end (2026-07-06).**
