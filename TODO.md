@@ -4,6 +4,78 @@
 
 ---
 
+## Nuovo tipo di elemento: Destinazione di viaggio (`travel_destination`), via Wikivoyage
+
+Il backend (list2me-backend v0.25.0) ha aggiunto l'integrazione con Wikivoyage:
+`GET /api/v1/wikivoyage/search/?q=…&lang=…` (ricerca minimale: titolo, estratto,
+nessuna immagine) e `GET /api/v1/wikivoyage/guides/{page_id}/` (dettaglio esteso:
+titolo, immagine di copertina, e le sezioni "Da vedere"/"Da fare"/"Dove mangiare"
+della guida, ciascuna come elenco di `{name, description, address, url}` estratti
+dal wikitext della pagina). Il nuovo tipo di sistema `travel_destination` non
+aveva form di ricerca/aggiunta né rendering — la funzionalità mancava del tutto
+lato frontend. **Stato: ✅ Implementato e verificato end-to-end (2026-07-06).**
+
+**File nuovi:**
+- `src/app/models/wikivoyage.model.ts` — `WikivoyageListing` (`name`/`description`/
+  `address`/`url`), `WikivoyageSearchResult` (stesso formato uniforme degli altri
+  servizi esterni: `title`/`subtitle`/`image_url` sempre `null` in ricerca, coerente
+  con BGG/Europeana artista/`service_url`/`metadata`), `WikivoyageGuide` (dettaglio
+  esteso di `/wikivoyage/guides/{page_id}/`, con `see`/`do`/`eat` come array di
+  `WikivoyageListing`).
+- `src/app/services/wikivoyage.service.ts` — `search(q, lang, limit)`,
+  `getGuide(pageId, lang)`, stesso pattern hardcoded-per-tipo di `BggService`/
+  `IgdbService`. `lang` (ISO 639-1, default `'en'`) seleziona l'edizione
+  linguistica Wikivoyage, in modo analogo al parametro `language` già usato da
+  `TvdbService`.
+- `src/app/pages/list-detail/list-detail.component.ts` — signal/subject per la
+  ricerca (`showTravelSearch`/`travelQuery`/`travelResults`/`travelLanguage`),
+  branch in `selectItemType`/`backToTypePicker`/`closeAddPanel`,
+  `onTravelQueryChange`, `onTravelLanguageChange` (riavvia la ricerca corrente se
+  già digitata, sul modello del cambio lingua TVDB), `addTravelItem` (usa
+  direttamente i campi minimali restituiti dalla ricerca, senza immagine — a
+  differenza di IGDB, la ricerca Wikivoyage non include mai un'immagine di
+  copertina, coerente con BGG), `syncTravelItem` (pulsante di sincronizzazione
+  stile IGDB/BGG che richiama `GET /wikivoyage/guides/{page_id}/` per arricchire
+  un elemento già aggiunto con l'immagine di copertina e le liste "Da vedere"/
+  "Da fare"/"Dove mangiare"), `isTravelItem`/`travelMeta`, icona `compass` →
+  `compass-outline` (fix in `iconNameFixes`, coerente col trattamento già
+  riservato a `dice`→`dice-outline` ecc.), label italiana "Destinazione di
+  viaggio".
+- `src/app/pages/list-detail/list-detail.component.html` — pannello di ricerca
+  Wikivoyage (stesso pattern di libro/TVDB/MusicBrainz/BGG/IGDB, con un selettore
+  di lingua analogo a quello TVDB ma con codici ISO 639-1 a 2 lettere anziché i
+  codici a 3 lettere di TheTVDB), branch `isTravelItem` nella card elemento
+  (copertina se sincronizzata, altrimenti icona bussola, più lingua) e nel
+  pannello di dettaglio (lingua, sezioni "Da vedere"/"Da fare"/"Dove mangiare"
+  con nome/descrizione/indirizzo per ciascun listing dopo sincronizzazione, link
+  a Wikivoyage), pulsante di sincronizzazione accanto a quello di IGDB/BGG,
+  attribuzione Wikivoyage nel footer.
+- `src/app/pages/list-detail/list-detail.component.scss` — stili per le sezioni
+  di listing (`.travel-listings`/`.travel-listing`/`.travel-listing-name`/
+  `.travel-listing-desc`/`.travel-listing-address`).
+
+**Verifica end-to-end (2026-07-06):** il container `api` era in esecuzione da
+prima dell'aggiunta della migrazione del nuovo tipo `travel_destination`; come
+nei casi precedenti, è stato necessario un `docker compose restart api` (nessuna
+modifica al codice, solo riavvio per eseguire la migrazione) prima che il tipo
+comparisse in `GET /item-types/`. Testato con Playwright contro il backend
+locale via Docker: tile "Destinazione di viaggio" nel type picker; ricerca
+testuale reale su Wikivoyage ("Rome", risultati con estratto e link alla fonte,
+nessuna immagine come da comportamento atteso); aggiunta di un elemento ("Rome")
+con rendering scheda/dettaglio (icona bussola, badge lingua "EN"); apertura
+pannello di dettaglio con link "Apri su Wikivoyage"; sincronizzazione via
+pulsante dedicato con arricchimento riuscito (immagine di copertina del
+Colosseo, sezione "Da fare" popolata con 4 listing reali di nome/descrizione/
+indirizzo — le sezioni "Da vedere"/"Dove mangiare" sono risultate vuote per
+questa pagina, comportamento corretto e non un bug: l'articolo principale
+"Rome" di Wikivoyage rimanda i dettagli di quelle sezioni ai sotto-articoli di
+distretto); footer di attribuzione con la fonte Wikivoyage. Nessun errore in
+console riconducibile al nuovo codice (residua solo il warning Nebular
+preesistente `NG0100` sul menu laterale, già presente su `main`). Utente e
+lista di test rimossi al termine della verifica.
+
+---
+
 ## Nuovo tipo di elemento: Videogioco (`video_game`), via IGDB
 
 Il backend (list2me-backend v0.24.0) ha aggiunto l'integrazione con IGDB (v4 API,

@@ -917,6 +917,82 @@
       </nb-card>
     }
 
+    <!-- ── Wikivoyage search panel (travel_destination) ───────────────────── -->
+    @if (showTravelSearch() && canEdit) {
+      <nb-card class="add-item-card travel-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="compass-outline"></nb-icon>
+          Cerca una destinazione di viaggio su Wikivoyage
+        </nb-card-header>
+        <nb-card-body>
+          <div class="tvdb-filters">
+            <select class="tvdb-select" [value]="travelLanguage()" (change)="onTravelLanguageChange($event)">
+              <option value="en">English</option>
+              <option value="it">Italiano</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="es">Español</option>
+              <option value="pt">Português</option>
+              <option value="ja">日本語</option>
+            </select>
+          </div>
+          <div class="book-search-input-wrap">
+            <input nbInput fullWidth #travelInput
+                   [value]="travelQuery()"
+                   placeholder="Nome della destinazione (città, regione, paese)..."
+                   (input)="onTravelQueryChange(travelInput.value)" />
+            @if (travelSearchLoading()) {
+              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+            }
+          </div>
+
+          @if (travelResults().length > 0) {
+            <div class="book-results">
+              @for (result of travelResults(); track $index) {
+                <div class="book-result" (click)="addTravelItem(result)" role="button" tabindex="0"
+                     (keyup.enter)="addTravelItem(result)">
+                  @if (result.image_url) {
+                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
+                  } @else {
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon icon="compass-outline"></nb-icon>
+                    </div>
+                  }
+                  <div class="book-result-info">
+                    <p class="book-result-title">{{ result.title }}</p>
+                    @if (result.subtitle) {
+                      <p class="book-result-meta">{{ result.subtitle }}</p>
+                    }
+                    @if (result.service_url) {
+                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
+                         class="result-service-link" (click)="$event.stopPropagation()">
+                        <nb-icon icon="external-link-outline"></nb-icon> Wikivoyage
+                      </a>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+            </div>
+          } @else if (travelQuery().trim().length >= 2 && !travelSearchLoading()) {
+            <p class="book-no-results">Nessun risultato trovato per "{{ travelQuery() }}".</p>
+          }
+
+          <div class="panel-attribution">
+            Ricerca fornita da <a href="https://www.wikivoyage.org" target="_blank" rel="noopener noreferrer">Wikivoyage</a>
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
     <!-- ── Place search panel (Nominatim) ─────────────────────────────────── -->
     @if (showPlaceSearch() && canEdit) {
       <nb-card class="add-item-card place-search-card" accent="info">
@@ -1491,6 +1567,24 @@
                           </p>
                         </div>
                       </div>
+                    } @else if (isTravelItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        @if (travelMeta(item).image_url) {
+                          <img [src]="travelMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon icon="compass-outline"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
+                            @if (travelMeta(item).lang) { {{ travelMeta(item).lang!.toUpperCase() }} }
+                          </p>
+                        </div>
+                      </div>
                     } @else if (isPlaceItem(item)) {
                       <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
                            (keyup.enter)="openDetail(item)" title="Mostra dettagli">
@@ -1636,6 +1730,18 @@
                             }
                           </button>
                         }
+                        @if (isTravelItem(item)) {
+                          <button nbButton ghost size="tiny"
+                                  [disabled]="syncingItemId() === item.id"
+                                  (click)="syncTravelItem(item)"
+                                  title="Aggiorna da Wikivoyage">
+                            @if (syncingItemId() === item.id) {
+                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                            } @else {
+                              <nb-icon icon="refresh-outline"></nb-icon>
+                            }
+                          </button>
+                        }
                         @if (isImageItem(item)) {
                           <label class="item-image-upload-btn" [class.uploading]="imageUploadingItemId() === item.id" title="Carica immagine">
                             <input type="file" accept="image/*" hidden (change)="uploadItemImage(item, $event)"
@@ -1668,7 +1774,7 @@
                   </div>
 
                   <!-- ── Item detail panel ──────────────────────────────── -->
-                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || isProductItem(item) || isBggItem(item) || isVideoGameItem(item) || (isImageItem(item) && item.image))) {
+                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || isProductItem(item) || isBggItem(item) || isVideoGameItem(item) || isTravelItem(item) || (isImageItem(item) && item.image))) {
                     <div class="item-detail">
                       @if (isBookItem(item)) {
                         <div class="item-detail-grid">
@@ -1904,6 +2010,76 @@
                                  class="item-detail-link">
                                 <nb-icon icon="external-link-outline"></nb-icon>
                                 Apri su IGDB
+                              </a>
+                            }
+                          </div>
+                        </div>
+                      } @else if (isTravelItem(item)) {
+                        <div class="item-detail-grid">
+                          @if (travelMeta(item).image_url) {
+                            <img [src]="travelMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
+                          }
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (item.item_type_detail) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="compass-outline"></nb-icon>
+                                {{ typeLabel(item.item_type_detail) }}
+                              </p>
+                            }
+                            @if (travelMeta(item).lang) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="globe-2-outline"></nb-icon>
+                                {{ travelMeta(item).lang!.toUpperCase() }}
+                              </p>
+                            }
+                            @if (travelMeta(item).see?.length) {
+                              <div class="travel-listings">
+                                <p class="travel-listings-title"><nb-icon icon="eye-outline"></nb-icon> Da vedere</p>
+                                @for (listing of travelMeta(item).see!; track listing.name) {
+                                  <div class="travel-listing">
+                                    <p class="travel-listing-name">{{ listing.name }}</p>
+                                    @if (listing.description) { <p class="travel-listing-desc">{{ listing.description }}</p> }
+                                    @if (listing.address) {
+                                      <p class="travel-listing-address"><nb-icon icon="pin-outline"></nb-icon> {{ listing.address }}</p>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
+                            @if (travelMeta(item).do?.length) {
+                              <div class="travel-listings">
+                                <p class="travel-listings-title"><nb-icon icon="activity-outline"></nb-icon> Da fare</p>
+                                @for (listing of travelMeta(item).do!; track listing.name) {
+                                  <div class="travel-listing">
+                                    <p class="travel-listing-name">{{ listing.name }}</p>
+                                    @if (listing.description) { <p class="travel-listing-desc">{{ listing.description }}</p> }
+                                    @if (listing.address) {
+                                      <p class="travel-listing-address"><nb-icon icon="pin-outline"></nb-icon> {{ listing.address }}</p>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
+                            @if (travelMeta(item).eat?.length) {
+                              <div class="travel-listings">
+                                <p class="travel-listings-title"><nb-icon icon="shopping-bag-outline"></nb-icon> Dove mangiare</p>
+                                @for (listing of travelMeta(item).eat!; track listing.name) {
+                                  <div class="travel-listing">
+                                    <p class="travel-listing-name">{{ listing.name }}</p>
+                                    @if (listing.description) { <p class="travel-listing-desc">{{ listing.description }}</p> }
+                                    @if (listing.address) {
+                                      <p class="travel-listing-address"><nb-icon icon="pin-outline"></nb-icon> {{ listing.address }}</p>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
+                            @if (travelMeta(item).service_url) {
+                              <a [href]="travelMeta(item).service_url" target="_blank" rel="noopener noreferrer"
+                                 class="item-detail-link">
+                                <nb-icon icon="external-link-outline"></nb-icon>
+                                Apri su Wikivoyage
                               </a>
                             }
                           </div>

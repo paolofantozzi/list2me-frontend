@@ -21,6 +21,7 @@ import { EuropeanaService } from '../../services/europeana.service';
 import { OpenFoodFactsService } from '../../services/openfoodfacts.service';
 import { BggService } from '../../services/bgg.service';
 import { IgdbService } from '../../services/igdb.service';
+import { WikivoyageService } from '../../services/wikivoyage.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
 import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
@@ -31,6 +32,7 @@ import { EuropeanaEntityType, EuropeanaSearchResult } from '../../models/europea
 import { OpenFoodFactsDomain, OpenFoodFactsSearchResult } from '../../models/openfoodfacts.model';
 import { BGGSearchType, BGGSearchResult } from '../../models/bgg.model';
 import { IGDBSearchResult } from '../../models/igdb.model';
+import { WikivoyageSearchResult } from '../../models/wikivoyage.model';
 import { AuthService } from '../../services/auth.service';
 import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
 import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
@@ -135,6 +137,13 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   videoGameResults = signal<IGDBSearchResult[]>([]);
   videoGameSearchLoading = signal(false);
 
+  // Wikivoyage search (travel_destination)
+  showTravelSearch = signal(false);
+  travelQuery = signal('');
+  travelResults = signal<WikivoyageSearchResult[]>([]);
+  travelSearchLoading = signal(false);
+  travelLanguage = signal('en');
+
   // Open Food/Beauty/Products Facts search
   showProductSearch = signal(false);
   productQuery = signal('');
@@ -215,6 +224,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   private productSearch$ = new Subject<string>();
   private bggSearch$ = new Subject<string>();
   private videoGameSearch$ = new Subject<string>();
+  private travelSearch$ = new Subject<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -230,6 +240,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private openFoodFactsService: OpenFoodFactsService,
     private bggService: BggService,
     private igdbService: IgdbService,
+    private wikivoyageService: WikivoyageService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private auth: AuthService
@@ -426,6 +437,24 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.videoGameResults.set(results);
       this.videoGameSearchLoading.set(false);
     });
+
+    this.travelSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.travelSearchLoading.set(true);
+        return this.wikivoyageService.search(q, this.travelLanguage()).pipe(
+          catchError(() => {
+            this.travelSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.travelResults.set(results);
+      this.travelSearchLoading.set(false);
+    });
   }
 
   ngOnDestroy(): void {
@@ -438,6 +467,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.productSearch$.complete();
     this.bggSearch$.complete();
     this.videoGameSearch$.complete();
+    this.travelSearch$.complete();
   }
 
   loadList(id: string): void {
@@ -788,6 +818,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showProductSearch.set(false);
     this.showBggSearch.set(false);
     this.showVideoGameSearch.set(false);
+    this.showTravelSearch.set(false);
     this.showImagePanel.set(false);
     this.showEditions.set(false);
     this.showNewChildList.set(false);
@@ -827,6 +858,10 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.showVideoGameSearch.set(true);
       this.videoGameResults.set([]);
       this.videoGameQuery.set('');
+    } else if (type.name === 'travel_destination') {
+      this.showTravelSearch.set(true);
+      this.travelResults.set([]);
+      this.travelQuery.set('');
     } else if (type.name === 'place') {
       this.showPlaceSearch.set(true);
       this.placeResults.set([]);
@@ -869,6 +904,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       board_game: 'dice-outline',
       rpg: 'book-open-outline',
       video_game: 'monitor-outline',
+      travel_destination: 'compass-outline',
     };
     return icons[name] ?? 'list-outline';
   }
@@ -888,6 +924,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     dice: 'dice-outline',
     'book-open': 'book-open-outline',
     'gamepad-2': 'monitor-outline',
+    compass: 'compass-outline',
   };
 
   pickIcon(type: ItemType): string {
@@ -916,6 +953,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     beauty_product: 'Prodotto di bellezza',
     other_product: 'Altro prodotto',
     video_game: 'Videogioco',
+    travel_destination: 'Destinazione di viaggio',
   };
 
   typeLabel(type: { name: string; label: string } | null | undefined): string {
@@ -934,6 +972,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showProductSearch.set(false);
     this.showBggSearch.set(false);
     this.showVideoGameSearch.set(false);
+    this.showTravelSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -955,6 +994,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.bggQuery.set('');
     this.videoGameResults.set([]);
     this.videoGameQuery.set('');
+    this.travelResults.set([]);
+    this.travelQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
@@ -979,6 +1020,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showProductSearch.set(false);
     this.showBggSearch.set(false);
     this.showVideoGameSearch.set(false);
+    this.showTravelSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -997,6 +1039,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.bggQuery.set('');
     this.videoGameResults.set([]);
     this.videoGameQuery.set('');
+    this.travelResults.set([]);
+    this.travelQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.pendingImageCaption.set('');
@@ -1716,6 +1760,110 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  // ── Wikivoyage search (travel_destination) ────────────────────────────────────
+
+  onTravelQueryChange(q: string): void {
+    this.travelQuery.set(q);
+    if (q.trim().length < 2) {
+      this.travelResults.set([]);
+      this.travelSearchLoading.set(false);
+      return;
+    }
+    this.travelSearch$.next(q.trim());
+  }
+
+  onTravelLanguageChange(event: Event): void {
+    this.travelLanguage.set((event.target as HTMLSelectElement).value);
+    if (this.travelQuery().trim().length >= 2) {
+      this.travelSearch$.next(this.travelQuery().trim());
+    }
+  }
+
+  addTravelItem(result: WikivoyageSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'travel_destination')?.id ?? null;
+
+    this.itemService.addItem(listId, {
+      text: result.title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        ...result.metadata,
+      },
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${result.title}" aggiunta!`, 'Destinazione aggiunta');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere la destinazione.', 'Errore')
+    });
+  }
+
+  // La ricerca Wikivoyage restituisce solo dati minimali (nessuna immagine); le liste
+  // "Da vedere"/"Da fare"/"Dove mangiare" e l'immagine di copertina sono disponibili
+  // solo su GET /wikivoyage/guides/{page_id}/, richiamato qui per arricchire l'elemento
+  // già aggiunto.
+  syncTravelItem(item: Item): void {
+    const pageId = this.travelMeta(item).wikivoyage_page_id;
+    if (!pageId) return;
+    const listId = this.list()!.id;
+    this.syncingItemId.set(item.id);
+
+    this.wikivoyageService.getGuide(pageId, this.travelMeta(item).lang || this.travelLanguage()).subscribe({
+      next: detail => {
+        this.itemService.updateItem(listId, item.id, {
+          metadata: {
+            ...item.metadata,
+            ...detail,
+          },
+        } as Partial<Item>).subscribe({
+          next: updated => {
+            this.items.update(items => items.map(i => i.id === updated.id ? updated : i));
+            this.syncingItemId.set(null);
+            this.toastr.success('Dati aggiornati da Wikivoyage.', 'Sincronizzato');
+          },
+          error: () => {
+            this.syncingItemId.set(null);
+            this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+          }
+        });
+      },
+      error: () => {
+        this.syncingItemId.set(null);
+        this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+      }
+    });
+  }
+
+  isTravelItem(item: Item): boolean {
+    return item.item_type_detail?.name === 'travel_destination';
+  }
+
+  travelMeta(item: Item): {
+    wikivoyage_page_id?: number;
+    title?: string;
+    lang?: string;
+    image_url?: string;
+    service_url?: string;
+    see?: { name: string; description: string; address: string; url: string }[];
+    do?: { name: string; description: string; address: string; url: string }[];
+    eat?: { name: string; description: string; address: string; url: string }[];
+  } {
+    return (item.metadata ?? {}) as {
+      wikivoyage_page_id?: number;
+      title?: string;
+      lang?: string;
+      image_url?: string;
+      service_url?: string;
+      see?: { name: string; description: string; address: string; url: string }[];
+      do?: { name: string; description: string; address: string; url: string }[];
+      eat?: { name: string; description: string; address: string; url: string }[];
+    };
+  }
+
   // ── Open Food/Beauty/Products Facts search ────────────────────────────────────
 
   productSearchTitle(): string {
@@ -2031,8 +2179,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return this.items().some(item => this.isVideoGameItem(item));
   }
 
+  get hasTravelItems(): boolean {
+    return this.items().some(item => this.isTravelItem(item));
+  }
+
   get hasExternalItems(): boolean {
-    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems || this.hasProductItems || this.hasBggItems || this.hasVideoGameItems;
+    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems || this.hasProductItems || this.hasBggItems || this.hasVideoGameItems || this.hasTravelItems;
   }
 
   externalAttributions(): { name: string; url: string }[] {
@@ -2045,6 +2197,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       { name: 'Open Food Facts', url: 'https://world.openfoodfacts.org', present: this.hasProductItems },
       { name: 'BoardGameGeek', url: 'https://boardgamegeek.com', present: this.hasBggItems },
       { name: 'IGDB', url: 'https://www.igdb.com', present: this.hasVideoGameItems },
+      { name: 'Wikivoyage', url: 'https://www.wikivoyage.org', present: this.hasTravelItems },
     ];
     return sources.filter(s => s.present).map(({ name, url }) => ({ name, url }));
   }
