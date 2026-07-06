@@ -856,9 +856,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       series: 'tv-outline',
       movie: 'film-outline',
       episode: 'play-circle-outline',
-      text: 'edit-2-outline',
+      text: 'letter-a-outline',
       artist: 'mic-outline',
-      album: 'recording-outline',
+      album: 'vinyl-outline',
       track: 'music-outline',
       place: 'pin-outline',
       artwork: 'color-palette-outline',
@@ -866,7 +866,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       food_product: 'shopping-bag-outline',
       beauty_product: 'star-outline',
       other_product: 'cube-outline',
-      board_game: 'shuffle-outline',
+      board_game: 'dice-outline',
       rpg: 'book-open-outline',
       video_game: 'monitor-outline',
     };
@@ -877,7 +877,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   // nel pacchetto Eva Icons usato dal frontend, che richiede il suffisso "-outline".
   private readonly iconNameFixes: Record<string, string> = {
     mic: 'mic-outline',
-    disc: 'recording-outline',
+    disc: 'vinyl-outline',
     music: 'music-outline',
     'map-pin': 'pin-outline',
     palette: 'color-palette-outline',
@@ -885,7 +885,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     utensils: 'shopping-bag-outline',
     sparkles: 'star-outline',
     package: 'cube-outline',
-    dice: 'shuffle-outline',
+    dice: 'dice-outline',
     'book-open': 'book-open-outline',
     'gamepad-2': 'monitor-outline',
   };
