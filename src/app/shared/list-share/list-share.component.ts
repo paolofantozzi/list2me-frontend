@@ -12,6 +12,7 @@ import { ListShare, GroupVisibility } from '../../models/list.model';
 import { Group } from '../../models/group.model';
 import { UserPublic } from '../../models/user.model';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-list-share',
@@ -49,6 +50,7 @@ export class ListShareComponent implements OnChanges, OnDestroy {
     private userService: UserService,
     private toastr: NbToastrService,
     private auth: AuthService,
+    private confirmDialog: ConfirmDialogService,
   ) {
     this.userSearch$.pipe(
       debounceTime(300),
@@ -129,18 +131,25 @@ export class ListShareComponent implements OnChanges, OnDestroy {
   }
 
   revokeShare(share: ListShare): void {
-    if (!confirm(`Revocare l'accesso di ${share.shared_with.username}?`)) return;
-    this.revokingShareId.set(share.id);
-    this.listService.revokeShare(this.listId, share.id).subscribe({
-      next: () => {
-        this.shares.update(ss => ss.filter(s => s.id !== share.id));
-        this.revokingShareId.set(null);
-        this.toastr.success('Accesso revocato.', 'Fatto');
-      },
-      error: () => {
-        this.revokingShareId.set(null);
-        this.toastr.danger('Impossibile revocare l\'accesso.', 'Errore');
-      }
+    this.confirmDialog.confirm({
+      title: 'Revoca accesso',
+      message: `Revocare l'accesso di ${share.shared_with.username}?`,
+      confirmLabel: 'Revoca',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.revokingShareId.set(share.id);
+      this.listService.revokeShare(this.listId, share.id).subscribe({
+        next: () => {
+          this.shares.update(ss => ss.filter(s => s.id !== share.id));
+          this.revokingShareId.set(null);
+          this.toastr.success('Accesso revocato.', 'Fatto');
+        },
+        error: () => {
+          this.revokingShareId.set(null);
+          this.toastr.danger('Impossibile revocare l\'accesso.', 'Errore');
+        }
+      });
     });
   }
 
@@ -199,18 +208,25 @@ export class ListShareComponent implements OnChanges, OnDestroy {
   }
 
   revokeGroupVisibility(gv: GroupVisibility): void {
-    if (!confirm(`Rimuovere la visibilità per il gruppo "${gv.group.name}"?`)) return;
-    this.revokingGroupVisibilityId.set(gv.id);
-    this.listService.removeGroupVisibility(this.listId, gv.id).subscribe({
-      next: () => {
-        this.groupVisibilities.update(gvs => gvs.filter(g => g.id !== gv.id));
-        this.revokingGroupVisibilityId.set(null);
-        this.toastr.success('Visibilità rimossa.', 'Fatto');
-      },
-      error: () => {
-        this.revokingGroupVisibilityId.set(null);
-        this.toastr.danger('Impossibile rimuovere la visibilità.', 'Errore');
-      }
+    this.confirmDialog.confirm({
+      title: 'Rimuovi visibilità',
+      message: `Rimuovere la visibilità per il gruppo "${gv.group.name}"?`,
+      confirmLabel: 'Rimuovi',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.revokingGroupVisibilityId.set(gv.id);
+      this.listService.removeGroupVisibility(this.listId, gv.id).subscribe({
+        next: () => {
+          this.groupVisibilities.update(gvs => gvs.filter(g => g.id !== gv.id));
+          this.revokingGroupVisibilityId.set(null);
+          this.toastr.success('Visibilità rimossa.', 'Fatto');
+        },
+        error: () => {
+          this.revokingGroupVisibilityId.set(null);
+          this.toastr.danger('Impossibile rimuovere la visibilità.', 'Errore');
+        }
+      });
     });
   }
 

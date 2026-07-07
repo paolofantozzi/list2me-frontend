@@ -7,6 +7,7 @@ import {
 } from '@nebular/theme';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-profile',
@@ -42,7 +43,8 @@ export class ProfileComponent implements OnInit {
     private auth: AuthService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
-    private router: Router
+    private router: Router,
+    private confirmDialog: ConfirmDialogService
   ) {
     this.form = this.fb.group({
       first_name: [''],
@@ -100,15 +102,29 @@ export class ProfileComponent implements OnInit {
   }
 
   removeAvatar(): void {
-    if (!confirm('Rimuovere l\'avatar caricato?')) return;
-    this.auth.removeAvatar().subscribe({
-      next: () => this.toastr.success('Avatar rimosso!', 'Successo'),
-      error: () => this.toastr.danger('Impossibile rimuovere l\'avatar.', 'Errore')
+    this.confirmDialog.confirm({
+      title: 'Rimuovi avatar',
+      message: "Rimuovere l'avatar caricato?",
+      confirmLabel: 'Rimuovi',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.auth.removeAvatar().subscribe({
+        next: () => this.toastr.success('Avatar rimosso!', 'Successo'),
+        error: () => this.toastr.danger('Impossibile rimuovere l\'avatar.', 'Errore')
+      });
     });
   }
 
   confirmDeactivate(): void {
-    if (!confirm('Sei sicuro di voler disattivare il tuo account? Questa azione è irreversibile.')) return;
-    this.auth.logout().subscribe(() => this.router.navigate(['/auth/login']));
+    this.confirmDialog.confirm({
+      title: 'Disattiva account',
+      message: 'Sei sicuro di voler disattivare il tuo account? Questa azione è irreversibile.',
+      confirmLabel: 'Disattiva',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.auth.logout().subscribe(() => this.router.navigate(['/auth/login']));
+    });
   }
 }

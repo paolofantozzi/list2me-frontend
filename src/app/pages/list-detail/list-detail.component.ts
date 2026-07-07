@@ -43,6 +43,10 @@ import { AuthService } from '../../services/auth.service';
 import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
 import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
 import { ListShareComponent } from '../../shared/list-share/list-share.component';
+import { ExternalSearchPanelComponent, AttributionLogo } from '../../shared/external-search-panel/external-search-panel.component';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ItemRowComponent, ItemRowBadge } from '../../shared/item-row/item-row.component';
+import { ItemDetailExpandComponent, ItemDetailRow, ItemDetailLink } from '../../shared/item-detail-expand/item-detail-expand.component';
 
 @Component({
   selector: 'app-list-detail',
@@ -66,6 +70,9 @@ import { ListShareComponent } from '../../shared/list-share/list-share.component
     PlaceMapComponent,
     TagInputComponent,
     ListShareComponent,
+    ExternalSearchPanelComponent,
+    ItemRowComponent,
+    ItemDetailExpandComponent,
   ],
   templateUrl: './list-detail.component.html',
   styleUrl: './list-detail.component.scss'
@@ -108,11 +115,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   tvdbLanguage = signal('ita');
   tvdbType = signal('');
 
-  // MusicBrainz search
+  // MusicBrainz search — query/risultati/loading gestiti internamente da ExternalSearchPanelComponent
   showMusicSearch = signal(false);
-  musicQuery = signal('');
-  musicResults = signal<MusicBrainzSearchResult[]>([]);
-  musicSearchLoading = signal(false);
 
   // Place search (Nominatim)
   showPlaceSearch = signal(false);
@@ -126,36 +130,21 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   placeReverseLoading = signal(false);
   placeAddLoading = signal(false);
 
-  // Europeana search
+  // Europeana search — query/risultati/loading gestiti internamente da ExternalSearchPanelComponent
   showEuropeanaSearch = signal(false);
-  europeanaQuery = signal('');
-  europeanaResults = signal<EuropeanaSearchResult[]>([]);
-  europeanaSearchLoading = signal(false);
 
-  // BoardGameGeek search (board_game / rpg)
+  // BoardGameGeek search (board_game / rpg) — query/risultati/loading gestiti internamente da ExternalSearchPanelComponent
   showBggSearch = signal(false);
-  bggQuery = signal('');
-  bggResults = signal<BGGSearchResult[]>([]);
-  bggSearchLoading = signal(false);
 
-  // IGDB search (video_game)
+  // IGDB search (video_game) — query/risultati/loading gestiti internamente da ExternalSearchPanelComponent
   showVideoGameSearch = signal(false);
-  videoGameQuery = signal('');
-  videoGameResults = signal<IGDBSearchResult[]>([]);
-  videoGameSearchLoading = signal(false);
 
-  // Wikivoyage search (travel_destination)
+  // Wikivoyage search (travel_destination) — query/risultati/loading gestiti internamente da ExternalSearchPanelComponent
   showTravelSearch = signal(false);
-  travelQuery = signal('');
-  travelResults = signal<WikivoyageSearchResult[]>([]);
-  travelSearchLoading = signal(false);
   travelLanguage = signal('en');
 
-  // SeatGeek search (concert)
+  // SeatGeek search (concert) — query/risultati/loading gestiti internamente da ExternalSearchPanelComponent
   showConcertSearch = signal(false);
-  concertQuery = signal('');
-  concertResults = signal<SeatGeekSearchResult[]>([]);
-  concertSearchLoading = signal(false);
 
   // AIFA search (medicine)
   showMedicineSearch = signal(false);
@@ -163,11 +152,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   medicineResults = signal<MedicineResult[]>([]);
   medicineSearchLoading = signal(false);
 
-  // Perenual search (plant)
+  // Perenual search (plant) — query/risultati/loading gestiti internamente da ExternalSearchPanelComponent
   showPlantSearch = signal(false);
-  plantQuery = signal('');
-  plantResults = signal<PlantSearchResult[]>([]);
-  plantSearchLoading = signal(false);
 
   // Open Food/Beauty/Products Facts search
   showProductSearch = signal(false);
@@ -242,17 +228,10 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   private bookSearch$ = new Subject<string>();
   private tvdbSearch$ = new Subject<string>();
-  private musicSearch$ = new Subject<string>();
   private placeSearch$ = new Subject<string>();
   private placeCoords$ = new Subject<{ lat: number; lon: number }>();
-  private europeanaSearch$ = new Subject<string>();
   private productSearch$ = new Subject<string>();
-  private bggSearch$ = new Subject<string>();
-  private videoGameSearch$ = new Subject<string>();
-  private travelSearch$ = new Subject<string>();
-  private concertSearch$ = new Subject<string>();
   private medicineSearch$ = new Subject<string>();
-  private plantSearch$ = new Subject<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -274,7 +253,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private plantService: PlantService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
-    private auth: AuthService
+    private auth: AuthService,
+    private confirmDialog: ConfirmDialogService
   ) {
     this.addItemForm = this.fb.group({
       text: ['', [Validators.required, Validators.maxLength(500)]],
@@ -303,9 +283,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.loadList(id);
 
     this.itemTypesLoading.set(true);
-    this.itemTypeService.getItemTypes().subscribe({
-      next: resp => {
-        this.itemTypes.set(resp.results);
+    this.itemTypeService.getAllItemTypes().subscribe({
+      next: types => {
+        this.itemTypes.set(types);
         this.itemTypesLoading.set(false);
       },
       error: () => this.itemTypesLoading.set(false),
@@ -347,25 +327,6 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.tvdbSearchLoading.set(false);
     });
 
-    this.musicSearch$.pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      filter(q => q.trim().length >= 2),
-      switchMap(q => {
-        this.musicSearchLoading.set(true);
-        const type = (this.selectedType()?.name as MusicBrainzEntityType) ?? 'artist';
-        return this.musicBrainzService.search(q, type).pipe(
-          catchError(() => {
-            this.musicSearchLoading.set(false);
-            return of([]);
-          })
-        );
-      })
-    ).subscribe(results => {
-      this.musicResults.set(results);
-      this.musicSearchLoading.set(false);
-    });
-
     this.placeSearch$.pipe(
       debounceTime(400),
       distinctUntilChanged(),
@@ -400,24 +361,6 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.placeReverseLoading.set(false);
     });
 
-    this.europeanaSearch$.pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      filter(q => q.trim().length >= 2),
-      switchMap(q => {
-        this.europeanaSearchLoading.set(true);
-        const type: EuropeanaEntityType = this.selectedType()?.name === 'art_artist' ? 'artist' : 'artwork';
-        return this.europeanaService.search(q, type).pipe(
-          catchError(() => {
-            this.europeanaSearchLoading.set(false);
-            return of([]);
-          })
-        );
-      })
-    ).subscribe(results => {
-      this.europeanaResults.set(results);
-      this.europeanaSearchLoading.set(false);
-    });
 
     this.productSearch$.pipe(
       debounceTime(400),
@@ -437,78 +380,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.productSearchLoading.set(false);
     });
 
-    this.bggSearch$.pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      filter(q => q.trim().length >= 2),
-      switchMap(q => {
-        this.bggSearchLoading.set(true);
-        const type: BGGSearchType = this.selectedType()?.name === 'rpg' ? 'rpgitem' : 'boardgame';
-        return this.bggService.search(q, type).pipe(
-          catchError(() => {
-            this.bggSearchLoading.set(false);
-            return of([]);
-          })
-        );
-      })
-    ).subscribe(results => {
-      this.bggResults.set(results);
-      this.bggSearchLoading.set(false);
-    });
 
-    this.videoGameSearch$.pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      filter(q => q.trim().length >= 2),
-      switchMap(q => {
-        this.videoGameSearchLoading.set(true);
-        return this.igdbService.search(q).pipe(
-          catchError(() => {
-            this.videoGameSearchLoading.set(false);
-            return of([]);
-          })
-        );
-      })
-    ).subscribe(results => {
-      this.videoGameResults.set(results);
-      this.videoGameSearchLoading.set(false);
-    });
-
-    this.travelSearch$.pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      filter(q => q.trim().length >= 2),
-      switchMap(q => {
-        this.travelSearchLoading.set(true);
-        return this.wikivoyageService.search(q, this.travelLanguage()).pipe(
-          catchError(() => {
-            this.travelSearchLoading.set(false);
-            return of([]);
-          })
-        );
-      })
-    ).subscribe(results => {
-      this.travelResults.set(results);
-      this.travelSearchLoading.set(false);
-    });
-
-    this.concertSearch$.pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      filter(q => q.trim().length >= 2),
-      switchMap(q => {
-        this.concertSearchLoading.set(true);
-        return this.seatgeekService.search(q).pipe(
-          catchError(() => {
-            this.concertSearchLoading.set(false);
-            return of([]);
-          })
-        );
-      })
-    ).subscribe(results => {
-      this.concertResults.set(results);
-      this.concertSearchLoading.set(false);
-    });
 
     this.medicineSearch$.pipe(
       debounceTime(400),
@@ -528,39 +400,15 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.medicineSearchLoading.set(false);
     });
 
-    this.plantSearch$.pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      filter(q => q.trim().length >= 2),
-      switchMap(q => {
-        this.plantSearchLoading.set(true);
-        return this.plantService.search(q).pipe(
-          catchError(() => {
-            this.plantSearchLoading.set(false);
-            return of([]);
-          })
-        );
-      })
-    ).subscribe(results => {
-      this.plantResults.set(results);
-      this.plantSearchLoading.set(false);
-    });
   }
 
   ngOnDestroy(): void {
     this.bookSearch$.complete();
     this.tvdbSearch$.complete();
-    this.musicSearch$.complete();
     this.placeSearch$.complete();
     this.placeCoords$.complete();
-    this.europeanaSearch$.complete();
     this.productSearch$.complete();
-    this.bggSearch$.complete();
-    this.videoGameSearch$.complete();
-    this.travelSearch$.complete();
-    this.concertSearch$.complete();
     this.medicineSearch$.complete();
-    this.plantSearch$.complete();
   }
 
   loadList(id: string): void {
@@ -672,16 +520,22 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   }
 
   deleteItem(item: Item): void {
-    if (!confirm(`Eliminare questo elemento?`)) return;
-    const listId = this.list()!.id;
-
-    this.itemService.deleteItem(listId, item.id).subscribe({
-      next: () => {
-        this.items.update(items => items.filter(i => i.id !== item.id));
-        this.list.update(l => l ? { ...l, items_count: Math.max(0, l.items_count - 1) } : l);
-        this.toastr.success('Elemento eliminato.', 'Eliminato');
-      },
-      error: () => this.toastr.danger('Impossibile eliminare l\'elemento.', 'Errore')
+    this.confirmDialog.confirm({
+      title: 'Elimina elemento',
+      message: 'Eliminare questo elemento?',
+      confirmLabel: 'Elimina',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      const listId = this.list()!.id;
+      this.itemService.deleteItem(listId, item.id).subscribe({
+        next: () => {
+          this.items.update(items => items.filter(i => i.id !== item.id));
+          this.list.update(l => l ? { ...l, items_count: Math.max(0, l.items_count - 1) } : l);
+          this.toastr.success('Elemento eliminato.', 'Eliminato');
+        },
+        error: () => this.toastr.danger('Impossibile eliminare l\'elemento.', 'Errore')
+      });
     });
   }
 
@@ -797,21 +651,27 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   }
 
   mergeFork(): void {
-    if (!confirm('Importare le modifiche dalla lista originale? Gli elementi aggiunti alla fonte verranno aggiunti e quelli rimossi verranno eliminati.')) return;
-    const listId = this.list()!.id;
-    this.mergeLoading.set(true);
-    this.listService.mergeList(listId).subscribe({
-      next: () => {
-        this.mergeLoading.set(false);
-        this.diff.set(null);
-        this.showDiff.set(false);
-        this.toastr.success('Lista aggiornata dalla fonte!', 'Merge completato');
-        this.loadList(listId);
-      },
-      error: () => {
-        this.mergeLoading.set(false);
-        this.toastr.danger('Impossibile eseguire il merge.', 'Errore');
-      }
+    this.confirmDialog.confirm({
+      title: 'Importa modifiche',
+      message: 'Importare le modifiche dalla lista originale? Gli elementi aggiunti alla fonte verranno aggiunti e quelli rimossi verranno eliminati.',
+      confirmLabel: 'Importa',
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      const listId = this.list()!.id;
+      this.mergeLoading.set(true);
+      this.listService.mergeList(listId).subscribe({
+        next: () => {
+          this.mergeLoading.set(false);
+          this.diff.set(null);
+          this.showDiff.set(false);
+          this.toastr.success('Lista aggiornata dalla fonte!', 'Merge completato');
+          this.loadList(listId);
+        },
+        error: () => {
+          this.mergeLoading.set(false);
+          this.toastr.danger('Impossibile eseguire il merge.', 'Errore');
+        }
+      });
     });
   }
 
@@ -963,32 +823,20 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.tvdbType.set(type.name === 'episode' ? 'series' : type.name);
     } else if (['artist', 'album', 'track'].includes(type.name)) {
       this.showMusicSearch.set(true);
-      this.musicResults.set([]);
-      this.musicQuery.set('');
     } else if (['board_game', 'rpg'].includes(type.name)) {
       this.showBggSearch.set(true);
-      this.bggResults.set([]);
-      this.bggQuery.set('');
     } else if (type.name === 'video_game') {
       this.showVideoGameSearch.set(true);
-      this.videoGameResults.set([]);
-      this.videoGameQuery.set('');
     } else if (type.name === 'travel_destination') {
       this.showTravelSearch.set(true);
-      this.travelResults.set([]);
-      this.travelQuery.set('');
     } else if (type.name === 'concert') {
       this.showConcertSearch.set(true);
-      this.concertResults.set([]);
-      this.concertQuery.set('');
     } else if (type.name === 'medicine') {
       this.showMedicineSearch.set(true);
       this.medicineResults.set([]);
       this.medicineQuery.set('');
     } else if (type.name === 'plant') {
       this.showPlantSearch.set(true);
-      this.plantResults.set([]);
-      this.plantQuery.set('');
     } else if (type.name === 'place') {
       this.showPlaceSearch.set(true);
       this.placeResults.set([]);
@@ -996,8 +844,6 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.resetPlaceManualState();
     } else if (['artwork', 'art_artist'].includes(type.name)) {
       this.showEuropeanaSearch.set(true);
-      this.europeanaResults.set([]);
-      this.europeanaQuery.set('');
     } else if (['food_product', 'beauty_product', 'other_product'].includes(type.name)) {
       this.showProductSearch.set(true);
       this.productResults.set([]);
@@ -1116,28 +962,14 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.bookQuery.set('');
     this.tvdbResults.set([]);
     this.tvdbQuery.set('');
-    this.musicResults.set([]);
-    this.musicQuery.set('');
     this.placeResults.set([]);
     this.placeQuery.set('');
     this.resetPlaceManualState();
-    this.europeanaResults.set([]);
-    this.europeanaQuery.set('');
     this.productResults.set([]);
     this.productQuery.set('');
     this.resetProductBarcodeState();
-    this.bggResults.set([]);
-    this.bggQuery.set('');
-    this.videoGameResults.set([]);
-    this.videoGameQuery.set('');
-    this.travelResults.set([]);
-    this.travelQuery.set('');
-    this.concertResults.set([]);
-    this.concertQuery.set('');
     this.medicineResults.set([]);
     this.medicineQuery.set('');
-    this.plantResults.set([]);
-    this.plantQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
@@ -1171,25 +1003,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.bookQuery.set('');
     this.tvdbResults.set([]);
     this.tvdbQuery.set('');
-    this.musicResults.set([]);
-    this.musicQuery.set('');
     this.placeResults.set([]);
     this.placeQuery.set('');
     this.resetPlaceManualState();
-    this.europeanaResults.set([]);
-    this.europeanaQuery.set('');
-    this.bggResults.set([]);
-    this.bggQuery.set('');
-    this.videoGameResults.set([]);
-    this.videoGameQuery.set('');
-    this.travelResults.set([]);
-    this.travelQuery.set('');
-    this.concertResults.set([]);
-    this.concertQuery.set('');
     this.medicineResults.set([]);
     this.medicineQuery.set('');
-    this.plantResults.set([]);
-    this.plantQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.pendingImageCaption.set('');
@@ -1279,16 +1097,22 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   deleteChildList(item: Item): void {
     const detail = item.child_list_detail;
     if (!detail) return;
-    if (!confirm(`Eliminare definitivamente la sotto-lista "${detail.title}"? L'operazione non è reversibile.`)) return;
-
-    this.listService.deleteList(detail.id).subscribe({
-      next: () => {
-        this.items.update(items => items.map(i =>
-          i.id === item.id ? { ...i, child_list: null, child_list_detail: null } : i
-        ));
-        this.toastr.success('Sotto-lista eliminata.', 'Eliminata');
-      },
-      error: () => this.toastr.danger('Impossibile eliminare la sotto-lista (solo il proprietario può farlo).', 'Errore')
+    this.confirmDialog.confirm({
+      title: 'Elimina sotto-lista',
+      message: `Eliminare definitivamente la sotto-lista "${detail.title}"? L'operazione non è reversibile.`,
+      confirmLabel: 'Elimina',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.listService.deleteList(detail.id).subscribe({
+        next: () => {
+          this.items.update(items => items.map(i =>
+            i.id === item.id ? { ...i, child_list: null, child_list_detail: null } : i
+          ));
+          this.toastr.success('Sotto-lista eliminata.', 'Eliminata');
+        },
+        error: () => this.toastr.danger('Impossibile eliminare la sotto-lista (solo il proprietario può farlo).', 'Errore')
+      });
     });
   }
 
@@ -1492,14 +1316,30 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   // ── MusicBrainz search ───────────────────────────────────────────────────────
 
-  onMusicQueryChange(q: string): void {
-    this.musicQuery.set(q);
-    if (q.trim().length < 2) {
-      this.musicResults.set([]);
-      this.musicSearchLoading.set(false);
-      return;
-    }
-    this.musicSearch$.next(q.trim());
+  musicSearch = (query: string) => {
+    const type = (this.selectedType()?.name as MusicBrainzEntityType) ?? 'artist';
+    return this.musicBrainzService.search(query, type);
+  };
+
+  musicSearchTitle(): string {
+    const name = this.selectedType()?.name;
+    if (name === 'artist') return 'Cerca artista su MusicBrainz';
+    if (name === 'track') return 'Cerca brano su MusicBrainz';
+    return 'Cerca album su MusicBrainz';
+  }
+
+  musicSearchPlaceholder(): string {
+    const name = this.selectedType()?.name;
+    if (name === 'artist') return 'Nome artista...';
+    if (name === 'track') return 'Titolo del brano...';
+    return "Titolo dell'album...";
+  }
+
+  musicSearchIcon(): string {
+    const name = this.selectedType()?.name;
+    if (name === 'artist') return 'mic-outline';
+    if (name === 'track') return 'music-outline';
+    return 'recording-outline';
   }
 
   addMusicItem(result: MusicBrainzSearchResult): void {
@@ -1635,14 +1475,21 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   // ── Europeana search ─────────────────────────────────────────────────────────
 
-  onEuropeanaQueryChange(q: string): void {
-    this.europeanaQuery.set(q);
-    if (q.trim().length < 2) {
-      this.europeanaResults.set([]);
-      this.europeanaSearchLoading.set(false);
-      return;
-    }
-    this.europeanaSearch$.next(q.trim());
+  europeanaSearch = (query: string) => {
+    const type: EuropeanaEntityType = this.selectedType()?.name === 'art_artist' ? 'artist' : 'artwork';
+    return this.europeanaService.search(query, type);
+  };
+
+  europeanaSearchTitle(): string {
+    return this.selectedType()?.name === 'art_artist' ? 'Cerca artista su Europeana' : "Cerca opera d'arte su Europeana";
+  }
+
+  europeanaSearchIcon(): string {
+    return this.selectedType()?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline';
+  }
+
+  europeanaSearchPlaceholder(): string {
+    return this.selectedType()?.name === 'art_artist' ? 'Nome artista...' : 'Titolo, soggetto...';
   }
 
   addEuropeanaItem(result: EuropeanaSearchResult): void {
@@ -1707,17 +1554,59 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  europeanaIcon(item: Item): string {
+    return item.item_type_detail?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline';
+  }
+
+  europeanaMetaLine(item: Item): string {
+    const meta = this.europeanaMeta(item);
+    const parts: string[] = [];
+    if (meta.creator) parts.push(meta.creator);
+    if (meta.year) parts.push(`· ${meta.year}`);
+    return parts.join(' ');
+  }
+
+  europeanaDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.europeanaMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (item.item_type_detail) {
+      rows.push({ icon: this.europeanaIcon(item), text: this.typeLabel(item.item_type_detail) });
+    }
+    if (item.item_type_detail?.name === 'art_artist') {
+      if (meta.biography) rows.push({ icon: 'file-text-outline', text: meta.biography });
+      if (meta.date_of_birth || meta.date_of_death) {
+        const text = meta.date_of_death ? `${meta.date_of_birth ?? ''} – ${meta.date_of_death}` : (meta.date_of_birth ?? '');
+        rows.push({ icon: 'calendar-outline', text });
+      }
+      if (meta.place_of_birth) rows.push({ icon: 'pin-outline', text: meta.place_of_birth });
+      if (meta.professions?.length) rows.push({ icon: 'briefcase-outline', text: meta.professions.join(', ') });
+    } else {
+      if (meta.creator) rows.push({ icon: 'person-outline', text: meta.creator });
+      if (meta.year) rows.push({ icon: 'calendar-outline', text: meta.year });
+      if (meta.medium) rows.push({ icon: 'brush-outline', text: meta.medium });
+      if (meta.description) rows.push({ icon: 'file-text-outline', text: meta.description });
+      if (meta.provider) rows.push({ icon: 'briefcase-outline', text: meta.provider });
+    }
+    return rows;
+  }
+
+  europeanaExternalLink(item: Item): ItemDetailLink | null {
+    const url = this.europeanaMeta(item).service_url;
+    return url ? { url, label: 'Apri su Europeana' } : null;
+  }
+
   // ── BoardGameGeek search ──────────────────────────────────────────────────────
 
-  onBggQueryChange(q: string): void {
-    this.bggQuery.set(q);
-    if (q.trim().length < 2) {
-      this.bggResults.set([]);
-      this.bggSearchLoading.set(false);
-      return;
-    }
-    this.bggSearch$.next(q.trim());
-  }
+  bggSearch = (query: string) => {
+    const type: BGGSearchType = this.selectedType()?.name === 'rpg' ? 'rpgitem' : 'boardgame';
+    return this.bggService.search(query, type);
+  };
+
+  readonly bggAttributionLogo: AttributionLogo = {
+    src: '/images/powered-by-bgg.png',
+    alt: 'Powered by BGG',
+    href: 'https://boardgamegeek.com',
+  };
 
   addBggItem(result: BGGSearchResult): void {
     const listId = this.list()!.id;
@@ -1811,17 +1700,31 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  bggMetaLine(item: Item): string {
+    const year = this.bggMeta(item).year_published;
+    return year ? String(year) : '';
+  }
+
+  bggDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.bggMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (item.item_type_detail) {
+      rows.push({ icon: this.bggIcon(item), text: this.typeLabel(item.item_type_detail) });
+    }
+    if (meta.year_published) {
+      rows.push({ icon: 'calendar-outline', text: String(meta.year_published) });
+    }
+    return rows;
+  }
+
+  bggExternalLink(item: Item): ItemDetailLink | null {
+    const url = this.bggMeta(item).service_url;
+    return url ? { url, label: 'Apri su BoardGameGeek' } : null;
+  }
+
   // ── IGDB search (video_game) ──────────────────────────────────────────────────
 
-  onVideoGameQueryChange(q: string): void {
-    this.videoGameQuery.set(q);
-    if (q.trim().length < 2) {
-      this.videoGameResults.set([]);
-      this.videoGameSearchLoading.set(false);
-      return;
-    }
-    this.videoGameSearch$.next(q.trim());
-  }
+  videoGameSearch = (query: string) => this.igdbService.search(query);
 
   addVideoGameItem(result: IGDBSearchResult): void {
     const listId = this.list()!.id;
@@ -1925,23 +1828,60 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
-  // ── Wikivoyage search (travel_destination) ────────────────────────────────────
-
-  onTravelQueryChange(q: string): void {
-    this.travelQuery.set(q);
-    if (q.trim().length < 2) {
-      this.travelResults.set([]);
-      this.travelSearchLoading.set(false);
-      return;
-    }
-    this.travelSearch$.next(q.trim());
+  videoGameMetaLine(item: Item): string {
+    const meta = this.videoGameMeta(item);
+    const platforms = meta.platforms?.length ? meta.platforms.slice(0, 2).join(', ') : '';
+    const year = meta.first_release_date ? `· ${meta.first_release_date.slice(0, 4)}` : '';
+    return [platforms, year].filter(Boolean).join(' ');
   }
 
-  onTravelLanguageChange(event: Event): void {
-    this.travelLanguage.set((event.target as HTMLSelectElement).value);
-    if (this.travelQuery().trim().length >= 2) {
-      this.travelSearch$.next(this.travelQuery().trim());
+  videoGameDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.videoGameMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (item.item_type_detail) {
+      rows.push({ icon: 'monitor-outline', text: this.typeLabel(item.item_type_detail) });
     }
+    if (meta.platforms?.length) {
+      rows.push({ icon: 'hard-drive-outline', text: meta.platforms.join(', ') });
+    }
+    if (meta.genres?.length) {
+      rows.push({ icon: 'pricetags-outline', text: meta.genres.join(', ') });
+    }
+    if (meta.first_release_date) {
+      rows.push({ icon: 'calendar-outline', text: meta.first_release_date });
+    }
+    if (meta.developers?.length) {
+      rows.push({ icon: 'code-outline', text: meta.developers.join(', ') });
+    }
+    if (meta.publishers?.length) {
+      rows.push({ icon: 'briefcase-outline', text: meta.publishers.join(', ') });
+    }
+    if (meta.rating) {
+      rows.push({ icon: 'star-outline', text: `${Math.round(meta.rating)}/100` });
+    }
+    if (meta.summary) {
+      rows.push({ icon: 'file-text-outline', text: meta.summary, wrap: true });
+    }
+    return rows;
+  }
+
+  videoGameExternalLink(item: Item): ItemDetailLink | null {
+    const url = this.videoGameMeta(item).service_url;
+    return url ? { url, label: 'Apri su IGDB' } : null;
+  }
+
+  // ── Wikivoyage search (travel_destination) ────────────────────────────────────
+
+  travelSearch = (query: string) => this.wikivoyageService.search(query, this.travelLanguage());
+
+  onTravelLanguageChange(event: Event, panel: ExternalSearchPanelComponent<WikivoyageSearchResult>): void {
+    this.travelLanguage.set((event.target as HTMLSelectElement).value);
+    panel.researchCurrentQuery();
+  }
+
+  travelMetaLine(item: Item): string {
+    const lang = this.travelMeta(item).lang;
+    return lang ? lang.toUpperCase() : '';
   }
 
   addTravelItem(result: WikivoyageSearchResult): void {
@@ -2031,15 +1971,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   // ── SeatGeek search (concert) ──────────────────────────────────────────────────
 
-  onConcertQueryChange(q: string): void {
-    this.concertQuery.set(q);
-    if (q.trim().length < 2) {
-      this.concertResults.set([]);
-      this.concertSearchLoading.set(false);
-      return;
-    }
-    this.concertSearch$.next(q.trim());
-  }
+  concertSearch = (query: string) => this.seatgeekService.search(query);
 
   // La ricerca SeatGeek include già un'immagine (foto del performer, quando disponibile),
   // quindi l'elemento viene aggiunto direttamente dal risultato di ricerca, come IGDB.
@@ -2139,6 +2071,45 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  concertMetaLine(item: Item): string {
+    const meta = this.concertMeta(item);
+    const parts: string[] = [];
+    if (meta.venue_name) parts.push(meta.venue_name);
+    if (meta.venue_city) parts.push(`· ${meta.venue_city}`);
+    return parts.join(' ');
+  }
+
+  concertDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.concertMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (meta.performers?.length) {
+      rows.push({ icon: 'mic-outline', text: meta.performers.join(', ') });
+    }
+    if (meta.datetime_local) {
+      rows.push({ icon: 'calendar-outline', text: meta.datetime_local });
+    }
+    if (meta.venue_name) {
+      let venueText = meta.venue_name;
+      if (meta.venue_city) venueText += `, ${meta.venue_city}`;
+      if (meta.venue_country) venueText += ` (${meta.venue_country})`;
+      rows.push({ icon: 'pin-outline', text: venueText });
+    }
+    if (meta.low_price || meta.average_price || meta.high_price) {
+      const parts: string[] = [];
+      if (meta.low_price) parts.push(`da ${meta.low_price}€`);
+      if (meta.average_price) parts.push(`· media ${meta.average_price}€`);
+      if (meta.high_price) parts.push(`· fino a ${meta.high_price}€`);
+      if (meta.listing_count) parts.push(`(${meta.listing_count} annunci)`);
+      rows.push({ icon: 'pricetags-outline', text: parts.join(' ') });
+    }
+    return rows;
+  }
+
+  concertExternalLink(item: Item): ItemDetailLink | null {
+    const url = this.concertMeta(item).service_url;
+    return url ? { url, label: 'Apri su SeatGeek' } : null;
+  }
+
   // ── AIFA search (medicine) ──────────────────────────────────────────────────────
 
   onMedicineQueryChange(q: string): void {
@@ -2198,17 +2169,33 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  medicineMetaLine(item: Item): string {
+    const meta = this.medicineMeta(item);
+    const parts: string[] = [];
+    if (meta.active_ingredient) parts.push(meta.active_ingredient);
+    if (meta.pharmaceutical_form) parts.push(`· ${meta.pharmaceutical_form}`);
+    return parts.join(' ');
+  }
+
+  medicineDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.medicineMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (meta.active_ingredient) rows.push({ icon: 'activity-outline', text: meta.active_ingredient });
+    if (meta.atc_code) rows.push({ icon: 'hash-outline', text: `ATC ${meta.atc_code}` });
+    if (meta.pharmaceutical_form || meta.pack_description) {
+      let text = meta.pharmaceutical_form ?? '';
+      if (meta.pack_description) text += ` · ${meta.pack_description}`;
+      rows.push({ icon: 'cube-outline', text });
+    }
+    if (meta.marketing_authorization_holder) rows.push({ icon: 'briefcase-outline', text: meta.marketing_authorization_holder });
+    if (meta.prescription_requirement) rows.push({ icon: 'alert-triangle-outline', text: meta.prescription_requirement });
+    if (meta.aic_code) rows.push({ icon: 'pricetags-outline', text: `AIC ${meta.aic_code}` });
+    return rows;
+  }
+
   // ── Perenual search (plant) ─────────────────────────────────────────────────────
 
-  onPlantQueryChange(q: string): void {
-    this.plantQuery.set(q);
-    if (q.trim().length < 2) {
-      this.plantResults.set([]);
-      this.plantSearchLoading.set(false);
-      return;
-    }
-    this.plantSearch$.next(q.trim());
-  }
+  plantSearch = (query: string) => this.plantService.search(query);
 
   // La ricerca Perenual include già un'immagine (come IGDB), quindi l'elemento viene
   // aggiunto direttamente dal risultato di ricerca senza una chiamata di dettaglio extra.
@@ -2332,6 +2319,72 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       poisonous_to_pets?: boolean;
       image_url?: string;
     };
+  }
+
+  plantMetaLine(item: Item): string {
+    const meta = this.plantMeta(item);
+    const parts: string[] = [];
+    if (meta.scientific_name?.length) parts.push(meta.scientific_name.join(', '));
+    if (meta.cycle) parts.push(`· ${meta.cycle}`);
+    return parts.join(' ');
+  }
+
+  plantDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.plantMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (meta.scientific_name?.length) {
+      rows.push({ text: meta.scientific_name.join(', '), italic: true });
+    }
+    if (meta.family) {
+      rows.push({ icon: 'pricetags-outline', text: meta.family });
+    }
+    if (meta.origin?.length) {
+      rows.push({ icon: 'pin-outline', text: meta.origin.join(', ') });
+    }
+    if (meta.description) {
+      rows.push({ icon: 'file-text-outline', text: meta.description, wrap: true });
+    }
+    if (meta.watering || meta.watering_benchmark) {
+      let text = meta.watering ?? '';
+      if (meta.watering_benchmark) text += ` (${meta.watering_benchmark})`;
+      rows.push({ icon: 'droplet-outline', text });
+    }
+    if (meta.sunlight?.length) {
+      rows.push({ icon: 'sun-outline', text: meta.sunlight.join(', ') });
+    }
+    if (meta.cycle || meta.growth_rate || meta.maintenance || meta.care_level) {
+      const parts: string[] = [];
+      if (meta.cycle) parts.push(meta.cycle);
+      if (meta.growth_rate) parts.push(`· crescita ${meta.growth_rate}`);
+      if (meta.maintenance) parts.push(`· manutenzione ${meta.maintenance}`);
+      if (meta.care_level) parts.push(`· cura ${meta.care_level}`);
+      rows.push({ icon: 'activity-outline', text: parts.join(' ') });
+    }
+    return rows;
+  }
+
+  plantBadges(item: Item): ItemRowBadge[] {
+    const meta = this.plantMeta(item);
+    const badges: ItemRowBadge[] = [];
+    if (meta.indoor) badges.push({ text: 'Da interno' });
+    if (meta.tropical) badges.push({ text: 'Tropicale' });
+    if (meta.drought_tolerant) badges.push({ text: 'Resistente alla siccità' });
+    if (meta.salt_tolerant) badges.push({ text: 'Resistente al sale' });
+    if (meta.thorny) badges.push({ text: 'Spinosa' });
+    if (meta.invasive) badges.push({ text: 'Invasiva' });
+    if (meta.edible_fruit) badges.push({ text: 'Frutto commestibile' });
+    if (meta.edible_leaf) badges.push({ text: 'Foglia commestibile' });
+    if (meta.medicinal) badges.push({ text: 'Uso medicinale' });
+    return badges;
+  }
+
+  plantWarningText(item: Item): string | null {
+    const meta = this.plantMeta(item);
+    if (!meta.poisonous_to_humans && !meta.poisonous_to_pets) return null;
+    const targets: string[] = [];
+    if (meta.poisonous_to_humans) targets.push("l'uomo");
+    if (meta.poisonous_to_pets) targets.push('gli animali domestici');
+    return `Tossica per ${targets.join(' e per ')}`;
   }
 
   // ── Open Food/Beauty/Products Facts search ────────────────────────────────────
@@ -2459,6 +2512,53 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  productMetaLine(item: Item): string {
+    const meta = this.productMeta(item);
+    const parts: string[] = [];
+    if (meta.brands) parts.push(meta.brands);
+    if (meta.quantity) parts.push(`· ${meta.quantity}`);
+    return parts.join(' ');
+  }
+
+  productScoreBadges(item: Item): ItemRowBadge[] {
+    const meta = this.productMeta(item);
+    const badges: ItemRowBadge[] = [];
+    if (meta.nutriscore_grade) {
+      badges.push({ text: `Nutri-Score ${meta.nutriscore_grade.toUpperCase()}`, cssClass: `nutri-badge--${meta.nutriscore_grade}` });
+    }
+    if (meta.nova_group) {
+      badges.push({ text: `NOVA ${meta.nova_group}` });
+    }
+    if (meta.ecoscore_grade) {
+      badges.push({ text: `Eco-Score ${meta.ecoscore_grade.toUpperCase()}`, cssClass: `nutri-badge--${meta.ecoscore_grade}` });
+    }
+    return badges;
+  }
+
+  productDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.productMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (meta.brands) rows.push({ icon: 'pricetags-outline', text: meta.brands });
+    if (meta.quantity) rows.push({ icon: 'cube-outline', text: meta.quantity });
+    if (meta.categories) rows.push({ icon: 'grid-outline', text: meta.categories });
+    if (meta.barcode) rows.push({ icon: 'hash-outline', text: meta.barcode });
+    // Nel markup originale ingredienti/etichette comparivano dopo i badge punteggio;
+    // qui restano nello stesso elenco di righe, subito prima dei badge (riordino cosmetico minore).
+    if (meta.ingredients_text) rows.push({ icon: 'file-text-outline', text: meta.ingredients_text, wrap: true });
+    if (meta.labels?.length) rows.push({ icon: 'pricetags-outline', text: meta.labels.join(', ') });
+    return rows;
+  }
+
+  productWarningText(item: Item): string | null {
+    const allergens = this.productMeta(item).allergens;
+    return allergens?.length ? `Allergeni: ${allergens.join(', ')}` : null;
+  }
+
+  productExternalLink(item: Item): ItemDetailLink | null {
+    const url = this.productMeta(item).service_url;
+    return url ? { url, label: 'Apri su Open Food Facts' } : null;
+  }
+
   onImageFileChange(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     const prev = this.pendingImagePreviewUrl();
@@ -2565,8 +2665,61 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return (item.metadata ?? {}) as { author?: string; isbn?: string; cover_url?: string; year?: number | null; service_url?: string };
   }
 
+  bookMetaLine(item: Item): string {
+    const meta = this.bookMeta(item);
+    const parts: string[] = [];
+    if (meta.author) parts.push(meta.author);
+    if (meta.year) parts.push(`· ${meta.year}`);
+    if (meta.isbn) parts.push(`· ISBN ${meta.isbn}`);
+    return parts.join(' ');
+  }
+
+  bookDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.bookMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (meta.author) rows.push({ icon: 'person-outline', text: meta.author });
+    if (meta.year) rows.push({ icon: 'calendar-outline', text: String(meta.year) });
+    if (meta.isbn) rows.push({ icon: 'hash-outline', text: `ISBN ${meta.isbn}` });
+    return rows;
+  }
+
+  bookExternalLink(item: Item): ItemDetailLink | null {
+    const url = this.bookMeta(item).service_url;
+    return url ? { url, label: 'Apri su OpenLibrary' } : null;
+  }
+
   tvdbMeta(item: Item): { image_url?: string; network?: string; status?: string; year?: number; service_url?: string; type?: string } {
     return (item.metadata ?? {}) as { image_url?: string; network?: string; status?: string; year?: number; service_url?: string; type?: string };
+  }
+
+  tvdbMetaLine(item: Item): string {
+    const meta = this.tvdbMeta(item);
+    const parts: string[] = [];
+    if (meta.year) parts.push(String(meta.year));
+    if (meta.network) parts.push(`· ${meta.network}`);
+    if (meta.status) parts.push(`· ${meta.status}`);
+    return parts.join(' ');
+  }
+
+  tvdbDetailIcon(item: Item): string {
+    return item.item_type_detail?.name === 'movie' ? 'film-outline' : 'tv-outline';
+  }
+
+  tvdbDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.tvdbMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (item.item_type_detail) {
+      rows.push({ icon: this.tvdbDetailIcon(item), text: this.typeLabel(item.item_type_detail) });
+    }
+    if (meta.year) rows.push({ icon: 'calendar-outline', text: String(meta.year) });
+    if (meta.network) rows.push({ icon: 'monitor-outline', text: meta.network });
+    if (meta.status) rows.push({ icon: 'info-outline', text: meta.status });
+    return rows;
+  }
+
+  tvdbExternalLink(item: Item): ItemDetailLink | null {
+    const url = this.tvdbMeta(item).service_url;
+    return url ? { url, label: 'Apri su TheTVDB' } : null;
   }
 
   musicMeta(item: Item): {
@@ -2593,6 +2746,49 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  musicMetaLine(item: Item): string {
+    const meta = this.musicMeta(item);
+    const parts: string[] = [];
+    if (meta.artist_name) parts.push(meta.artist_name);
+    if (meta.album_name) parts.push(`· ${meta.album_name}`);
+    if (meta.first_release_date) parts.push(`· ${meta.first_release_date}`);
+    if (meta.country) parts.push(`· ${meta.country}`);
+    return parts.join(' ');
+  }
+
+  musicDetailRows(item: Item): ItemDetailRow[] {
+    const meta = this.musicMeta(item);
+    const rows: ItemDetailRow[] = [];
+    if (item.item_type_detail) {
+      rows.push({ icon: this.musicIcon(item), text: this.typeLabel(item.item_type_detail) });
+    }
+    if (meta.artist_name) {
+      rows.push({ icon: 'mic-outline', text: meta.artist_name });
+    }
+    if (meta.album_name) {
+      rows.push({ icon: 'recording-outline', text: meta.album_name });
+    }
+    if (meta.first_release_date) {
+      rows.push({ icon: 'calendar-outline', text: meta.first_release_date });
+    }
+    if (meta.country) {
+      rows.push({ icon: 'globe-2-outline', text: meta.country });
+    }
+    if (meta.life_span_begin) {
+      const text = meta.life_span_end ? `${meta.life_span_begin} – ${meta.life_span_end}` : meta.life_span_begin;
+      rows.push({ icon: 'calendar-outline', text });
+    }
+    if (meta.track_number) {
+      rows.push({ icon: 'hash-outline', text: `Traccia ${meta.track_number}` });
+    }
+    return rows;
+  }
+
+  musicExternalLink(item: Item): ItemDetailLink | null {
+    const url = this.musicMeta(item).service_url;
+    return url ? { url, label: 'Apri su MusicBrainz' } : null;
+  }
+
   placeMeta(item: Item): {
     display_name?: string;
     address?: Record<string, string>;
@@ -2611,6 +2807,19 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       place_type?: string;
       service_url?: string;
     };
+  }
+
+  placeMetaLine(item: Item): string {
+    const meta = this.placeMeta(item);
+    const parts: string[] = [];
+    if (meta.category) parts.push(meta.category);
+    if (meta.place_type) parts.push(`· ${meta.place_type}`);
+    return parts.join(' ');
+  }
+
+  placeRowImageUrl(item: Item): string | null {
+    const meta = this.placeMeta(item);
+    return meta.latitude != null && meta.longitude != null ? this.placeTileUrl(meta.latitude, meta.longitude) : null;
   }
 
   openDetail(item: Item): void {

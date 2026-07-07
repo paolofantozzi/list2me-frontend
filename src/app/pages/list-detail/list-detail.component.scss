@@ -1,14 +1,4 @@
-$primary: #3366ff;
-$primary-100: #ebf2ff;
-$text-hint: #8f9bb3;
-$text-basic: #1a2138;
-$border: #edf0f7;
-$success: #00d68f;
-$success-100: #e8fff6;
-$danger: #ff3d71;
-$danger-100: #fff2f5;
-$warning: #ffaa00;
-$warning-100: #fff8e6;
+@use '../../../styles/tokens' as *;
 
 .page-container {
   padding: 1.5rem;
@@ -562,16 +552,6 @@ $warning-100: #fff8e6;
   }
 }
 
-.tvdb-cover-item {
-  width: 44px;
-  min-width: 44px;
-  height: 64px;
-  object-fit: contain;
-  background: $border;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-}
-
 .book-meta {
   margin: 0.2rem 0 0;
   font-size: 0.8125rem;
@@ -726,21 +706,6 @@ $warning-100: #fff8e6;
   }
 }
 
-.powered-by-bgg-logo {
-  height: 20px;
-  width: auto;
-  display: block;
-}
-
-.powered-by-bgg-link {
-  display: inline-block;
-  margin-top: 0.5rem;
-  opacity: 0.85;
-  transition: opacity 0.15s ease;
-
-  &:hover { opacity: 1; }
-}
-
 .items-attribution {
   font-size: 0.75rem;
   color: $text-hint;
@@ -784,7 +749,7 @@ $warning-100: #fff8e6;
   transition: background 0.12s;
 
   &:hover {
-    background: darken($primary-100, 5%);
+    background: $primary-100-hover;
   }
 
   nb-icon { font-size: 0.95rem; }
@@ -802,7 +767,7 @@ $warning-100: #fff8e6;
   display: flex;
   align-items: center;
   gap: 0.2rem;
-  color: darken($primary, 10%);
+  color: $primary-dark;
   opacity: 0.75;
   font-size: 0.75rem;
 }
@@ -848,7 +813,7 @@ $warning-100: #fff8e6;
   font-weight: 600;
   margin: 0.75rem 0 0.375rem;
 
-  &.diff-added-label { color: darken($success, 10%); }
+  &.diff-added-label { color: $success-strong; }
   &.diff-removed-label { color: $danger; }
 }
 
@@ -868,13 +833,13 @@ $warning-100: #fff8e6;
 
   &--added {
     background: $success-100;
-    color: darken($success, 15%);
+    color: $success-strong;
     border-left: 3px solid $success;
   }
 
   &--removed {
     background: $danger-100;
-    color: darken($danger, 5%);
+    color: $danger-strong;
     border-left: 3px solid $danger;
     text-decoration: line-through;
   }
@@ -914,9 +879,9 @@ $warning-100: #fff8e6;
   padding: 0.1rem 0.5rem;
   border-radius: 4px;
 
-  &--pending  { background: $warning-100; color: darken($warning, 20%); }
-  &--accepted { background: $success-100; color: darken($success, 15%); }
-  &--rejected { background: $danger-100;  color: darken($danger, 5%); }
+  &--pending  { background: $warning-100; color: $warning-strong; }
+  &--accepted { background: $success-100; color: $success-strong; }
+  &--rejected { background: $danger-100;  color: $danger-strong; }
 }
 
 .suggestion-actions-list {
@@ -1269,11 +1234,6 @@ $warning-100: #fff8e6;
 
 // ── Place items ────────────────────────────────────────────────────────────────
 
-.place-cover-thumb {
-  object-fit: cover;
-  background: $border;
-}
-
 .item-detail-grid--place {
   align-items: stretch;
 }
@@ -1306,45 +1266,9 @@ $warning-100: #fff8e6;
   font-weight: 600;
 }
 
-.product-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin: 0.3rem 0 0;
-}
-
-.product-badge {
-  display: inline-block;
-  padding: 0.1rem 0.5rem;
-  border-radius: 10px;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  background: $border;
-  color: $text-basic;
-
-  &.nutri-badge--a { background: #1e8f4e; color: #fff; }
-  &.nutri-badge--b { background: #7ab648; color: #fff; }
-  &.nutri-badge--c { background: $warning; color: #fff; }
-  &.nutri-badge--d { background: #ee8100; color: #fff; }
-  &.nutri-badge--e { background: $danger; color: #fff; }
-}
 
 // ── Video game items (IGDB) ───────────────────────────────────────────────────
 
-.video-game-screenshots {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  margin-top: 0.25rem;
-}
-
-.video-game-screenshot {
-  width: 100px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-}
 
 // ── Travel destination items (Wikivoyage) ─────────────────────────────────────
 

@@ -1,0 +1,28 @@
+<div class="item-media-wrap" (click)="open.emit()" role="button" tabindex="0"
+     (keyup.enter)="open.emit()" title="Mostra dettagli">
+  @if (imageUrl) {
+    <img [src]="imageUrl" [alt]="title" class="book-cover" [style.object-fit]="coverFit" loading="lazy">
+  } @else {
+    <div class="book-cover book-cover--placeholder">
+      <nb-icon [icon]="iconFallback"></nb-icon>
+    </div>
+  }
+  <div class="item-text">
+    <p class="item-title">{{ title || '(senza titolo)' }}</p>
+    <p class="book-meta">
+      @if (typeLabel) {
+        <span class="item-type-badge">{{ typeLabel }}</span>
+      }
+      @if (metaText) {
+        {{ metaText }}
+      }
+    </p>
+    @if (badges?.length) {
+      <p class="product-badges">
+        @for (badge of badges!; track badge.text) {
+          <span class="product-badge" [class]="badge.cssClass">{{ badge.text }}</span>
+        }
+      </p>
+    }
+  </div>
+</div>

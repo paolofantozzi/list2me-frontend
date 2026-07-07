@@ -1,6 +1,4 @@
-$primary: #3366ff;
-$text-hint: #8f9bb3;
-$text-basic: #1a2138;
+@use '../../../styles/tokens' as *;
 
 .page-container {
   max-width: 800px;
@@ -19,6 +17,98 @@ $text-basic: #1a2138;
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+// ── Panoramica ───────────────────────────────────────────────────────────────
+
+.stats-section {
+  margin-bottom: $space-6;
+}
+
+.stats-title {
+  margin: 0 0 $space-4;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: $text-basic;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: $space-4;
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-5 $space-4;
+  background: $surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  text-decoration: none;
+  transition: transform 0.15s;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &--highlight {
+    .stat-tile-value {
+      color: $warning;
+    }
+  }
+}
+
+.stat-tile-icon {
+  font-size: $font-size-xl;
+  color: $primary;
+}
+
+.stat-tile-value {
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  color: $text-basic;
+}
+
+.stat-tile-label {
+  font-size: $font-size-sm;
+  color: $text-hint;
+}
+
+.recent-lists {
+  margin-top: $space-4;
+}
+
+.recent-lists-title {
+  margin: 0 0 $space-2;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $text-hint;
+}
+
+.recent-lists-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.recent-list-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-1 $space-3;
+  background: $primary-100;
+  color: $primary;
+  border-radius: 9999px;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .loading-center {
@@ -95,7 +185,7 @@ $text-basic: #1a2138;
 .activity-details {
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: #f7f9fc;
+  background: $bg-page;
   border-radius: 6px;
   display: flex;
   flex-direction: column;

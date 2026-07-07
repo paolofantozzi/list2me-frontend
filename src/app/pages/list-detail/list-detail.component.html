@@ -720,350 +720,87 @@
 
     <!-- ── MusicBrainz search panel ──────────────────────────────────────────── -->
     @if (showMusicSearch() && canEdit) {
-      <nb-card class="add-item-card music-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon [icon]="selectedType()?.name === 'artist' ? 'mic-outline' : selectedType()?.name === 'track' ? 'music-outline' : 'recording-outline'"></nb-icon>
-          @if (selectedType()?.name === 'artist') {
-            Cerca artista su MusicBrainz
-          } @else if (selectedType()?.name === 'track') {
-            Cerca brano su MusicBrainz
-          } @else {
-            Cerca album su MusicBrainz
-          }
-        </nb-card-header>
-        <nb-card-body>
-          <div class="book-search-input-wrap">
-            <input nbInput fullWidth #musicInput
-                   [value]="musicQuery()"
-                   [placeholder]="selectedType()?.name === 'artist' ? 'Nome artista...' : selectedType()?.name === 'track' ? 'Titolo del brano...' : 'Titolo dell\'album...'"
-                   (input)="onMusicQueryChange(musicInput.value)" />
-            @if (musicSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
-            }
-          </div>
-
-          @if (musicResults().length > 0) {
-            <div class="book-results">
-              @for (result of musicResults(); track $index) {
-                <div class="book-result" (click)="addMusicItem(result)" role="button" tabindex="0"
-                     (keyup.enter)="addMusicItem(result)">
-                  @if (result.image_url) {
-                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
-                  } @else {
-                    <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon [icon]="selectedType()?.name === 'artist' ? 'mic-outline' : selectedType()?.name === 'track' ? 'music-outline' : 'recording-outline'"></nb-icon>
-                    </div>
-                  }
-                  <div class="book-result-info">
-                    <p class="book-result-title">{{ result.title }}</p>
-                    @if (result.subtitle) {
-                      <p class="book-result-meta">{{ result.subtitle }}</p>
-                    }
-                    @if (result.service_url) {
-                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
-                         class="result-service-link" (click)="$event.stopPropagation()">
-                        <nb-icon icon="external-link-outline"></nb-icon> MusicBrainz
-                      </a>
-                    }
-                  </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
-                </div>
-              }
-            </div>
-          } @else if (musicQuery().trim().length >= 2 && !musicSearchLoading()) {
-            <p class="book-no-results">Nessun risultato trovato per "{{ musicQuery() }}".</p>
-          }
-
-          <div class="panel-attribution">
-            Ricerca fornita da <a href="https://musicbrainz.org" target="_blank" rel="noopener noreferrer">MusicBrainz</a>
-          </div>
-
-          <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
-              Indietro
-            </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
-          </div>
-        </nb-card-body>
-      </nb-card>
+      <app-external-search-panel
+        [title]="musicSearchTitle()"
+        [icon]="musicSearchIcon()"
+        [placeholder]="musicSearchPlaceholder()"
+        attributionName="MusicBrainz"
+        attributionUrl="https://musicbrainz.org"
+        [searchFn]="musicSearch"
+        (add)="addMusicItem($event)"
+        (back)="backToTypePicker()"
+        (cancel)="closeAddPanel()">
+      </app-external-search-panel>
     }
 
     <!-- ── BoardGameGeek search panel ─────────────────────────────────────── -->
     @if (showBggSearch() && canEdit) {
-      <nb-card class="add-item-card bgg-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon [icon]="selectedType()?.name === 'rpg' ? 'book-open-outline' : 'shuffle-outline'"></nb-icon>
-          @if (selectedType()?.name === 'rpg') {
-            Cerca gioco di ruolo su BoardGameGeek
-          } @else {
-            Cerca gioco da tavolo su BoardGameGeek
-          }
-        </nb-card-header>
-        <nb-card-body>
-          <div class="book-search-input-wrap">
-            <input nbInput fullWidth #bggInput
-                   [value]="bggQuery()"
-                   placeholder="Titolo del gioco..."
-                   (input)="onBggQueryChange(bggInput.value)" />
-            @if (bggSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
-            }
-          </div>
-
-          @if (bggResults().length > 0) {
-            <div class="book-results">
-              @for (result of bggResults(); track $index) {
-                <div class="book-result" (click)="addBggItem(result)" role="button" tabindex="0"
-                     (keyup.enter)="addBggItem(result)">
-                  @if (result.image_url) {
-                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
-                  } @else {
-                    <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon [icon]="selectedType()?.name === 'rpg' ? 'book-open-outline' : 'shuffle-outline'"></nb-icon>
-                    </div>
-                  }
-                  <div class="book-result-info">
-                    <p class="book-result-title">{{ result.title }}</p>
-                    @if (result.subtitle) {
-                      <p class="book-result-meta">{{ result.subtitle }}</p>
-                    }
-                    @if (result.service_url) {
-                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
-                         class="result-service-link" (click)="$event.stopPropagation()">
-                        <nb-icon icon="external-link-outline"></nb-icon> BoardGameGeek
-                      </a>
-                    }
-                  </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
-                </div>
-              }
-            </div>
-          } @else if (bggQuery().trim().length >= 2 && !bggSearchLoading()) {
-            <p class="book-no-results">Nessun risultato trovato per "{{ bggQuery() }}".</p>
-          }
-
-          <div class="panel-attribution">
-            <a href="https://boardgamegeek.com" target="_blank" rel="noopener noreferrer">
-              <img src="/images/powered-by-bgg.png" alt="Powered by BGG" class="powered-by-bgg-logo">
-            </a>
-          </div>
-
-          <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
-              Indietro
-            </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
-          </div>
-        </nb-card-body>
-      </nb-card>
+      <app-external-search-panel
+        [title]="selectedType()?.name === 'rpg' ? 'Cerca gioco di ruolo su BoardGameGeek' : 'Cerca gioco da tavolo su BoardGameGeek'"
+        [icon]="selectedType()?.name === 'rpg' ? 'book-open-outline' : 'shuffle-outline'"
+        placeholder="Titolo del gioco..."
+        [attributionLogo]="bggAttributionLogo"
+        [searchFn]="bggSearch"
+        (add)="addBggItem($event)"
+        (back)="backToTypePicker()"
+        (cancel)="closeAddPanel()">
+      </app-external-search-panel>
     }
 
     <!-- ── IGDB search panel (video_game) ─────────────────────────────────── -->
     @if (showVideoGameSearch() && canEdit) {
-      <nb-card class="add-item-card video-game-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="monitor-outline"></nb-icon>
-          Cerca videogioco su IGDB
-        </nb-card-header>
-        <nb-card-body>
-          <div class="book-search-input-wrap">
-            <input nbInput fullWidth #videoGameInput
-                   [value]="videoGameQuery()"
-                   placeholder="Titolo del videogioco..."
-                   (input)="onVideoGameQueryChange(videoGameInput.value)" />
-            @if (videoGameSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
-            }
-          </div>
-
-          @if (videoGameResults().length > 0) {
-            <div class="book-results">
-              @for (result of videoGameResults(); track $index) {
-                <div class="book-result" (click)="addVideoGameItem(result)" role="button" tabindex="0"
-                     (keyup.enter)="addVideoGameItem(result)">
-                  @if (result.image_url) {
-                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
-                  } @else {
-                    <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon icon="monitor-outline"></nb-icon>
-                    </div>
-                  }
-                  <div class="book-result-info">
-                    <p class="book-result-title">{{ result.title }}</p>
-                    @if (result.subtitle) {
-                      <p class="book-result-meta">{{ result.subtitle }}</p>
-                    }
-                    @if (result.service_url) {
-                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
-                         class="result-service-link" (click)="$event.stopPropagation()">
-                        <nb-icon icon="external-link-outline"></nb-icon> IGDB
-                      </a>
-                    }
-                  </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
-                </div>
-              }
-            </div>
-          } @else if (videoGameQuery().trim().length >= 2 && !videoGameSearchLoading()) {
-            <p class="book-no-results">Nessun risultato trovato per "{{ videoGameQuery() }}".</p>
-          }
-
-          <div class="panel-attribution">
-            Ricerca fornita da <a href="https://www.igdb.com" target="_blank" rel="noopener noreferrer">IGDB</a>
-          </div>
-
-          <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
-              Indietro
-            </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
-          </div>
-        </nb-card-body>
-      </nb-card>
+      <app-external-search-panel
+        title="Cerca videogioco su IGDB"
+        icon="monitor-outline"
+        placeholder="Titolo del videogioco..."
+        attributionName="IGDB"
+        attributionUrl="https://www.igdb.com"
+        [searchFn]="videoGameSearch"
+        (add)="addVideoGameItem($event)"
+        (back)="backToTypePicker()"
+        (cancel)="closeAddPanel()">
+      </app-external-search-panel>
     }
 
     <!-- ── Wikivoyage search panel (travel_destination) ───────────────────── -->
     @if (showTravelSearch() && canEdit) {
-      <nb-card class="add-item-card travel-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="compass-outline"></nb-icon>
-          Cerca una destinazione di viaggio su Wikivoyage
-        </nb-card-header>
-        <nb-card-body>
-          <div class="tvdb-filters">
-            <select class="tvdb-select" [value]="travelLanguage()" (change)="onTravelLanguageChange($event)">
-              <option value="en">English</option>
-              <option value="it">Italiano</option>
-              <option value="fr">Français</option>
-              <option value="de">Deutsch</option>
-              <option value="es">Español</option>
-              <option value="pt">Português</option>
-              <option value="ja">日本語</option>
-            </select>
-          </div>
-          <div class="book-search-input-wrap">
-            <input nbInput fullWidth #travelInput
-                   [value]="travelQuery()"
-                   placeholder="Nome della destinazione (città, regione, paese)..."
-                   (input)="onTravelQueryChange(travelInput.value)" />
-            @if (travelSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
-            }
-          </div>
-
-          @if (travelResults().length > 0) {
-            <div class="book-results">
-              @for (result of travelResults(); track $index) {
-                <div class="book-result" (click)="addTravelItem(result)" role="button" tabindex="0"
-                     (keyup.enter)="addTravelItem(result)">
-                  @if (result.image_url) {
-                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
-                  } @else {
-                    <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon icon="compass-outline"></nb-icon>
-                    </div>
-                  }
-                  <div class="book-result-info">
-                    <p class="book-result-title">{{ result.title }}</p>
-                    @if (result.subtitle) {
-                      <p class="book-result-meta">{{ result.subtitle }}</p>
-                    }
-                    @if (result.service_url) {
-                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
-                         class="result-service-link" (click)="$event.stopPropagation()">
-                        <nb-icon icon="external-link-outline"></nb-icon> Wikivoyage
-                      </a>
-                    }
-                  </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
-                </div>
-              }
-            </div>
-          } @else if (travelQuery().trim().length >= 2 && !travelSearchLoading()) {
-            <p class="book-no-results">Nessun risultato trovato per "{{ travelQuery() }}".</p>
-          }
-
-          <div class="panel-attribution">
-            Ricerca fornita da <a href="https://www.wikivoyage.org" target="_blank" rel="noopener noreferrer">Wikivoyage</a>
-          </div>
-
-          <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
-              Indietro
-            </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
-          </div>
-        </nb-card-body>
-      </nb-card>
+      <app-external-search-panel #travelPanel
+        title="Cerca una destinazione di viaggio su Wikivoyage"
+        icon="compass-outline"
+        placeholder="Nome della destinazione (città, regione, paese)..."
+        attributionName="Wikivoyage"
+        attributionUrl="https://www.wikivoyage.org"
+        [searchFn]="travelSearch"
+        (add)="addTravelItem($event)"
+        (back)="backToTypePicker()"
+        (cancel)="closeAddPanel()">
+        <div extra-controls class="tvdb-filters">
+          <select class="tvdb-select" [value]="travelLanguage()" (change)="onTravelLanguageChange($event, travelPanel)">
+            <option value="en">English</option>
+            <option value="it">Italiano</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="pt">Português</option>
+            <option value="ja">日本語</option>
+          </select>
+        </div>
+      </app-external-search-panel>
     }
 
     <!-- ── SeatGeek search panel (concert) ─────────────────────────────────── -->
     @if (showConcertSearch() && canEdit) {
-      <nb-card class="add-item-card concert-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="music-outline"></nb-icon>
-          Cerca un concerto su SeatGeek
-        </nb-card-header>
-        <nb-card-body>
-          <div class="book-search-input-wrap">
-            <input nbInput fullWidth #concertInput
-                   [value]="concertQuery()"
-                   placeholder="Artista, venue o città..."
-                   (input)="onConcertQueryChange(concertInput.value)" />
-            @if (concertSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
-            }
-          </div>
-
-          @if (concertResults().length > 0) {
-            <div class="book-results">
-              @for (result of concertResults(); track $index) {
-                <div class="book-result" (click)="addConcertItem(result)" role="button" tabindex="0"
-                     (keyup.enter)="addConcertItem(result)">
-                  @if (result.image_url) {
-                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
-                  } @else {
-                    <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon icon="music-outline"></nb-icon>
-                    </div>
-                  }
-                  <div class="book-result-info">
-                    <p class="book-result-title">{{ result.title }}</p>
-                    @if (result.subtitle) {
-                      <p class="book-result-meta">{{ result.subtitle }}</p>
-                    }
-                    @if (result.service_url) {
-                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
-                         class="result-service-link" (click)="$event.stopPropagation()">
-                        <nb-icon icon="external-link-outline"></nb-icon> SeatGeek
-                      </a>
-                    }
-                  </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
-                </div>
-              }
-            </div>
-          } @else if (concertQuery().trim().length >= 2 && !concertSearchLoading()) {
-            <p class="book-no-results">Nessun risultato trovato per "{{ concertQuery() }}".</p>
-          }
-
-          <div class="panel-attribution">
-            Ricerca fornita da <a href="https://seatgeek.com" target="_blank" rel="noopener noreferrer">SeatGeek</a>
-          </div>
-
-          <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
-              Indietro
-            </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
-          </div>
-        </nb-card-body>
-      </nb-card>
+      <app-external-search-panel
+        title="Cerca un concerto su SeatGeek"
+        icon="music-outline"
+        placeholder="Artista, venue o città..."
+        attributionName="SeatGeek"
+        attributionUrl="https://seatgeek.com"
+        [searchFn]="concertSearch"
+        (add)="addConcertItem($event)"
+        (back)="backToTypePicker()"
+        (cancel)="closeAddPanel()">
+      </app-external-search-panel>
     }
 
     <!-- ── AIFA search panel (medicine) ─────────────────────────────────────── -->
@@ -1127,61 +864,18 @@
 
     <!-- ── Perenual search panel (plant) ────────────────────────────────────── -->
     @if (showPlantSearch() && canEdit) {
-      <nb-card class="add-item-card plant-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="droplet-outline"></nb-icon>
-          Cerca una pianta su Perenual
-        </nb-card-header>
-        <nb-card-body>
-          <div class="book-search-input-wrap">
-            <input nbInput fullWidth #plantInput
-                   [value]="plantQuery()"
-                   placeholder="Nome comune o scientifico..."
-                   (input)="onPlantQueryChange(plantInput.value)" />
-            @if (plantSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
-            }
-          </div>
-
-          @if (plantResults().length > 0) {
-            <div class="book-results">
-              @for (result of plantResults(); track $index) {
-                <div class="book-result" (click)="addPlantItem(result)" role="button" tabindex="0"
-                     (keyup.enter)="addPlantItem(result)">
-                  @if (result.image_url) {
-                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
-                  } @else {
-                    <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon icon="droplet-outline"></nb-icon>
-                    </div>
-                  }
-                  <div class="book-result-info">
-                    <p class="book-result-title">{{ result.title }}</p>
-                    @if (result.subtitle) {
-                      <p class="book-result-meta"><em>{{ result.subtitle }}</em></p>
-                    }
-                  </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
-                </div>
-              }
-            </div>
-          } @else if (plantQuery().trim().length >= 2 && !plantSearchLoading()) {
-            <p class="book-no-results">Nessun risultato trovato per "{{ plantQuery() }}".</p>
-          }
-
-          <div class="panel-attribution">
-            Ricerca fornita da <a href="https://perenual.com" target="_blank" rel="noopener noreferrer">Perenual</a>
-          </div>
-
-          <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
-              Indietro
-            </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
-          </div>
-        </nb-card-body>
-      </nb-card>
+      <app-external-search-panel
+        title="Cerca una pianta su Perenual"
+        icon="droplet-outline"
+        placeholder="Nome comune o scientifico..."
+        attributionName="Perenual"
+        attributionUrl="https://perenual.com"
+        [italicSubtitle]="true"
+        [searchFn]="plantSearch"
+        (add)="addPlantItem($event)"
+        (back)="backToTypePicker()"
+        (cancel)="closeAddPanel()">
+      </app-external-search-panel>
     }
 
     <!-- ── Place search panel (Nominatim) ─────────────────────────────────── -->
@@ -1310,71 +1004,17 @@
 
     <!-- ── Europeana search panel ─────────────────────────────────────────── -->
     @if (showEuropeanaSearch() && canEdit) {
-      <nb-card class="add-item-card europeana-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon [icon]="selectedType()?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline'"></nb-icon>
-          @if (selectedType()?.name === 'art_artist') {
-            Cerca artista su Europeana
-          } @else {
-            Cerca opera d'arte su Europeana
-          }
-        </nb-card-header>
-        <nb-card-body>
-          <div class="book-search-input-wrap">
-            <input nbInput fullWidth #europeanaInput
-                   [value]="europeanaQuery()"
-                   [placeholder]="selectedType()?.name === 'art_artist' ? 'Nome artista...' : 'Titolo, soggetto...'"
-                   (input)="onEuropeanaQueryChange(europeanaInput.value)" />
-            @if (europeanaSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
-            }
-          </div>
-
-          @if (europeanaResults().length > 0) {
-            <div class="book-results">
-              @for (result of europeanaResults(); track $index) {
-                <div class="book-result" (click)="addEuropeanaItem(result)" role="button" tabindex="0"
-                     (keyup.enter)="addEuropeanaItem(result)">
-                  @if (result.image_url) {
-                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
-                  } @else {
-                    <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon [icon]="selectedType()?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline'"></nb-icon>
-                    </div>
-                  }
-                  <div class="book-result-info">
-                    <p class="book-result-title">{{ result.title }}</p>
-                    @if (result.subtitle) {
-                      <p class="book-result-meta">{{ result.subtitle }}</p>
-                    }
-                    @if (result.service_url) {
-                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
-                         class="result-service-link" (click)="$event.stopPropagation()">
-                        <nb-icon icon="external-link-outline"></nb-icon> Europeana
-                      </a>
-                    }
-                  </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
-                </div>
-              }
-            </div>
-          } @else if (europeanaQuery().trim().length >= 2 && !europeanaSearchLoading()) {
-            <p class="book-no-results">Nessun risultato trovato per "{{ europeanaQuery() }}".</p>
-          }
-
-          <div class="panel-attribution">
-            Ricerca fornita da <a href="https://www.europeana.eu" target="_blank" rel="noopener noreferrer">Europeana</a>
-          </div>
-
-          <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
-              Indietro
-            </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
-          </div>
-        </nb-card-body>
-      </nb-card>
+      <app-external-search-panel
+        [title]="europeanaSearchTitle()"
+        [icon]="europeanaSearchIcon()"
+        [placeholder]="europeanaSearchPlaceholder()"
+        attributionName="Europeana"
+        attributionUrl="https://www.europeana.eu"
+        [searchFn]="europeanaSearch"
+        (add)="addEuropeanaItem($event)"
+        (back)="backToTypePicker()"
+        (cancel)="closeAddPanel()">
+      </app-external-search-panel>
     }
 
     <!-- ── Open Food/Beauty/Products Facts search panel ─────────────────────── -->
@@ -1668,46 +1308,22 @@
                     <span class="item-number">{{ i + 1 }}</span>
 
                     @if (isBookItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (bookMeta(item).cover_url) {
-                          <img [src]="bookMeta(item).cover_url" [alt]="item.text"
-                               class="book-cover" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon icon="book-outline"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (bookMeta(item).author) { {{ bookMeta(item).author }} }
-                            @if (bookMeta(item).year) { · {{ bookMeta(item).year }} }
-                            @if (bookMeta(item).isbn) { · ISBN {{ bookMeta(item).isbn }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="bookMeta(item).cover_url ?? null"
+                        iconFallback="book-outline"
+                        [title]="item.text || '(senza titolo)'"
+                        [metaText]="bookMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isTvdbItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (tvdbMeta(item).image_url) {
-                          <img [src]="tvdbMeta(item).image_url" [alt]="item.text"
-                               class="book-cover tvdb-cover-item" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon icon="tv-outline"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (tvdbMeta(item).year) { {{ tvdbMeta(item).year }} }
-                            @if (tvdbMeta(item).network) { · {{ tvdbMeta(item).network }} }
-                            @if (tvdbMeta(item).status) { · {{ tvdbMeta(item).status }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="tvdbMeta(item).image_url ?? null"
+                        iconFallback="tv-outline"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="tvdbMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isImageItem(item)) {
                       <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
                            (keyup.enter)="openDetail(item)" title="Mostra immagine">
@@ -1724,209 +1340,97 @@
                         </div>
                       </div>
                     } @else if (isMusicItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (musicMeta(item).image_url) {
-                          <img [src]="musicMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon [icon]="musicIcon(item)"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (musicMeta(item).artist_name) { {{ musicMeta(item).artist_name }} }
-                            @if (musicMeta(item).album_name) { · {{ musicMeta(item).album_name }} }
-                            @if (musicMeta(item).first_release_date) { · {{ musicMeta(item).first_release_date }} }
-                            @if (musicMeta(item).country) { · {{ musicMeta(item).country }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="musicMeta(item).image_url ?? null"
+                        [iconFallback]="musicIcon(item)"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="musicMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isBggItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (bggMeta(item).image_url) {
-                          <img [src]="bggMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon [icon]="bggIcon(item)"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (bggMeta(item).year_published) { {{ bggMeta(item).year_published }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="bggMeta(item).image_url ?? null"
+                        [iconFallback]="bggIcon(item)"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="bggMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isVideoGameItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (videoGameMeta(item).image_url) {
-                          <img [src]="videoGameMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon icon="monitor-outline"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (videoGameMeta(item).platforms?.length) { {{ videoGameMeta(item).platforms!.slice(0, 2).join(', ') }} }
-                            @if (videoGameMeta(item).first_release_date) { · {{ videoGameMeta(item).first_release_date!.slice(0, 4) }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="videoGameMeta(item).image_url ?? null"
+                        iconFallback="monitor-outline"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="videoGameMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isTravelItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (travelMeta(item).image_url) {
-                          <img [src]="travelMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon icon="compass-outline"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (travelMeta(item).lang) { {{ travelMeta(item).lang!.toUpperCase() }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="travelMeta(item).image_url ?? null"
+                        iconFallback="compass-outline"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="travelMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isConcertItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (concertMeta(item).image_url) {
-                          <img [src]="concertMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon icon="music-outline"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (concertMeta(item).venue_name) { {{ concertMeta(item).venue_name }} }
-                            @if (concertMeta(item).venue_city) { · {{ concertMeta(item).venue_city }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="concertMeta(item).image_url ?? null"
+                        iconFallback="music-outline"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="concertMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isMedicineItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        <div class="book-cover book-cover--placeholder">
-                          <nb-icon icon="activity-outline"></nb-icon>
-                        </div>
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (medicineMeta(item).active_ingredient) { {{ medicineMeta(item).active_ingredient }} }
-                            @if (medicineMeta(item).pharmaceutical_form) { · {{ medicineMeta(item).pharmaceutical_form }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="null"
+                        iconFallback="activity-outline"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="medicineMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isPlantItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (plantMeta(item).image_url) {
-                          <img [src]="plantMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon icon="droplet-outline"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (plantMeta(item).scientific_name?.length) { <em>{{ plantMeta(item).scientific_name!.join(', ') }}</em> }
-                            @if (plantMeta(item).cycle) { · {{ plantMeta(item).cycle }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="plantMeta(item).image_url ?? null"
+                        iconFallback="droplet-outline"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="plantMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isPlaceItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (placeMeta(item).latitude != null && placeMeta(item).longitude != null) {
-                          <img [src]="placeTileUrl(placeMeta(item).latitude!, placeMeta(item).longitude!)"
-                               [alt]="item.text" class="book-cover place-cover-thumb" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon icon="pin-outline"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (placeMeta(item).category) { {{ placeMeta(item).category }} }
-                            @if (placeMeta(item).place_type) { · {{ placeMeta(item).place_type }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="placeRowImageUrl(item)"
+                        iconFallback="pin-outline"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="placeMetaLine(item)"
+                        coverFit="cover"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isEuropeanaItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (europeanaMeta(item).image_url) {
-                          <img [src]="europeanaMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon [icon]="item.item_type_detail?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline'"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (europeanaMeta(item).creator) { {{ europeanaMeta(item).creator }} }
-                            @if (europeanaMeta(item).year) { · {{ europeanaMeta(item).year }} }
-                          </p>
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="europeanaMeta(item).image_url ?? null"
+                        [iconFallback]="europeanaIcon(item)"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="europeanaMetaLine(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else if (isProductItem(item)) {
-                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
-                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
-                        @if (productMeta(item).image_url) {
-                          <img [src]="productMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
-                        } @else {
-                          <div class="book-cover book-cover--placeholder">
-                            <nb-icon [icon]="productIcon(item)"></nb-icon>
-                          </div>
-                        }
-                        <div class="item-text">
-                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
-                          <p class="book-meta">
-                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
-                            @if (productMeta(item).brands) { {{ productMeta(item).brands }} }
-                            @if (productMeta(item).quantity) { · {{ productMeta(item).quantity }} }
-                          </p>
-                          @if (productMeta(item).nutriscore_grade || productMeta(item).nova_group || productMeta(item).ecoscore_grade) {
-                            <p class="product-badges">
-                              @if (productMeta(item).nutriscore_grade) {
-                                <span class="product-badge" [class]="'nutri-badge--' + productMeta(item).nutriscore_grade">
-                                  Nutri-Score {{ productMeta(item).nutriscore_grade!.toUpperCase() }}
-                                </span>
-                              }
-                              @if (productMeta(item).nova_group) {
-                                <span class="product-badge">NOVA {{ productMeta(item).nova_group }}</span>
-                              }
-                              @if (productMeta(item).ecoscore_grade) {
-                                <span class="product-badge" [class]="'nutri-badge--' + productMeta(item).ecoscore_grade">
-                                  Eco-Score {{ productMeta(item).ecoscore_grade!.toUpperCase() }}
-                                </span>
-                              }
-                            </p>
-                          }
-                        </div>
-                      </div>
+                      <app-item-row
+                        [imageUrl]="productMeta(item).image_url ?? null"
+                        [iconFallback]="productIcon(item)"
+                        [title]="item.text || '(senza titolo)'"
+                        [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
+                        [metaText]="productMetaLine(item)"
+                        [badges]="productScoreBadges(item)"
+                        (open)="openDetail(item)">
+                      </app-item-row>
                     } @else {
                       <div class="item-text">
                         <p class="item-title">{{ item.text || '(vuoto)' }}</p>
@@ -2088,243 +1592,46 @@
                   @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || isProductItem(item) || isBggItem(item) || isVideoGameItem(item) || isTravelItem(item) || isConcertItem(item) || isMedicineItem(item) || isPlantItem(item) || (isImageItem(item) && item.image) || item.event_date || item.location_address)) {
                     <div class="item-detail">
                       @if (isBookItem(item)) {
-                        <div class="item-detail-grid">
-                          @if (bookMeta(item).cover_url) {
-                            <img [src]="bookMeta(item).cover_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
-                          }
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (bookMeta(item).author) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="person-outline"></nb-icon>
-                                {{ bookMeta(item).author }}
-                              </p>
-                            }
-                            @if (bookMeta(item).year) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="calendar-outline"></nb-icon>
-                                {{ bookMeta(item).year }}
-                              </p>
-                            }
-                            @if (bookMeta(item).isbn) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="hash-outline"></nb-icon>
-                                ISBN {{ bookMeta(item).isbn }}
-                              </p>
-                            }
-                            @if (bookMeta(item).service_url) {
-                              <a [href]="bookMeta(item).service_url" target="_blank" rel="noopener noreferrer"
-                                 class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
-                                Apri su OpenLibrary
-                              </a>
-                            }
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [imageUrl]="bookMeta(item).cover_url ?? null"
+                          [title]="item.text"
+                          [rows]="bookDetailRows(item)"
+                          [externalLink]="bookExternalLink(item)">
+                        </app-item-detail-expand>
                       } @else if (isTvdbItem(item)) {
-                        <div class="item-detail-grid">
-                          @if (tvdbMeta(item).image_url) {
-                            <img [src]="tvdbMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
-                          }
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (item.item_type_detail) {
-                              <p class="item-detail-row">
-                                <nb-icon [icon]="item.item_type_detail.name === 'movie' ? 'film-outline' : 'tv-outline'"></nb-icon>
-                                {{ typeLabel(item.item_type_detail) }}
-                              </p>
-                            }
-                            @if (tvdbMeta(item).year) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="calendar-outline"></nb-icon>
-                                {{ tvdbMeta(item).year }}
-                              </p>
-                            }
-                            @if (tvdbMeta(item).network) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="monitor-outline"></nb-icon>
-                                {{ tvdbMeta(item).network }}
-                              </p>
-                            }
-                            @if (tvdbMeta(item).status) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="info-outline"></nb-icon>
-                                {{ tvdbMeta(item).status }}
-                              </p>
-                            }
-                            @if (tvdbMeta(item).service_url) {
-                              <a [href]="tvdbMeta(item).service_url" target="_blank" rel="noopener noreferrer"
-                                 class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
-                                Apri su TheTVDB
-                              </a>
-                            }
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [imageUrl]="tvdbMeta(item).image_url ?? null"
+                          [title]="item.text"
+                          [rows]="tvdbDetailRows(item)"
+                          [externalLink]="tvdbExternalLink(item)">
+                        </app-item-detail-expand>
                       } @else if (isImageItem(item) && item.image) {
                         <div class="item-detail-image-full">
                           <img [src]="item.image" [alt]="item.text" loading="lazy">
                         </div>
                       } @else if (isMusicItem(item)) {
-                        <div class="item-detail-grid">
-                          @if (musicMeta(item).image_url) {
-                            <img [src]="musicMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
-                          }
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (item.item_type_detail) {
-                              <p class="item-detail-row">
-                                <nb-icon [icon]="musicIcon(item)"></nb-icon>
-                                {{ typeLabel(item.item_type_detail) }}
-                              </p>
-                            }
-                            @if (musicMeta(item).artist_name) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="mic-outline"></nb-icon>
-                                {{ musicMeta(item).artist_name }}
-                              </p>
-                            }
-                            @if (musicMeta(item).album_name) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="recording-outline"></nb-icon>
-                                {{ musicMeta(item).album_name }}
-                              </p>
-                            }
-                            @if (musicMeta(item).first_release_date) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="calendar-outline"></nb-icon>
-                                {{ musicMeta(item).first_release_date }}
-                              </p>
-                            }
-                            @if (musicMeta(item).country) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="globe-2-outline"></nb-icon>
-                                {{ musicMeta(item).country }}
-                              </p>
-                            }
-                            @if (musicMeta(item).life_span_begin) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="calendar-outline"></nb-icon>
-                                {{ musicMeta(item).life_span_begin }}@if (musicMeta(item).life_span_end) { – {{ musicMeta(item).life_span_end }} }
-                              </p>
-                            }
-                            @if (musicMeta(item).track_number) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="hash-outline"></nb-icon>
-                                Traccia {{ musicMeta(item).track_number }}
-                              </p>
-                            }
-                            @if (musicMeta(item).service_url) {
-                              <a [href]="musicMeta(item).service_url" target="_blank" rel="noopener noreferrer"
-                                 class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
-                                Apri su MusicBrainz
-                              </a>
-                            }
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [imageUrl]="musicMeta(item).image_url ?? null"
+                          [title]="item.text"
+                          [rows]="musicDetailRows(item)"
+                          [externalLink]="musicExternalLink(item)">
+                        </app-item-detail-expand>
                       } @else if (isBggItem(item)) {
-                        <div class="item-detail-grid">
-                          @if (bggMeta(item).image_url) {
-                            <img [src]="bggMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
-                          }
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (item.item_type_detail) {
-                              <p class="item-detail-row">
-                                <nb-icon [icon]="bggIcon(item)"></nb-icon>
-                                {{ typeLabel(item.item_type_detail) }}
-                              </p>
-                            }
-                            @if (bggMeta(item).year_published) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="calendar-outline"></nb-icon>
-                                {{ bggMeta(item).year_published }}
-                              </p>
-                            }
-                            @if (bggMeta(item).service_url) {
-                              <a [href]="bggMeta(item).service_url" target="_blank" rel="noopener noreferrer"
-                                 class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
-                                Apri su BoardGameGeek
-                              </a>
-                            }
-                            <a href="https://boardgamegeek.com" target="_blank" rel="noopener noreferrer" class="powered-by-bgg-link">
-                              <img src="/images/powered-by-bgg.png" alt="Powered by BGG" class="powered-by-bgg-logo">
-                            </a>
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [imageUrl]="bggMeta(item).image_url ?? null"
+                          [title]="item.text"
+                          [rows]="bggDetailRows(item)"
+                          [externalLink]="bggExternalLink(item)"
+                          [attributionLogo]="bggAttributionLogo">
+                        </app-item-detail-expand>
                       } @else if (isVideoGameItem(item)) {
-                        <div class="item-detail-grid">
-                          @if (videoGameMeta(item).image_url) {
-                            <img [src]="videoGameMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
-                          }
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (item.item_type_detail) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="monitor-outline"></nb-icon>
-                                {{ typeLabel(item.item_type_detail) }}
-                              </p>
-                            }
-                            @if (videoGameMeta(item).platforms?.length) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="hard-drive-outline"></nb-icon>
-                                {{ videoGameMeta(item).platforms!.join(', ') }}
-                              </p>
-                            }
-                            @if (videoGameMeta(item).genres?.length) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="pricetags-outline"></nb-icon>
-                                {{ videoGameMeta(item).genres!.join(', ') }}
-                              </p>
-                            }
-                            @if (videoGameMeta(item).first_release_date) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="calendar-outline"></nb-icon>
-                                {{ videoGameMeta(item).first_release_date }}
-                              </p>
-                            }
-                            @if (videoGameMeta(item).developers?.length) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="code-outline"></nb-icon>
-                                {{ videoGameMeta(item).developers!.join(', ') }}
-                              </p>
-                            }
-                            @if (videoGameMeta(item).publishers?.length) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="briefcase-outline"></nb-icon>
-                                {{ videoGameMeta(item).publishers!.join(', ') }}
-                              </p>
-                            }
-                            @if (videoGameMeta(item).rating) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="star-outline"></nb-icon>
-                                {{ videoGameMeta(item).rating! | number: '1.0-0' }}/100
-                              </p>
-                            }
-                            @if (videoGameMeta(item).summary) {
-                              <p class="item-detail-row item-detail-row--wrap">
-                                <nb-icon icon="file-text-outline"></nb-icon>
-                                {{ videoGameMeta(item).summary }}
-                              </p>
-                            }
-                            @if (videoGameMeta(item).screenshots?.length) {
-                              <div class="video-game-screenshots">
-                                @for (shot of videoGameMeta(item).screenshots!.slice(0, 4); track shot) {
-                                  <img [src]="shot" alt="Screenshot" class="video-game-screenshot" loading="lazy">
-                                }
-                              </div>
-                            }
-                            @if (videoGameMeta(item).service_url) {
-                              <a [href]="videoGameMeta(item).service_url" target="_blank" rel="noopener noreferrer"
-                                 class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
-                                Apri su IGDB
-                              </a>
-                            }
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [imageUrl]="videoGameMeta(item).image_url ?? null"
+                          [title]="item.text"
+                          [rows]="videoGameDetailRows(item)"
+                          [gallery]="videoGameMeta(item).screenshots ?? null"
+                          [externalLink]="videoGameExternalLink(item)">
+                        </app-item-detail-expand>
                       } @else if (isTravelItem(item)) {
                         <div class="item-detail-grid">
                           @if (travelMeta(item).image_url) {
@@ -2396,167 +1703,25 @@
                           </div>
                         </div>
                       } @else if (isConcertItem(item)) {
-                        <div class="item-detail-grid">
-                          @if (concertMeta(item).image_url) {
-                            <img [src]="concertMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
-                          }
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (concertMeta(item).performers?.length) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="mic-outline"></nb-icon>
-                                {{ concertMeta(item).performers!.join(', ') }}
-                              </p>
-                            }
-                            @if (concertMeta(item).datetime_local) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="calendar-outline"></nb-icon>
-                                {{ concertMeta(item).datetime_local }}
-                              </p>
-                            }
-                            @if (concertMeta(item).venue_name) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="pin-outline"></nb-icon>
-                                {{ concertMeta(item).venue_name }}
-                                @if (concertMeta(item).venue_city) { , {{ concertMeta(item).venue_city }} }
-                                @if (concertMeta(item).venue_country) { ({{ concertMeta(item).venue_country }}) }
-                              </p>
-                            }
-                            @if (concertMeta(item).low_price || concertMeta(item).average_price || concertMeta(item).high_price) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="pricetags-outline"></nb-icon>
-                                @if (concertMeta(item).low_price) { da {{ concertMeta(item).low_price }}€ }
-                                @if (concertMeta(item).average_price) { · media {{ concertMeta(item).average_price }}€ }
-                                @if (concertMeta(item).high_price) { · fino a {{ concertMeta(item).high_price }}€ }
-                                @if (concertMeta(item).listing_count) { ({{ concertMeta(item).listing_count }} annunci) }
-                              </p>
-                            }
-                            @if (concertMeta(item).service_url) {
-                              <a [href]="concertMeta(item).service_url" target="_blank" rel="noopener noreferrer"
-                                 class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
-                                Apri su SeatGeek
-                              </a>
-                            }
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [imageUrl]="concertMeta(item).image_url ?? null"
+                          [title]="item.text"
+                          [rows]="concertDetailRows(item)"
+                          [externalLink]="concertExternalLink(item)">
+                        </app-item-detail-expand>
                       } @else if (isMedicineItem(item)) {
-                        <div class="item-detail-grid">
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (medicineMeta(item).active_ingredient) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="activity-outline"></nb-icon>
-                                {{ medicineMeta(item).active_ingredient }}
-                              </p>
-                            }
-                            @if (medicineMeta(item).atc_code) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="hash-outline"></nb-icon>
-                                ATC {{ medicineMeta(item).atc_code }}
-                              </p>
-                            }
-                            @if (medicineMeta(item).pharmaceutical_form || medicineMeta(item).pack_description) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="cube-outline"></nb-icon>
-                                {{ medicineMeta(item).pharmaceutical_form }}
-                                @if (medicineMeta(item).pack_description) { · {{ medicineMeta(item).pack_description }} }
-                              </p>
-                            }
-                            @if (medicineMeta(item).marketing_authorization_holder) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="briefcase-outline"></nb-icon>
-                                {{ medicineMeta(item).marketing_authorization_holder }}
-                              </p>
-                            }
-                            @if (medicineMeta(item).prescription_requirement) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="alert-triangle-outline"></nb-icon>
-                                {{ medicineMeta(item).prescription_requirement }}
-                              </p>
-                            }
-                            @if (medicineMeta(item).aic_code) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="pricetags-outline"></nb-icon>
-                                AIC {{ medicineMeta(item).aic_code }}
-                              </p>
-                            }
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [title]="item.text"
+                          [rows]="medicineDetailRows(item)">
+                        </app-item-detail-expand>
                       } @else if (isPlantItem(item)) {
-                        <div class="item-detail-grid">
-                          @if (plantMeta(item).image_url) {
-                            <img [src]="plantMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
-                          }
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (plantMeta(item).scientific_name?.length) {
-                              <p class="item-detail-row"><em>{{ plantMeta(item).scientific_name!.join(', ') }}</em></p>
-                            }
-                            @if (plantMeta(item).family) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="pricetags-outline"></nb-icon>
-                                {{ plantMeta(item).family }}
-                              </p>
-                            }
-                            @if (plantMeta(item).origin?.length) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="pin-outline"></nb-icon>
-                                {{ plantMeta(item).origin!.join(', ') }}
-                              </p>
-                            }
-                            @if (plantMeta(item).description) {
-                              <p class="item-detail-row item-detail-row--wrap">
-                                <nb-icon icon="file-text-outline"></nb-icon>
-                                {{ plantMeta(item).description }}
-                              </p>
-                            }
-                            @if (plantMeta(item).watering || plantMeta(item).watering_benchmark) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="droplet-outline"></nb-icon>
-                                {{ plantMeta(item).watering }}
-                                @if (plantMeta(item).watering_benchmark) { ({{ plantMeta(item).watering_benchmark }}) }
-                              </p>
-                            }
-                            @if (plantMeta(item).sunlight?.length) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="sun-outline"></nb-icon>
-                                {{ plantMeta(item).sunlight!.join(', ') }}
-                              </p>
-                            }
-                            @if (plantMeta(item).cycle || plantMeta(item).growth_rate || plantMeta(item).maintenance || plantMeta(item).care_level) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="activity-outline"></nb-icon>
-                                @if (plantMeta(item).cycle) { {{ plantMeta(item).cycle }} }
-                                @if (plantMeta(item).growth_rate) { · crescita {{ plantMeta(item).growth_rate }} }
-                                @if (plantMeta(item).maintenance) { · manutenzione {{ plantMeta(item).maintenance }} }
-                                @if (plantMeta(item).care_level) { · cura {{ plantMeta(item).care_level }} }
-                              </p>
-                            }
-                            @if (plantMeta(item).drought_tolerant || plantMeta(item).salt_tolerant || plantMeta(item).thorny || plantMeta(item).invasive || plantMeta(item).tropical || plantMeta(item).indoor || plantMeta(item).edible_fruit || plantMeta(item).edible_leaf || plantMeta(item).medicinal) {
-                              <p class="product-badges">
-                                @if (plantMeta(item).indoor) { <span class="product-badge">Da interno</span> }
-                                @if (plantMeta(item).tropical) { <span class="product-badge">Tropicale</span> }
-                                @if (plantMeta(item).drought_tolerant) { <span class="product-badge">Resistente alla siccità</span> }
-                                @if (plantMeta(item).salt_tolerant) { <span class="product-badge">Resistente al sale</span> }
-                                @if (plantMeta(item).thorny) { <span class="product-badge">Spinosa</span> }
-                                @if (plantMeta(item).invasive) { <span class="product-badge">Invasiva</span> }
-                                @if (plantMeta(item).edible_fruit) { <span class="product-badge">Frutto commestibile</span> }
-                                @if (plantMeta(item).edible_leaf) { <span class="product-badge">Foglia commestibile</span> }
-                                @if (plantMeta(item).medicinal) { <span class="product-badge">Uso medicinale</span> }
-                              </p>
-                            }
-                            @if (plantMeta(item).poisonous_to_humans || plantMeta(item).poisonous_to_pets) {
-                              <p class="item-detail-row item-detail-row--warning">
-                                <nb-icon icon="alert-triangle-outline"></nb-icon>
-                                Tossica per
-                                @if (plantMeta(item).poisonous_to_humans) { l'uomo }
-                                @if (plantMeta(item).poisonous_to_humans && plantMeta(item).poisonous_to_pets) { e per }
-                                @if (plantMeta(item).poisonous_to_pets) { gli animali domestici }
-                              </p>
-                            }
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [imageUrl]="plantMeta(item).image_url ?? null"
+                          [title]="item.text"
+                          [rows]="plantDetailRows(item)"
+                          [badges]="plantBadges(item)"
+                          [warningText]="plantWarningText(item)">
+                        </app-item-detail-expand>
                       } @else if (isPlaceItem(item)) {
                         <div class="item-detail-grid item-detail-grid--place">
                           @if (placeMeta(item).latitude != null && placeMeta(item).longitude != null) {
@@ -2592,159 +1757,21 @@
                           </div>
                         </div>
                       } @else if (isEuropeanaItem(item)) {
-                        <div class="item-detail-grid">
-                          @if (europeanaMeta(item).image_url) {
-                            <img [src]="europeanaMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
-                          }
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (item.item_type_detail) {
-                              <p class="item-detail-row">
-                                <nb-icon [icon]="item.item_type_detail.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline'"></nb-icon>
-                                {{ typeLabel(item.item_type_detail) }}
-                              </p>
-                            }
-                            @if (item.item_type_detail?.name === 'art_artist') {
-                              @if (europeanaMeta(item).biography) {
-                                <p class="item-detail-row">
-                                  <nb-icon icon="file-text-outline"></nb-icon>
-                                  {{ europeanaMeta(item).biography }}
-                                </p>
-                              }
-                              @if (europeanaMeta(item).date_of_birth || europeanaMeta(item).date_of_death) {
-                                <p class="item-detail-row">
-                                  <nb-icon icon="calendar-outline"></nb-icon>
-                                  {{ europeanaMeta(item).date_of_birth }}@if (europeanaMeta(item).date_of_death) { – {{ europeanaMeta(item).date_of_death }} }
-                                </p>
-                              }
-                              @if (europeanaMeta(item).place_of_birth) {
-                                <p class="item-detail-row">
-                                  <nb-icon icon="pin-outline"></nb-icon>
-                                  {{ europeanaMeta(item).place_of_birth }}
-                                </p>
-                              }
-                              @if (europeanaMeta(item).professions?.length) {
-                                <p class="item-detail-row">
-                                  <nb-icon icon="briefcase-outline"></nb-icon>
-                                  {{ europeanaMeta(item).professions!.join(', ') }}
-                                </p>
-                              }
-                            } @else {
-                              @if (europeanaMeta(item).creator) {
-                                <p class="item-detail-row">
-                                  <nb-icon icon="person-outline"></nb-icon>
-                                  {{ europeanaMeta(item).creator }}
-                                </p>
-                              }
-                              @if (europeanaMeta(item).year) {
-                                <p class="item-detail-row">
-                                  <nb-icon icon="calendar-outline"></nb-icon>
-                                  {{ europeanaMeta(item).year }}
-                                </p>
-                              }
-                              @if (europeanaMeta(item).medium) {
-                                <p class="item-detail-row">
-                                  <nb-icon icon="brush-outline"></nb-icon>
-                                  {{ europeanaMeta(item).medium }}
-                                </p>
-                              }
-                              @if (europeanaMeta(item).description) {
-                                <p class="item-detail-row">
-                                  <nb-icon icon="file-text-outline"></nb-icon>
-                                  {{ europeanaMeta(item).description }}
-                                </p>
-                              }
-                              @if (europeanaMeta(item).provider) {
-                                <p class="item-detail-row">
-                                  <nb-icon icon="briefcase-outline"></nb-icon>
-                                  {{ europeanaMeta(item).provider }}
-                                </p>
-                              }
-                            }
-                            @if (europeanaMeta(item).service_url) {
-                              <a [href]="europeanaMeta(item).service_url" target="_blank" rel="noopener noreferrer"
-                                 class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
-                                Apri su Europeana
-                              </a>
-                            }
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [imageUrl]="europeanaMeta(item).image_url ?? null"
+                          [title]="item.text"
+                          [rows]="europeanaDetailRows(item)"
+                          [externalLink]="europeanaExternalLink(item)">
+                        </app-item-detail-expand>
                       } @else if (isProductItem(item)) {
-                        <div class="item-detail-grid">
-                          @if (productMeta(item).image_url) {
-                            <img [src]="productMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
-                          }
-                          <div class="item-detail-info">
-                            <p class="item-detail-title">{{ item.text }}</p>
-                            @if (productMeta(item).brands) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="pricetags-outline"></nb-icon>
-                                {{ productMeta(item).brands }}
-                              </p>
-                            }
-                            @if (productMeta(item).quantity) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="cube-outline"></nb-icon>
-                                {{ productMeta(item).quantity }}
-                              </p>
-                            }
-                            @if (productMeta(item).categories) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="grid-outline"></nb-icon>
-                                {{ productMeta(item).categories }}
-                              </p>
-                            }
-                            @if (productMeta(item).barcode) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="hash-outline"></nb-icon>
-                                {{ productMeta(item).barcode }}
-                              </p>
-                            }
-                            @if (productMeta(item).nutriscore_grade || productMeta(item).nova_group || productMeta(item).ecoscore_grade) {
-                              <p class="product-badges">
-                                @if (productMeta(item).nutriscore_grade) {
-                                  <span class="product-badge" [class]="'nutri-badge--' + productMeta(item).nutriscore_grade">
-                                    Nutri-Score {{ productMeta(item).nutriscore_grade!.toUpperCase() }}
-                                  </span>
-                                }
-                                @if (productMeta(item).nova_group) {
-                                  <span class="product-badge">NOVA {{ productMeta(item).nova_group }}</span>
-                                }
-                                @if (productMeta(item).ecoscore_grade) {
-                                  <span class="product-badge" [class]="'nutri-badge--' + productMeta(item).ecoscore_grade">
-                                    Eco-Score {{ productMeta(item).ecoscore_grade!.toUpperCase() }}
-                                  </span>
-                                }
-                              </p>
-                            }
-                            @if (productMeta(item).ingredients_text) {
-                              <p class="item-detail-row item-detail-row--wrap">
-                                <nb-icon icon="file-text-outline"></nb-icon>
-                                {{ productMeta(item).ingredients_text }}
-                              </p>
-                            }
-                            @if (productMeta(item).labels?.length) {
-                              <p class="item-detail-row">
-                                <nb-icon icon="pricetags-outline"></nb-icon>
-                                {{ productMeta(item).labels!.join(', ') }}
-                              </p>
-                            }
-                            @if (productMeta(item).allergens?.length) {
-                              <p class="item-detail-row item-detail-row--warning">
-                                <nb-icon icon="alert-triangle-outline"></nb-icon>
-                                Allergeni: {{ productMeta(item).allergens!.join(', ') }}
-                              </p>
-                            }
-                            @if (productMeta(item).service_url) {
-                              <a [href]="productMeta(item).service_url" target="_blank" rel="noopener noreferrer"
-                                 class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
-                                Apri su Open Food Facts
-                              </a>
-                            }
-                          </div>
-                        </div>
+                        <app-item-detail-expand
+                          [imageUrl]="productMeta(item).image_url ?? null"
+                          [title]="item.text"
+                          [rows]="productDetailRows(item)"
+                          [badges]="productScoreBadges(item)"
+                          [warningText]="productWarningText(item)"
+                          [externalLink]="productExternalLink(item)">
+                        </app-item-detail-expand>
                       }
 
                       @if (item.event_date || item.event_time || item.location_address) {

@@ -28,9 +28,11 @@ Riassunto:
 - **Farmaco (`medicine`, v0.29.0) via AIFA:** `medicine.model.ts`/`medicine.service.ts`.
   A differenza degli altri tipi, la ricerca non segue il formato uniforme
   title/subtitle/image_url/service_url/metadata (nessuna immagine, nessun link, nessun
-  endpoint di dettaglio/sync) — verificato end-to-end con una riga inserita
-  manualmente in `Medicine`, dato che `import_aifa_medicines` fallisce sui dati reali
-  AIFA (bug segnalato in `list2me-backend/TODO.md`).
+  endpoint di dettaglio/sync). **Aggiornamento 2026-07-07 (backend v0.30.1):** il bug
+  di `import_aifa_medicines` (`DataError` su valori troppo lunghi) è stato risolto;
+  riverificato end-to-end con l'import reale del CSV AIFA (159719 righe) — la ricerca
+  "tachipirina" ora restituisce più varianti reali (compressa/supposta) invece
+  dell'unica riga inserita manualmente usata nella verifica originale.
 - **Pianta (`plant`, v0.30.0) via Perenual:** `plant.model.ts`/`plant.service.ts`,
   ricerca con immagine già inclusa (come IGDB) + sync per i dati di cura estesi
   (famiglia, origine, tolleranze, tossicità...). Verificato end-to-end con ricerca

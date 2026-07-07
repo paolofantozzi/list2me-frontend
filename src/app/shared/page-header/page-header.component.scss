@@ -1,0 +1,42 @@
+@use '../../../styles/tokens' as *;
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-4;
+  margin-bottom: $space-5;
+}
+
+.page-header-titles {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  min-width: 0;
+}
+
+.page-header-icon {
+  font-size: $font-size-xl;
+  color: $primary;
+  flex-shrink: 0;
+}
+
+.page-title {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: 600;
+  color: $text-basic;
+}
+
+.page-subtitle {
+  margin: 0.125rem 0 0;
+  font-size: $font-size-sm;
+  color: $text-hint;
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  flex-shrink: 0;
+}

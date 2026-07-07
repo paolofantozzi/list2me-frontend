@@ -8,6 +8,8 @@ import {
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { AdminUser, UserPublic } from '../../models/user.model';
+import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 type AdminStatusFilter = 'all' | 'active' | 'inactive';
 
@@ -24,6 +26,7 @@ type AdminStatusFilter = 'all' | 'active' | 'inactive';
     NbUserModule,
     NbAlertModule,
     NbSelectModule,
+    PageHeaderComponent,
   ],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss'
@@ -48,7 +51,8 @@ export class UsersComponent implements OnInit {
   constructor(
     private userService: UserService,
     private authService: AuthService,
-    private toastr: NbToastrService
+    private toastr: NbToastrService,
+    private confirmDialog: ConfirmDialogService
   ) {
     this.searchControl.valueChanges.pipe(
       debounceTime(400),
@@ -151,14 +155,20 @@ export class UsersComponent implements OnInit {
   }
 
   adminDeactivate(user: AdminUser): void {
-    if (!confirm(`Disattivare l'account di ${user.username}? L'utente non potrà più accedere.`)) return;
-
-    this.userService.deactivateUser(user.id).subscribe({
-      next: () => {
-        this.adminUsers.update(us => us.map(u => (u.id === user.id ? { ...u, is_active: false } : u)));
-        this.toastr.success(`Account di ${user.username} disattivato.`, 'Fatto');
-      },
-      error: (err) => this.handleDeactivateError(err)
+    this.confirmDialog.confirm({
+      title: 'Disattiva account',
+      message: `Disattivare l'account di ${user.username}? L'utente non potrà più accedere.`,
+      confirmLabel: 'Disattiva',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.userService.deactivateUser(user.id).subscribe({
+        next: () => {
+          this.adminUsers.update(us => us.map(u => (u.id === user.id ? { ...u, is_active: false } : u)));
+          this.toastr.success(`Account di ${user.username} disattivato.`, 'Fatto');
+        },
+        error: (err) => this.handleDeactivateError(err)
+      });
     });
   }
 
@@ -173,11 +183,16 @@ export class UsersComponent implements OnInit {
   }
 
   adminPromote(user: AdminUser): void {
-    if (!confirm(`Promuovere ${user.username} ad amministratore?`)) return;
-
-    this.userService.promoteUser(user.id).subscribe({
-      next: () => this.toastr.success(`${user.username} è ora amministratore.`, 'Fatto'),
-      error: () => this.toastr.danger('Impossibile promuovere l\'utente.', 'Errore')
+    this.confirmDialog.confirm({
+      title: 'Promuovi ad amministratore',
+      message: `Promuovere ${user.username} ad amministratore?`,
+      confirmLabel: 'Promuovi',
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.userService.promoteUser(user.id).subscribe({
+        next: () => this.toastr.success(`${user.username} è ora amministratore.`, 'Fatto'),
+        error: () => this.toastr.danger('Impossibile promuovere l\'utente.', 'Errore')
+      });
     });
   }
 

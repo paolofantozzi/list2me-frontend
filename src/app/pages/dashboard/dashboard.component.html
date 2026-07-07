@@ -1,6 +1,58 @@
 <div class="page-container">
+  <app-page-header title="Dashboard" icon="home-outline"></app-page-header>
+
+  <section class="stats-section">
+    <h2 class="stats-title">Panoramica</h2>
+
+    @if (statsLoading()) {
+      <div class="loading-center">
+        <nb-spinner status="primary" size="medium"></nb-spinner>
+      </div>
+    } @else if (statsError()) {
+      <nb-card status="danger" size="small">
+        <nb-card-body>
+          <nb-icon icon="alert-circle-outline"></nb-icon>
+          {{ statsError() }}
+          <button nbButton ghost size="small" status="danger" (click)="loadStats()">Riprova</button>
+        </nb-card-body>
+      </nb-card>
+    } @else {
+      <div class="stats-row">
+        <a class="stat-tile" routerLink="/pages/lists">
+          <nb-icon icon="list-outline" class="stat-tile-icon"></nb-icon>
+          <span class="stat-tile-value">{{ listsCount() }}</span>
+          <span class="stat-tile-label">Le mie liste</span>
+        </a>
+        <a class="stat-tile" routerLink="/pages/groups">
+          <nb-icon icon="people-outline" class="stat-tile-icon"></nb-icon>
+          <span class="stat-tile-value">{{ groupsCount() }}</span>
+          <span class="stat-tile-label">Gruppi</span>
+        </a>
+        <a class="stat-tile" [class.stat-tile--highlight]="pendingInvitesCount() > 0" routerLink="/pages/groups">
+          <nb-icon icon="email-outline" class="stat-tile-icon"></nb-icon>
+          <span class="stat-tile-value">{{ pendingInvitesCount() }}</span>
+          <span class="stat-tile-label">Inviti in sospeso</span>
+        </a>
+      </div>
+
+      @if (recentLists().length > 0) {
+        <div class="recent-lists">
+          <h3 class="recent-lists-title">Liste modificate di recente</h3>
+          <div class="recent-lists-row">
+            @for (list of recentLists(); track list.id) {
+              <a class="recent-list-chip" [routerLink]="['/pages/lists', list.id]">
+                <nb-icon icon="list-outline"></nb-icon>
+                {{ list.title }}
+              </a>
+            }
+          </div>
+        </div>
+      }
+    }
+  </section>
+
   <div class="page-header">
-    <h1 class="page-title">Feed attività</h1>
+    <h2 class="page-title">Feed attività</h2>
     <button nbButton status="primary" ghost (click)="loadFeed()">
       <nb-icon icon="refresh-outline"></nb-icon>
       Aggiorna

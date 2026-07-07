@@ -1,0 +1,9 @@
+<div class="section-header">
+  @if (icon) {
+    <nb-icon [icon]="icon" class="section-icon"></nb-icon>
+  }
+  <h3 class="section-title">{{ title }}</h3>
+  @if (count !== undefined) {
+    <span class="section-count">{{ count }}</span>
+  }
+</div>

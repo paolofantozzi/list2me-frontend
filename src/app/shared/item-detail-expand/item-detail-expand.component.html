@@ -1,0 +1,47 @@
+<div class="item-detail-grid">
+  @if (imageUrl) {
+    <img [src]="imageUrl" [alt]="title" class="item-detail-cover" loading="lazy">
+  }
+  <div class="item-detail-info">
+    <p class="item-detail-title">{{ title }}</p>
+    @for (row of rows; track $index) {
+      <p class="item-detail-row" [class.item-detail-row--wrap]="row.wrap">
+        @if (row.icon) {
+          <nb-icon [icon]="row.icon"></nb-icon>
+        }
+        @if (row.italic) { <em>{{ row.text }}</em> } @else { {{ row.text }} }
+      </p>
+    }
+    @if (badges?.length) {
+      <p class="product-badges">
+        @for (badge of badges!; track badge.text) {
+          <span class="product-badge" [class]="badge.cssClass">{{ badge.text }}</span>
+        }
+      </p>
+    }
+    @if (warningText) {
+      <p class="item-detail-row item-detail-row--warning">
+        <nb-icon icon="alert-triangle-outline"></nb-icon>
+        {{ warningText }}
+      </p>
+    }
+    @if (gallery?.length) {
+      <div class="video-game-screenshots">
+        @for (shot of gallery!.slice(0, 4); track shot) {
+          <img [src]="shot" alt="Screenshot" class="video-game-screenshot" loading="lazy">
+        }
+      </div>
+    }
+    @if (externalLink) {
+      <a [href]="externalLink.url" target="_blank" rel="noopener noreferrer" class="item-detail-link">
+        <nb-icon icon="external-link-outline"></nb-icon>
+        {{ externalLink.label }}
+      </a>
+    }
+    @if (attributionLogo) {
+      <a [href]="attributionLogo.href" target="_blank" rel="noopener noreferrer" class="attribution-logo-link">
+        <img [src]="attributionLogo.src" [alt]="attributionLogo.alt" class="attribution-logo">
+      </a>
+    }
+  </div>
+</div>

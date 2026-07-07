@@ -1,0 +1,10 @@
+<nb-card class="confirm-dialog">
+  <nb-card-header>{{ title }}</nb-card-header>
+  <nb-card-body>{{ message }}</nb-card-body>
+  <nb-card-footer class="confirm-dialog-actions">
+    <button nbButton ghost (click)="cancel()">{{ cancelLabel }}</button>
+    <button nbButton [status]="danger ? 'danger' : 'primary'" (click)="confirm()">
+      {{ confirmLabel }}
+    </button>
+  </nb-card-footer>
+</nb-card>

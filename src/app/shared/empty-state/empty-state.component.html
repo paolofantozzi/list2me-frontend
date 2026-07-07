@@ -1,0 +1,8 @@
+<div class="empty-state">
+  <nb-icon [icon]="icon" class="empty-icon"></nb-icon>
+  <h3>{{ title }}</h3>
+  @if (message) {
+    <p>{{ message }}</p>
+  }
+  <ng-content select="[action]"></ng-content>
+</div>

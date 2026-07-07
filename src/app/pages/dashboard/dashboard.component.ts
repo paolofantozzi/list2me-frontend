@@ -4,6 +4,11 @@ import { RouterLink } from '@angular/router';
 import { NbCardModule, NbIconModule, NbSpinnerModule, NbListModule, NbUserModule, NbButtonModule, NbBadgeModule } from '@nebular/theme';
 import { ActivityService } from '../../services/activity.service';
 import { Activity } from '../../models/activity.model';
+import { ListService } from '../../services/list.service';
+import { GroupService } from '../../services/group.service';
+import { AuthService } from '../../services/auth.service';
+import { List } from '../../models/list.model';
+import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,6 +23,7 @@ import { Activity } from '../../models/activity.model';
     NbUserModule,
     NbButtonModule,
     NbBadgeModule,
+    PageHeaderComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
@@ -28,10 +34,25 @@ export class DashboardComponent implements OnInit {
   error = signal('');
   expandedIds = signal<Set<string>>(new Set());
 
-  constructor(private activityService: ActivityService) {}
+  // Pannello "Panoramica" — stato indipendente dal feed: un fallimento qui
+  // non deve nascondere il feed attività e viceversa.
+  statsLoading = signal(true);
+  statsError = signal('');
+  listsCount = signal(0);
+  groupsCount = signal(0);
+  pendingInvitesCount = signal(0);
+  recentLists = signal<List[]>([]);
+
+  constructor(
+    private activityService: ActivityService,
+    private listService: ListService,
+    private groupService: GroupService,
+    private auth: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.loadFeed();
+    this.loadStats();
   }
 
   loadFeed(): void {
@@ -45,6 +66,37 @@ export class DashboardComponent implements OnInit {
         this.error.set('Could not load activity feed.');
         this.loading.set(false);
       }
+    });
+  }
+
+  loadStats(): void {
+    this.statsLoading.set(true);
+    this.statsError.set('');
+    const uid = this.auth.currentUser()?.id;
+
+    this.listService.getLists(undefined, true).subscribe({
+      next: response => {
+        const ownLists = response.results
+          .filter(l => l.owner.id === uid)
+          .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+        this.listsCount.set(ownLists.length);
+        this.recentLists.set(ownLists.slice(0, 4));
+        this.statsLoading.set(false);
+      },
+      error: () => {
+        this.statsError.set('Impossibile caricare la panoramica.');
+        this.statsLoading.set(false);
+      }
+    });
+
+    this.groupService.getGroups().subscribe({
+      next: groups => this.groupsCount.set(groups.length),
+      error: () => {},
+    });
+
+    this.groupService.getPendingInvites().subscribe({
+      next: invites => this.pendingInvitesCount.set(invites.length),
+      error: () => {},
     });
   }
 

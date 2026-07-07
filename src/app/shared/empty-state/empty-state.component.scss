@@ -1,0 +1,25 @@
+@use '../../../styles/tokens' as *;
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $space-6;
+  text-align: center;
+  gap: $space-4;
+
+  .empty-icon {
+    font-size: 3rem;
+    color: $text-hint;
+  }
+
+  h3 {
+    margin: 0;
+    color: $text-basic;
+  }
+
+  p {
+    margin: 0;
+    color: $text-hint;
+  }
+}

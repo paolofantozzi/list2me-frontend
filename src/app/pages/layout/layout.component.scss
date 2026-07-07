@@ -1,6 +1,4 @@
-$primary: #3366ff;
-$text-basic: #1a2138;
-$border: #edf0f7;
+@use '../../../styles/tokens' as *;
 
 :host {
   display: block;
@@ -46,9 +44,14 @@ $border: #edf0f7;
 .header-right {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-toggle {
+  padding: 0;
 }
 
 .footer-text {
   font-size: 0.75rem;
-  color: #8f9bb3;
+  color: $text-hint;
 }

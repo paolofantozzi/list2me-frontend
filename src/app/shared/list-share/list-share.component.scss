@@ -1,7 +1,4 @@
-$text: #1a2138;
-$text-hint: #8f9bb3;
-$border: #edf0f7;
-$background: #f0f2f7;
+@use '../../../styles/tokens' as *;
 
 .share-section {
   margin-bottom: 1.25rem;

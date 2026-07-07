@@ -12,6 +12,16 @@
       </div>
 
       <div class="header-right">
+        <button
+          nbButton
+          ghost
+          class="theme-toggle"
+          [attr.aria-label]="theme() === 'dark' ? 'Passa al tema chiaro' : 'Passa al tema scuro'"
+          [title]="theme() === 'dark' ? 'Tema chiaro' : 'Tema scuro'"
+          (click)="toggleTheme()"
+        >
+          <nb-icon [icon]="theme() === 'dark' ? 'sun-outline' : 'moon-outline'"></nb-icon>
+        </button>
         @if (currentUser()) {
           <nb-actions size="small">
             <nb-action>

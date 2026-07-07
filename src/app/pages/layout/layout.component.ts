@@ -6,6 +6,7 @@ import {
   NbSidebarService, NbMenuService, NbMenuItem, NbToastrService
 } from '@nebular/theme';
 import { AuthService } from '../../services/auth.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-layout',
@@ -44,18 +45,19 @@ export class LayoutComponent implements OnInit {
     },
     {
       title: 'Utenti',
-      icon: 'search-outline',
+      icon: 'person-outline',
       link: '/pages/users',
     },
   ];
 
   userMenuItems: NbMenuItem[] = [
     { title: 'Profilo', icon: 'person-outline', link: '/pages/profile' },
-    { title: 'Esci', icon: 'log-out-outline' },
+    { title: 'Esci', icon: 'log-out-outline', data: { action: 'logout' } },
   ];
 
   currentUser = computed(() => this.auth.currentUser());
   currentYear = new Date().getFullYear();
+  theme = computed(() => this.themeService.theme());
 
   userFullName = computed(() => {
     const u = this.currentUser();
@@ -69,12 +71,13 @@ export class LayoutComponent implements OnInit {
     private menuService: NbMenuService,
     private auth: AuthService,
     private router: Router,
-    private toastr: NbToastrService
+    private toastr: NbToastrService,
+    private themeService: ThemeService
   ) {}
 
   ngOnInit(): void {
     this.menuService.onItemClick().subscribe(({ item }) => {
-      if (item.title === 'Esci') {
+      if ((item.data as { action?: string } | undefined)?.action === 'logout') {
         this.logout();
       }
       // Collapse sidebar after navigation on non-desktop viewports
@@ -86,6 +89,10 @@ export class LayoutComponent implements OnInit {
 
   toggleSidebar(): void {
     this.sidebarService.toggle(true, 'left');
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggle();
   }
 
   logout(): void {

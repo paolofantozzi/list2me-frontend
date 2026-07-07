@@ -1,12 +1,74 @@
-// Use Nebular prebuilt default theme
+// Use Nebular prebuilt default + dark theme
 @use '@nebular/theme/styles/all' as *;
 
-// Configure and register the default theme (must be before nb-install)
-$nb-enabled-themes: (default);
-$nb-enable-css-custom-properties: false;
+// Configure and register default + dark theme (must be before nb-install).
+// Le CSS custom properties sono necessarie per cambiare tema a runtime senza
+// ricaricare la pagina (NbThemeService.changeTheme() aggiorna solo la classe
+// nb-theme-{name} su <body>, i valori dei componenti Nebular seguono da soli).
+$nb-enabled-themes: (default, dark);
+$nb-enable-css-custom-properties: true;
 
 @include nb-install() {
   @include nb-theme-global();
+}
+
+// ── Design token custom properties (list2me) ───────────────────────────────
+// Seguono lo stesso meccanismo di NbThemeService: la classe nb-theme-{name}
+// su <body> (impostata da Nebular stesso) seleziona il set di valori. I
+// componenti dell'app leggono questi valori tramite le variabili Sass in
+// src/styles/_tokens.scss (var(--l2m-x, fallback)), quindi cambiano aspetto
+// automaticamente al cambio tema senza bisogno di ricompilare o duplicare gli
+// stili in ogni componente.
+body.nb-theme-default {
+  --l2m-primary: #3366ff;
+  --l2m-primary-dark: #274bdb;
+  --l2m-primary-100: #ebf2ff;
+  --l2m-text-basic: #1a2138;
+  --l2m-text-hint: #8f9bb3;
+  --l2m-border: #edf0f7;
+  --l2m-border-strong: #c5cee0;
+  --l2m-background: #f0f2f7;
+  --l2m-bg-page: #f7f9fc;
+  --l2m-surface: #ffffff;
+  --l2m-warning: #ffaa00;
+  --l2m-warning-100: #fff4db;
+  --l2m-warning-strong: #996600;
+  --l2m-danger: #ff3d71;
+  --l2m-danger-100: #fff2f5;
+  --l2m-danger-strong: #ff235e;
+  --l2m-success: #00d68f;
+  --l2m-success-100: #e8fff6;
+  --l2m-success-strong: #008a5c;
+  --l2m-primary-100-hover: #d1e1ff;
+  --l2m-shadow-card: 0 4px 32px rgba(51, 102, 255, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06);
+  --l2m-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --l2m-scrollbar-thumb: #c5cee0;
+}
+
+body.nb-theme-dark {
+  --l2m-primary: #5b8aff;
+  --l2m-primary-dark: #85a7ff;
+  --l2m-primary-100: #1f2b4d;
+  --l2m-text-basic: #eef1f8;
+  --l2m-text-hint: #9aa5c0;
+  --l2m-border: #2a3352;
+  --l2m-border-strong: #3a4266;
+  --l2m-background: #12162a;
+  --l2m-bg-page: #171c33;
+  --l2m-surface: #1e2440;
+  --l2m-warning: #ffc94d;
+  --l2m-warning-100: #3a2f14;
+  --l2m-warning-strong: #ffc94d;
+  --l2m-danger: #ff6b8a;
+  --l2m-danger-100: #3a1620;
+  --l2m-danger-strong: #ff6b8a;
+  --l2m-success: #2ce6a0;
+  --l2m-success-100: #123a2c;
+  --l2m-success-strong: #2ce6a0;
+  --l2m-primary-100-hover: #26355f;
+  --l2m-shadow-card: 0 4px 32px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3);
+  --l2m-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --l2m-scrollbar-thumb: #3a4266;
 }
 
 // ── Global overrides ────────────────────────────────────────────────────────
@@ -19,6 +81,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Open Sans', 'Segoe UI', sans-serif;
+  background: var(--l2m-background);
+  transition: background-color 0.15s ease;
 }
 
 ::-webkit-scrollbar {
@@ -31,7 +95,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c5cee0;
+  background: var(--l2m-scrollbar-thumb);
   border-radius: 3px;
 }
 

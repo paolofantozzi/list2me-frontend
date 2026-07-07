@@ -12,6 +12,8 @@ import { UserService } from '../../services/user.service';
 import { Group, GroupInvite, GroupMember } from '../../models/group.model';
 import { UserPublic } from '../../models/user.model';
 import { AuthService } from '../../services/auth.service';
+import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-groups',
@@ -26,6 +28,7 @@ import { AuthService } from '../../services/auth.service';
     NbAlertModule,
     NbUserModule,
     NbBadgeModule,
+    PageHeaderComponent,
   ],
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.scss'
@@ -60,7 +63,8 @@ export class GroupsComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
-    private auth: AuthService
+    private auth: AuthService,
+    private confirmDialog: ConfirmDialogService
   ) {
     this.createForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(150)]],
@@ -126,25 +130,39 @@ export class GroupsComponent implements OnInit, OnDestroy {
   }
 
   leaveGroup(group: Group): void {
-    if (!confirm(`Lasciare "${group.name}"?`)) return;
-    this.groupService.leaveGroup(group.id).subscribe({
-      next: () => {
-        this.groups.update(gs => gs.filter(g => g.id !== group.id));
-        this.toastr.success('Hai lasciato il gruppo.', 'Fatto');
-      },
-      error: () => this.toastr.danger('Impossibile lasciare il gruppo.', 'Errore')
+    this.confirmDialog.confirm({
+      title: 'Lascia gruppo',
+      message: `Lasciare "${group.name}"?`,
+      confirmLabel: 'Lascia',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.groupService.leaveGroup(group.id).subscribe({
+        next: () => {
+          this.groups.update(gs => gs.filter(g => g.id !== group.id));
+          this.toastr.success('Hai lasciato il gruppo.', 'Fatto');
+        },
+        error: () => this.toastr.danger('Impossibile lasciare il gruppo.', 'Errore')
+      });
     });
   }
 
   deleteGroup(group: Group): void {
-    if (!confirm(`Eliminare "${group.name}"?`)) return;
-    this.groupService.deleteGroup(group.id).subscribe({
-      next: () => {
-        this.groups.update(gs => gs.filter(g => g.id !== group.id));
-        if (this.managingGroupId() === group.id) this.managingGroupId.set(null);
-        this.toastr.success('Gruppo eliminato.', 'Eliminato');
-      },
-      error: () => this.toastr.danger('Impossibile eliminare il gruppo.', 'Errore')
+    this.confirmDialog.confirm({
+      title: 'Elimina gruppo',
+      message: `Eliminare "${group.name}"?`,
+      confirmLabel: 'Elimina',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.groupService.deleteGroup(group.id).subscribe({
+        next: () => {
+          this.groups.update(gs => gs.filter(g => g.id !== group.id));
+          if (this.managingGroupId() === group.id) this.managingGroupId.set(null);
+          this.toastr.success('Gruppo eliminato.', 'Eliminato');
+        },
+        error: () => this.toastr.danger('Impossibile eliminare il gruppo.', 'Errore')
+      });
     });
   }
 
@@ -261,21 +279,28 @@ export class GroupsComponent implements OnInit, OnDestroy {
   }
 
   removeMember(groupId: string, member: GroupMember): void {
-    if (!confirm(`Rimuovere ${member.user.username} dal gruppo?`)) return;
-    this.removingUserId.set(member.user.id);
-    this.groupService.removeMember(groupId, member.user.id).subscribe({
-      next: () => {
-        this.members.update(ms => ms.filter(m => m.user.id !== member.user.id));
-        this.removingUserId.set(null);
-        this.groups.update(gs => gs.map(g =>
-          g.id === groupId ? { ...g, members_count: Math.max(0, g.members_count - 1) } : g
-        ));
-        this.toastr.success(`${member.user.username} rimosso dal gruppo.`, 'Fatto');
-      },
-      error: () => {
-        this.removingUserId.set(null);
-        this.toastr.danger('Impossibile rimuovere il membro.', 'Errore');
-      }
+    this.confirmDialog.confirm({
+      title: 'Rimuovi membro',
+      message: `Rimuovere ${member.user.username} dal gruppo?`,
+      confirmLabel: 'Rimuovi',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.removingUserId.set(member.user.id);
+      this.groupService.removeMember(groupId, member.user.id).subscribe({
+        next: () => {
+          this.members.update(ms => ms.filter(m => m.user.id !== member.user.id));
+          this.removingUserId.set(null);
+          this.groups.update(gs => gs.map(g =>
+            g.id === groupId ? { ...g, members_count: Math.max(0, g.members_count - 1) } : g
+          ));
+          this.toastr.success(`${member.user.username} rimosso dal gruppo.`, 'Fatto');
+        },
+        error: () => {
+          this.removingUserId.set(null);
+          this.toastr.danger('Impossibile rimuovere il membro.', 'Errore');
+        }
+      });
     });
   }
 

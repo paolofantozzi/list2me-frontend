@@ -1,0 +1,63 @@
+// Design tokens condivisi — unica fonte di verità per colori/spaziatura/radius/ombre/tipografia.
+// Ogni componente li importa con `@use '<path>/styles/tokens' as *;` (Sass puro, nessuna dipendenza
+// da nb-theme() — funziona nonostante Angular 21 compili ogni SCSS di componente in isolamento).
+// Nomi di variabile invariati rispetto a quelli storicamente dichiarati nei singoli componenti,
+// per rendere l'adozione un cambio meccanico senza toccare il resto delle regole.
+//
+// I colori/ombre puntano alle CSS custom properties --l2m-* definite in src/styles.scss per
+// body.nb-theme-default/body.nb-theme-dark (il fallback dopo la virgola è il valore del tema
+// default, usato solo se le custom properties non fossero ancora applicate). Questo fa sì che
+// ogni componente che usa già queste variabili Sass segua automaticamente il tema chiaro/scuro
+// corrente, senza bisogno di toccare le singole regole component per component.
+
+// ── Colori ───────────────────────────────────────────────────────────────────
+$primary: var(--l2m-primary, #3366ff);
+$primary-dark: var(--l2m-primary-dark, #274bdb);
+$primary-100: var(--l2m-primary-100, #ebf2ff);
+$text-basic: var(--l2m-text-basic, #1a2138);
+$text: var(--l2m-text-basic, #1a2138); // alias storico usato in alcuni componenti (list-detail, list-share)
+$text-hint: var(--l2m-text-hint, #8f9bb3);
+$border: var(--l2m-border, #edf0f7); // canonico — riconcilia la deriva #e4e9f2 già presente nelle pagine auth
+$border-strong: var(--l2m-border-strong, #c5cee0); // bordo enfatizzato (es. hover), stesso valore dello scrollbar-thumb
+$background: var(--l2m-background, #f0f2f7);
+$bg-page: var(--l2m-bg-page, #f7f9fc); // sfondo pannello auth / riquadri dettaglio attività
+$surface: var(--l2m-surface, #ffffff);
+$warning: var(--l2m-warning, #ffaa00);
+$warning-100: var(--l2m-warning-100, #fff4db); // canonico — riconcilia la deriva #fff8e6 già presente in lists.component
+$warning-strong: var(--l2m-warning-strong, #996600); // testo leggibile su sfondo $warning-100
+$danger: var(--l2m-danger, #ff3d71);
+$danger-100: var(--l2m-danger-100, #fff2f5);
+$danger-strong: var(--l2m-danger-strong, #ff235e); // testo leggibile su sfondo $danger-100
+$success: var(--l2m-success, #00d68f);
+$success-100: var(--l2m-success-100, #e8fff6);
+$success-strong: var(--l2m-success-strong, #008a5c); // testo leggibile su sfondo $success-100
+$primary-100-hover: var(--l2m-primary-100-hover, #d1e1ff); // hover per badge/pill su sfondo $primary-100
+
+// ── Spaziatura (scala 4px) ───────────────────────────────────────────────────
+$space-1: 0.25rem; // 4px
+$space-2: 0.5rem; // 8px
+$space-3: 0.75rem; // 12px
+$space-4: 1rem; // 16px
+$space-5: 1.5rem; // 24px
+$space-6: 2rem; // 32px
+$space-7: 2.5rem; // 40px
+$space-8: 3rem; // 48px
+
+// ── Raggi ────────────────────────────────────────────────────────────────────
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+
+// ── Ombre/elevazione ─────────────────────────────────────────────────────────
+$shadow-card: var(--l2m-shadow-card, 0 4px 32px rgba(51, 102, 255, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06));
+$shadow-sm: var(--l2m-shadow-sm, 0 1px 4px rgba(0, 0, 0, 0.06));
+
+// ── Scala tipografica ────────────────────────────────────────────────────────
+$font-size-xs: 0.75rem;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+$font-size-md: 1.05rem;
+$font-size-lg: 1.25rem;
+$font-size-xl: 1.5rem;
+$font-size-2xl: 1.75rem;
+$font-size-3xl: 2.75rem;

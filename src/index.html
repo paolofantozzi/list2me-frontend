@@ -26,6 +26,14 @@
   </script>
 </head>
 <body class="nb-theme-default">
+  <script>
+    // Anti-FOUC: applica il tema salvato prima che Angular esegua il bootstrap.
+    (function() {
+      if (localStorage.getItem('list2me_theme') === 'dark') {
+        document.body.className = 'nb-theme-dark';
+      }
+    })();
+  </script>
   <app-root></app-root>
 </body>
 </html>

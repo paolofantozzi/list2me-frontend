@@ -1,26 +1,7 @@
-$primary: #3366ff;
-$primary-100: #ebf2ff;
-$text-hint: #8f9bb3;
-$text-basic: #1a2138;
-$warning-100: #fff4db;
-$warning: #ffaa00;
-$border: #edf0f7;
+@use '../../../styles/tokens' as *;
 
 .page-container {
   padding: 1.5rem;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
 }
 
 .create-form-card {

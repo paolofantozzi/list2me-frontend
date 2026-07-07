@@ -5,13 +5,15 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import {
   NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule, NbBadgeModule,
   NbDialogModule, NbInputModule, NbFormFieldModule,
-  NbToastrService, NbAlertModule, NbTagModule, NbCheckboxModule
+  NbToastrService, NbAlertModule, NbTagModule, NbCheckboxModule, NbRadioModule
 } from '@nebular/theme';
 import { ListService } from '../../services/list.service';
 import { ItemService } from '../../services/item.service';
 import { AuthService } from '../../services/auth.service';
 import { List, Item, ChildListDetail } from '../../models/list.model';
 import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
+import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 interface SublistEntry {
   item: Item;
@@ -36,7 +38,9 @@ interface SublistEntry {
     NbAlertModule,
     NbTagModule,
     NbCheckboxModule,
+    NbRadioModule,
     TagInputComponent,
+    PageHeaderComponent,
   ],
   templateUrl: './lists.component.html',
   styleUrl: './lists.component.scss'
@@ -141,17 +145,23 @@ export class ListsComponent implements OnInit {
   deleteSublist(parentListId: string, entry: SublistEntry, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    if (!confirm(`Eliminare definitivamente la sottolista "${entry.detail.title}"? L'operazione non è reversibile.`)) return;
-
-    this.listService.deleteList(entry.detail.id).subscribe({
-      next: () => {
-        this.sublists.update(s => ({
-          ...s,
-          [parentListId]: (s[parentListId] ?? []).filter(e => e.item.id !== entry.item.id)
-        }));
-        this.toastr.success('Sottolista eliminata.', 'Eliminata');
-      },
-      error: () => this.toastr.danger('Impossibile eliminare la sottolista (solo il proprietario può farlo).', 'Errore')
+    this.confirmDialog.confirm({
+      title: 'Elimina sottolista',
+      message: `Eliminare definitivamente la sottolista "${entry.detail.title}"? L'operazione non è reversibile.`,
+      confirmLabel: 'Elimina',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.listService.deleteList(entry.detail.id).subscribe({
+        next: () => {
+          this.sublists.update(s => ({
+            ...s,
+            [parentListId]: (s[parentListId] ?? []).filter(e => e.item.id !== entry.item.id)
+          }));
+          this.toastr.success('Sottolista eliminata.', 'Eliminata');
+        },
+        error: () => this.toastr.danger('Impossibile eliminare la sottolista (solo il proprietario può farlo).', 'Errore')
+      });
     });
   }
 
@@ -164,6 +174,7 @@ export class ListsComponent implements OnInit {
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private router: Router,
+    private confirmDialog: ConfirmDialogService,
   ) {
     this.createForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
@@ -215,14 +226,20 @@ export class ListsComponent implements OnInit {
   deleteList(list: List, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    if (!confirm(`Eliminare "${list.title}"?`)) return;
-
-    this.listService.deleteList(list.id).subscribe({
-      next: () => {
-        this.lists.update(ls => ls.filter(l => l.id !== list.id));
-        this.toastr.success('Lista eliminata.', 'Eliminata');
-      },
-      error: () => this.toastr.danger('Impossibile eliminare la lista.', 'Errore')
+    this.confirmDialog.confirm({
+      title: 'Elimina lista',
+      message: `Eliminare "${list.title}"?`,
+      confirmLabel: 'Elimina',
+      danger: true,
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.listService.deleteList(list.id).subscribe({
+        next: () => {
+          this.lists.update(ls => ls.filter(l => l.id !== list.id));
+          this.toastr.success('Lista eliminata.', 'Eliminata');
+        },
+        error: () => this.toastr.danger('Impossibile eliminare la lista.', 'Errore')
+      });
     });
   }
 }

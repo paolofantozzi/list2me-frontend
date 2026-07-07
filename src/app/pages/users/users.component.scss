@@ -1,15 +1,9 @@
-$text-hint: #8f9bb3;
+@use '../../../styles/tokens' as *;
 
 .page-container {
   padding: 1.5rem;
   max-width: 900px;
   margin: 0 auto;
-}
-
-.page-title {
-  margin: 0 0 1.5rem;
-  font-size: 1.5rem;
-  font-weight: 600;
 }
 
 .search-card {
@@ -133,7 +127,7 @@ $text-hint: #8f9bb3;
   flex-wrap: wrap;
   gap: 1rem;
   padding: 0.75rem;
-  border: 1px solid #edf0f7;
+  border: 1px solid $border;
   border-radius: 0.5rem;
 
   nb-user { flex: 1; }
@@ -146,7 +140,7 @@ $text-hint: #8f9bb3;
   border-radius: 1rem;
 
   &.inactive {
-    color: #ff3d71;
+    color: $danger;
     background: rgba(255, 61, 113, 0.1);
   }
 }

@@ -1,5 +1,4 @@
-$text-hint: #8f9bb3;
-$text-basic: #1a2138;
+@use '../../../styles/tokens' as *;
 
 .page-container {
   padding: 1.5rem;
@@ -50,8 +49,8 @@ $text-basic: #1a2138;
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: #3366ff;
-  color: #fff;
+  background: $primary;
+  color: $surface;
   cursor: pointer;
   font-size: 0.9rem;
   transition: opacity 0.15s;
