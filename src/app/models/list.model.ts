@@ -28,6 +28,8 @@ export interface List {
   is_following?: boolean;
   /** Permesso effettivo dell'utente corrente su questa lista ('edit' anche per il proprietario). */
   my_permission: 'view' | 'edit';
+  /** Se questa lista è referenziata come `child_list` da un item, la lista che la contiene. */
+  parent_list?: ListSummary | null;
   items?: Item[];
   created_at: string;
   updated_at: string;
@@ -58,6 +60,16 @@ export interface Item {
   copied_from_item?: string | null;
   copied_from_list?: string | null;
   copied_from_list_detail?: ListSummary | null;
+  /** Data facoltativa a cui l'elemento si riferisce (auto-compilata da alcuni servizi esterni, sempre modificabile). */
+  event_date?: string | null;
+  /** Ora facoltativa, abbinata a `event_date`. */
+  event_time?: string | null;
+  /** Indirizzo o nome del luogo in forma libera. */
+  location_address?: string;
+  /** Latitudine GPS facoltativa, abbinata a `location_longitude`. */
+  location_latitude?: string | null;
+  /** Longitudine GPS facoltativa, abbinata a `location_latitude`. */
+  location_longitude?: string | null;
   created_at: string;
   updated_at: string;
 }

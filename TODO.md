@@ -1,6 +1,44 @@
 # TODO — richieste da list2me-backend
 
-**Stato: ✅ Completato e verificato end-to-end (2026-07-06).**
+## Funzionalità v0.26.0–v0.30.0: parent_list/exclude_children, campi evento/luogo, concert/medicine/plant
+
+**Stato: ✅ Completato e verificato end-to-end (2026-07-07).** Vedi le voci più recenti
+nella memoria auto-generata (`project-*.md`) per il dettaglio di ciascuna funzionalità.
+Riassunto:
+
+- **`parent_list`/`exclude_children` (v0.26.0):** `lists.component.ts` ora chiama
+  `GET /lists/?exclude_children=true`, eliminando la duplicazione delle sottoliste
+  segnalata in `list2me-backend/TODO.md` (una sottolista compariva sia come card
+  indipendente in "Le mie liste" sia nel pannello "Sottoliste" della lista genitore —
+  vedi [[project-sublist-visibility]] in memoria). `List.parent_list` è esposto in
+  `list.model.ts` e mostrato come badge cliccabile ("Sottolista di «X»") nell'header di
+  `list-detail.component.html` quando presente.
+- **Campi generici evento/luogo (v0.27.0):** `event_date`/`event_time`/
+  `location_address`/`location_latitude`/`location_longitude` aggiunti a `Item`
+  (`list.model.ts`), editabili per **qualsiasi** tipo di elemento tramite il form di
+  modifica esistente (`editItemForm`), mostrati come chip compatto sulla card e come
+  sezione dedicata nel pannello di dettaglio. Nessuna logica di auto-fill lato
+  frontend: il backend valorizza già questi campi da concerti/serie/videogiochi/album
+  quando non specificati in fase di creazione.
+- **Concerto (`concert`, v0.28.0) via SeatGeek:** `seatgeek.model.ts`/
+  `seatgeek.service.ts` + wiring completo (ricerca con immagine già inclusa, sync per i
+  dati di prezzo biglietti). **Non verificato end-to-end**: `SEATGEEK_CLIENT_ID` non è
+  configurato nell'ambiente locale (vedi `list2me-backend/TODO.md`); il pannello di
+  ricerca è stato verificato solo per apertura/gestione errore-vuoto (nessun crash).
+- **Farmaco (`medicine`, v0.29.0) via AIFA:** `medicine.model.ts`/`medicine.service.ts`.
+  A differenza degli altri tipi, la ricerca non segue il formato uniforme
+  title/subtitle/image_url/service_url/metadata (nessuna immagine, nessun link, nessun
+  endpoint di dettaglio/sync) — verificato end-to-end con una riga inserita
+  manualmente in `Medicine`, dato che `import_aifa_medicines` fallisce sui dati reali
+  AIFA (bug segnalato in `list2me-backend/TODO.md`).
+- **Pianta (`plant`, v0.30.0) via Perenual:** `plant.model.ts`/`plant.service.ts`,
+  ricerca con immagine già inclusa (come IGDB) + sync per i dati di cura estesi
+  (famiglia, origine, tolleranze, tossicità...). Verificato end-to-end con ricerca
+  reale ("rose" → "Mocha Rose Big Leaf Maple"), aggiunta e sincronizzazione.
+
+Icone senza corrispondenza diretta in Eva Icons, mappate in `iconNameFixes`/
+`getDefaultIcon` di `list-detail.component.ts`: `pill` → `activity-outline` (farmaco),
+`flower-2` → `droplet-outline` (pianta, nessuna icona botanica disponibile nel set).
 
 ---
 

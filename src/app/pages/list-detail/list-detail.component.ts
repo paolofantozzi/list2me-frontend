@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
-import { SlicePipe, DecimalPipe } from '@angular/common';
+import { SlicePipe, DecimalPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -22,6 +22,9 @@ import { OpenFoodFactsService } from '../../services/openfoodfacts.service';
 import { BggService } from '../../services/bgg.service';
 import { IgdbService } from '../../services/igdb.service';
 import { WikivoyageService } from '../../services/wikivoyage.service';
+import { SeatGeekService } from '../../services/seatgeek.service';
+import { MedicineService } from '../../services/medicine.service';
+import { PlantService } from '../../services/plant.service';
 import { List, Item, ListDiff, Suggestion, ListVisibility } from '../../models/list.model';
 import { ItemType } from '../../models/item-type.model';
 import { BookResult, BookEdition } from '../../models/book.model';
@@ -33,6 +36,9 @@ import { OpenFoodFactsDomain, OpenFoodFactsSearchResult } from '../../models/ope
 import { BGGSearchType, BGGSearchResult } from '../../models/bgg.model';
 import { IGDBSearchResult } from '../../models/igdb.model';
 import { WikivoyageSearchResult } from '../../models/wikivoyage.model';
+import { SeatGeekSearchResult } from '../../models/seatgeek.model';
+import { MedicineResult } from '../../models/medicine.model';
+import { PlantSearchResult } from '../../models/plant.model';
 import { AuthService } from '../../services/auth.service';
 import { PlaceMapComponent } from '../../shared/place-map/place-map.component';
 import { TagInputComponent } from '../../shared/tag-input/tag-input.component';
@@ -44,6 +50,7 @@ import { ListShareComponent } from '../../shared/list-share/list-share.component
   imports: [
     SlicePipe,
     DecimalPipe,
+    DatePipe,
     ReactiveFormsModule,
     DragDropModule,
     NbCardModule,
@@ -144,6 +151,24 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   travelSearchLoading = signal(false);
   travelLanguage = signal('en');
 
+  // SeatGeek search (concert)
+  showConcertSearch = signal(false);
+  concertQuery = signal('');
+  concertResults = signal<SeatGeekSearchResult[]>([]);
+  concertSearchLoading = signal(false);
+
+  // AIFA search (medicine)
+  showMedicineSearch = signal(false);
+  medicineQuery = signal('');
+  medicineResults = signal<MedicineResult[]>([]);
+  medicineSearchLoading = signal(false);
+
+  // Perenual search (plant)
+  showPlantSearch = signal(false);
+  plantQuery = signal('');
+  plantResults = signal<PlantSearchResult[]>([]);
+  plantSearchLoading = signal(false);
+
   // Open Food/Beauty/Products Facts search
   showProductSearch = signal(false);
   productQuery = signal('');
@@ -225,6 +250,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   private bggSearch$ = new Subject<string>();
   private videoGameSearch$ = new Subject<string>();
   private travelSearch$ = new Subject<string>();
+  private concertSearch$ = new Subject<string>();
+  private medicineSearch$ = new Subject<string>();
+  private plantSearch$ = new Subject<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -241,6 +269,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private bggService: BggService,
     private igdbService: IgdbService,
     private wikivoyageService: WikivoyageService,
+    private seatgeekService: SeatGeekService,
+    private medicineService: MedicineService,
+    private plantService: PlantService,
     private fb: FormBuilder,
     private toastr: NbToastrService,
     private auth: AuthService
@@ -254,6 +285,11 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       text: ['', [Validators.required, Validators.maxLength(500)]],
       new_child_list_title: [''],
       new_child_list_visibility: ['public'],
+      event_date: [''],
+      event_time: [''],
+      location_address: [''],
+      location_latitude: [''],
+      location_longitude: [''],
     });
     this.suggestForm = this.fb.group({
       description: ['', [Validators.required, Validators.maxLength(500)]],
@@ -455,6 +491,60 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.travelResults.set(results);
       this.travelSearchLoading.set(false);
     });
+
+    this.concertSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.concertSearchLoading.set(true);
+        return this.seatgeekService.search(q).pipe(
+          catchError(() => {
+            this.concertSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.concertResults.set(results);
+      this.concertSearchLoading.set(false);
+    });
+
+    this.medicineSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.medicineSearchLoading.set(true);
+        return this.medicineService.search(q).pipe(
+          catchError(() => {
+            this.medicineSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.medicineResults.set(results);
+      this.medicineSearchLoading.set(false);
+    });
+
+    this.plantSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      filter(q => q.trim().length >= 2),
+      switchMap(q => {
+        this.plantSearchLoading.set(true);
+        return this.plantService.search(q).pipe(
+          catchError(() => {
+            this.plantSearchLoading.set(false);
+            return of([]);
+          })
+        );
+      })
+    ).subscribe(results => {
+      this.plantResults.set(results);
+      this.plantSearchLoading.set(false);
+    });
   }
 
   ngOnDestroy(): void {
@@ -468,6 +558,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.bggSearch$.complete();
     this.videoGameSearch$.complete();
     this.travelSearch$.complete();
+    this.concertSearch$.complete();
+    this.medicineSearch$.complete();
+    this.plantSearch$.complete();
   }
 
   loadList(id: string): void {
@@ -534,7 +627,16 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   startEditItem(item: Item): void {
     this.editingItem.set(item);
     this.showEditChildList.set(false);
-    this.editItemForm.setValue({ text: item.text, new_child_list_title: '', new_child_list_visibility: 'public' });
+    this.editItemForm.setValue({
+      text: item.text,
+      new_child_list_title: '',
+      new_child_list_visibility: 'public',
+      event_date: item.event_date ?? '',
+      event_time: item.event_time ?? '',
+      location_address: item.location_address ?? '',
+      location_latitude: item.location_latitude ?? '',
+      location_longitude: item.location_longitude ?? '',
+    });
   }
 
   saveEditItem(): void {
@@ -542,8 +644,18 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     if (!item || this.editItemForm.invalid) return;
     const listId = this.list()!.id;
 
-    const { text, new_child_list_title, new_child_list_visibility } = this.editItemForm.value;
-    const payload: Record<string, unknown> = { text };
+    const {
+      text, new_child_list_title, new_child_list_visibility,
+      event_date, event_time, location_address, location_latitude, location_longitude,
+    } = this.editItemForm.value;
+    const payload: Record<string, unknown> = {
+      text,
+      event_date: event_date?.trim() ? event_date : null,
+      event_time: event_time?.trim() ? event_time : null,
+      location_address: location_address?.trim() ?? '',
+      location_latitude: location_latitude?.toString().trim() ? location_latitude : null,
+      location_longitude: location_longitude?.toString().trim() ? location_longitude : null,
+    };
     if (this.showEditChildList() && new_child_list_title?.trim()) {
       payload['new_child_list'] = { title: new_child_list_title.trim(), visibility: new_child_list_visibility };
     }
@@ -819,6 +931,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showBggSearch.set(false);
     this.showVideoGameSearch.set(false);
     this.showTravelSearch.set(false);
+    this.showConcertSearch.set(false);
+    this.showMedicineSearch.set(false);
+    this.showPlantSearch.set(false);
     this.showImagePanel.set(false);
     this.showEditions.set(false);
     this.showNewChildList.set(false);
@@ -862,6 +977,18 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       this.showTravelSearch.set(true);
       this.travelResults.set([]);
       this.travelQuery.set('');
+    } else if (type.name === 'concert') {
+      this.showConcertSearch.set(true);
+      this.concertResults.set([]);
+      this.concertQuery.set('');
+    } else if (type.name === 'medicine') {
+      this.showMedicineSearch.set(true);
+      this.medicineResults.set([]);
+      this.medicineQuery.set('');
+    } else if (type.name === 'plant') {
+      this.showPlantSearch.set(true);
+      this.plantResults.set([]);
+      this.plantQuery.set('');
     } else if (type.name === 'place') {
       this.showPlaceSearch.set(true);
       this.placeResults.set([]);
@@ -905,6 +1032,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       rpg: 'book-open-outline',
       video_game: 'monitor-outline',
       travel_destination: 'compass-outline',
+      concert: 'music-outline',
+      medicine: 'activity-outline',
+      plant: 'droplet-outline',
     };
     return icons[name] ?? 'list-outline';
   }
@@ -925,6 +1055,8 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     'book-open': 'book-open-outline',
     'gamepad-2': 'monitor-outline',
     compass: 'compass-outline',
+    pill: 'activity-outline',
+    'flower-2': 'droplet-outline',
   };
 
   pickIcon(type: ItemType): string {
@@ -954,6 +1086,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     other_product: 'Altro prodotto',
     video_game: 'Videogioco',
     travel_destination: 'Destinazione di viaggio',
+    concert: 'Concerto',
+    medicine: 'Farmaco',
+    plant: 'Pianta',
   };
 
   typeLabel(type: { name: string; label: string } | null | undefined): string {
@@ -973,6 +1108,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showBggSearch.set(false);
     this.showVideoGameSearch.set(false);
     this.showTravelSearch.set(false);
+    this.showConcertSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -996,6 +1132,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.videoGameQuery.set('');
     this.travelResults.set([]);
     this.travelQuery.set('');
+    this.concertResults.set([]);
+    this.concertQuery.set('');
+    this.medicineResults.set([]);
+    this.medicineQuery.set('');
+    this.plantResults.set([]);
+    this.plantQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.episodeSeriesId.set(null);
@@ -1021,6 +1163,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.showBggSearch.set(false);
     this.showVideoGameSearch.set(false);
     this.showTravelSearch.set(false);
+    this.showConcertSearch.set(false);
     this.showImagePanel.set(false);
     this.showEpisodePicker.set(false);
     this.showEditions.set(false);
@@ -1041,6 +1184,12 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     this.videoGameQuery.set('');
     this.travelResults.set([]);
     this.travelQuery.set('');
+    this.concertResults.set([]);
+    this.concertQuery.set('');
+    this.medicineResults.set([]);
+    this.medicineQuery.set('');
+    this.plantResults.set([]);
+    this.plantQuery.set('');
     this.episodesPage.set(null);
     this.episodeSeasonFilter.set(null);
     this.pendingImageCaption.set('');
@@ -1880,6 +2029,311 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  // ── SeatGeek search (concert) ──────────────────────────────────────────────────
+
+  onConcertQueryChange(q: string): void {
+    this.concertQuery.set(q);
+    if (q.trim().length < 2) {
+      this.concertResults.set([]);
+      this.concertSearchLoading.set(false);
+      return;
+    }
+    this.concertSearch$.next(q.trim());
+  }
+
+  // La ricerca SeatGeek include già un'immagine (foto del performer, quando disponibile),
+  // quindi l'elemento viene aggiunto direttamente dal risultato di ricerca, come IGDB.
+  // Data/ora/luogo (event_date/event_time/location_*) sono compilati automaticamente dal
+  // backend a partire dai metadata del concerto (derive_event_info), senza bisogno di
+  // logica aggiuntiva qui.
+  addConcertItem(result: SeatGeekSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'concert')?.id ?? null;
+
+    this.itemService.addItem(listId, {
+      text: result.title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        ...result.metadata,
+        image_url: result.metadata.image_url ?? result.image_url ?? undefined,
+        service_url: result.metadata.service_url || result.service_url || undefined,
+      },
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${result.title}" aggiunto!`, 'Concerto aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere il concerto.', 'Errore')
+    });
+  }
+
+  // La ricerca SeatGeek non include le statistiche sui prezzi dei biglietti: disponibili
+  // solo su GET /seatgeek/events/{id}/, richiamato qui per arricchire l'elemento già aggiunto.
+  syncConcertItem(item: Item): void {
+    const eventId = this.concertMeta(item).seatgeek_event_id;
+    if (!eventId) return;
+    const listId = this.list()!.id;
+    this.syncingItemId.set(item.id);
+
+    this.seatgeekService.getEvent(eventId).subscribe({
+      next: detail => {
+        this.itemService.updateItem(listId, item.id, {
+          metadata: {
+            ...item.metadata,
+            ...detail,
+          },
+        } as Partial<Item>).subscribe({
+          next: updated => {
+            this.items.update(items => items.map(i => i.id === updated.id ? updated : i));
+            this.syncingItemId.set(null);
+            this.toastr.success('Dati aggiornati da SeatGeek.', 'Sincronizzato');
+          },
+          error: () => {
+            this.syncingItemId.set(null);
+            this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+          }
+        });
+      },
+      error: () => {
+        this.syncingItemId.set(null);
+        this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+      }
+    });
+  }
+
+  isConcertItem(item: Item): boolean {
+    return item.item_type_detail?.name === 'concert';
+  }
+
+  concertMeta(item: Item): {
+    seatgeek_event_id?: number;
+    datetime_local?: string;
+    venue_name?: string;
+    venue_city?: string;
+    venue_country?: string;
+    performers?: string[];
+    image_url?: string;
+    service_url?: string;
+    low_price?: number;
+    average_price?: number;
+    high_price?: number;
+    listing_count?: number;
+  } {
+    return (item.metadata ?? {}) as {
+      seatgeek_event_id?: number;
+      datetime_local?: string;
+      venue_name?: string;
+      venue_city?: string;
+      venue_country?: string;
+      performers?: string[];
+      image_url?: string;
+      service_url?: string;
+      low_price?: number;
+      average_price?: number;
+      high_price?: number;
+      listing_count?: number;
+    };
+  }
+
+  // ── AIFA search (medicine) ──────────────────────────────────────────────────────
+
+  onMedicineQueryChange(q: string): void {
+    this.medicineQuery.set(q);
+    if (q.trim().length < 2) {
+      this.medicineResults.set([]);
+      this.medicineSearchLoading.set(false);
+      return;
+    }
+    this.medicineSearch$.next(q.trim());
+  }
+
+  // A differenza degli altri servizi esterni, la ricerca AIFA non è un proxy live: serve
+  // un indice locale già pre-caricato, senza immagine né endpoint di dettaglio/sync.
+  addMedicineItem(result: MedicineResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'medicine')?.id ?? null;
+
+    this.itemService.addItem(listId, {
+      text: result.name,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: { ...result },
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${result.name}" aggiunto!`, 'Farmaco aggiunto');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere il farmaco.', 'Errore')
+    });
+  }
+
+  isMedicineItem(item: Item): boolean {
+    return item.item_type_detail?.name === 'medicine';
+  }
+
+  medicineMeta(item: Item): {
+    aic_code?: string;
+    active_ingredient?: string;
+    atc_code?: string;
+    marketing_authorization_holder?: string;
+    pharmaceutical_form?: string;
+    pack_description?: string;
+    prescription_requirement?: string;
+  } {
+    return (item.metadata ?? {}) as {
+      aic_code?: string;
+      active_ingredient?: string;
+      atc_code?: string;
+      marketing_authorization_holder?: string;
+      pharmaceutical_form?: string;
+      pack_description?: string;
+      prescription_requirement?: string;
+    };
+  }
+
+  // ── Perenual search (plant) ─────────────────────────────────────────────────────
+
+  onPlantQueryChange(q: string): void {
+    this.plantQuery.set(q);
+    if (q.trim().length < 2) {
+      this.plantResults.set([]);
+      this.plantSearchLoading.set(false);
+      return;
+    }
+    this.plantSearch$.next(q.trim());
+  }
+
+  // La ricerca Perenual include già un'immagine (come IGDB), quindi l'elemento viene
+  // aggiunto direttamente dal risultato di ricerca senza una chiamata di dettaglio extra.
+  addPlantItem(result: PlantSearchResult): void {
+    const listId = this.list()!.id;
+    const position = String(this.items().length + 1);
+    const typeId = this.selectedType()?.id ?? this.itemTypes().find(t => t.name === 'plant')?.id ?? null;
+
+    this.itemService.addItem(listId, {
+      text: result.title,
+      ...(typeId ? { item_type: typeId } : {}),
+      metadata: {
+        ...result.metadata,
+        image_url: result.metadata.image_url ?? result.image_url ?? undefined,
+      },
+      position,
+    }).subscribe({
+      next: item => {
+        this.items.update(items => [...items, item]);
+        this.list.update(l => l ? { ...l, items_count: l.items_count + 1 } : l);
+        this.closeAddPanel();
+        this.toastr.success(`"${result.title}" aggiunta!`, 'Pianta aggiunta');
+      },
+      error: () => this.toastr.danger('Impossibile aggiungere la pianta.', 'Errore')
+    });
+  }
+
+  // La ricerca Perenual restituisce solo dati minimali (nome, ciclo, esposizione); i dati
+  // di cura estesi (famiglia, origine, descrizione, tolleranze, tossicità...) sono
+  // disponibili solo su GET /plants/species/{id}/, richiamato qui per arricchire
+  // l'elemento già aggiunto.
+  syncPlantItem(item: Item): void {
+    const speciesId = this.plantMeta(item).perenual_id;
+    if (!speciesId) return;
+    const listId = this.list()!.id;
+    this.syncingItemId.set(item.id);
+
+    this.plantService.getSpecies(speciesId).subscribe({
+      next: detail => {
+        this.itemService.updateItem(listId, item.id, {
+          metadata: {
+            ...item.metadata,
+            ...detail,
+          },
+        } as Partial<Item>).subscribe({
+          next: updated => {
+            this.items.update(items => items.map(i => i.id === updated.id ? updated : i));
+            this.syncingItemId.set(null);
+            this.toastr.success('Dati aggiornati da Perenual.', 'Sincronizzato');
+          },
+          error: () => {
+            this.syncingItemId.set(null);
+            this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+          }
+        });
+      },
+      error: () => {
+        this.syncingItemId.set(null);
+        this.toastr.danger('Impossibile sincronizzare.', 'Errore');
+      }
+    });
+  }
+
+  isPlantItem(item: Item): boolean {
+    return item.item_type_detail?.name === 'plant';
+  }
+
+  plantMeta(item: Item): {
+    perenual_id?: number;
+    common_name?: string;
+    scientific_name?: string[];
+    other_names?: string[];
+    family?: string;
+    origin?: string[];
+    description?: string;
+    cycle?: string;
+    watering?: string;
+    watering_benchmark?: string;
+    sunlight?: string[];
+    growth_rate?: string;
+    maintenance?: string;
+    care_level?: string;
+    drought_tolerant?: boolean;
+    salt_tolerant?: boolean;
+    thorny?: boolean;
+    invasive?: boolean;
+    tropical?: boolean;
+    indoor?: boolean;
+    edible_fruit?: boolean;
+    edible_leaf?: boolean;
+    medicinal?: boolean;
+    poisonous_to_humans?: boolean;
+    poisonous_to_pets?: boolean;
+    image_url?: string;
+  } {
+    return (item.metadata ?? {}) as {
+      perenual_id?: number;
+      common_name?: string;
+      scientific_name?: string[];
+      other_names?: string[];
+      family?: string;
+      origin?: string[];
+      description?: string;
+      cycle?: string;
+      watering?: string;
+      watering_benchmark?: string;
+      sunlight?: string[];
+      growth_rate?: string;
+      maintenance?: string;
+      care_level?: string;
+      drought_tolerant?: boolean;
+      salt_tolerant?: boolean;
+      thorny?: boolean;
+      invasive?: boolean;
+      tropical?: boolean;
+      indoor?: boolean;
+      edible_fruit?: boolean;
+      edible_leaf?: boolean;
+      medicinal?: boolean;
+      poisonous_to_humans?: boolean;
+      poisonous_to_pets?: boolean;
+      image_url?: string;
+    };
+  }
+
   // ── Open Food/Beauty/Products Facts search ────────────────────────────────────
 
   productSearchTitle(): string {
@@ -2199,8 +2653,20 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     return this.items().some(item => this.isTravelItem(item));
   }
 
+  get hasConcertItems(): boolean {
+    return this.items().some(item => this.isConcertItem(item));
+  }
+
+  get hasMedicineItems(): boolean {
+    return this.items().some(item => this.isMedicineItem(item));
+  }
+
+  get hasPlantItems(): boolean {
+    return this.items().some(item => this.isPlantItem(item));
+  }
+
   get hasExternalItems(): boolean {
-    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems || this.hasProductItems || this.hasBggItems || this.hasVideoGameItems || this.hasTravelItems;
+    return this.hasBookItems || this.hasTvdbItems || this.hasMusicItems || this.hasPlaceItems || this.hasEuropeanaItems || this.hasProductItems || this.hasBggItems || this.hasVideoGameItems || this.hasTravelItems || this.hasConcertItems || this.hasMedicineItems || this.hasPlantItems;
   }
 
   externalAttributions(): { name: string; url: string }[] {
@@ -2214,6 +2680,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       { name: 'BoardGameGeek', url: 'https://boardgamegeek.com', present: this.hasBggItems },
       { name: 'IGDB', url: 'https://www.igdb.com', present: this.hasVideoGameItems },
       { name: 'Wikivoyage', url: 'https://www.wikivoyage.org', present: this.hasTravelItems },
+      { name: 'SeatGeek', url: 'https://seatgeek.com', present: this.hasConcertItems },
+      { name: 'AIFA', url: 'https://www.aifa.gov.it', present: this.hasMedicineItems },
+      { name: 'Perenual', url: 'https://perenual.com', present: this.hasPlantItems },
     ];
     return sources.filter(s => s.present).map(({ name, url }) => ({ name, url }));
   }

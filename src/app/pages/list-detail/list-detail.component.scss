@@ -59,6 +59,20 @@ $warning-100: #fff8e6;
   margin-top: 0.25rem;
 }
 
+.parent-list-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: $text-hint;
+  cursor: pointer;
+
+  &:hover {
+    color: $primary;
+  }
+}
+
 .list-tags {
   display: flex;
   flex-wrap: wrap;
@@ -139,6 +153,42 @@ $warning-100: #fff8e6;
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
+}
+
+.event-location-edit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 0.75rem;
+  margin-bottom: 0.5rem;
+
+  .form-group--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.event-location-chip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  color: $text-hint;
+  margin: 0.25rem 0;
+}
+
+.event-location-chip-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  nb-icon {
+    font-size: 1rem;
+  }
+}
+
+.item-detail-event-location {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid $border;
 }
 
 // ── Type picker ───────────────────────────────────────────────────────────────
@@ -473,6 +523,15 @@ $warning-100: #fff8e6;
   nb-icon { font-size: 0.875rem; }
 
   &:hover { text-decoration: underline; }
+}
+
+.item-detail-link-inline {
+  display: inline-flex;
+  color: $primary;
+  margin-left: 0.375rem;
+  vertical-align: middle;
+
+  nb-icon { font-size: 0.875rem; }
 }
 
 // ── Book items ────────────────────────────────────────────────────────────────

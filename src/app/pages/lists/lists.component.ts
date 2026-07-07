@@ -178,7 +178,9 @@ export class ListsComponent implements OnInit {
 
   loadLists(): void {
     this.loading.set(true);
-    this.listService.getLists().subscribe({
+    // Esclude le sottoliste (già visibili nel pannello "Sottoliste" della lista genitore)
+    // per evitare che compaiano anche come card indipendenti in questa pagina.
+    this.listService.getLists(undefined, true).subscribe({
       next: data => {
         this.lists.set(data.results);
         this.loading.set(false);

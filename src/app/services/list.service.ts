@@ -9,9 +9,10 @@ import { PaginatedResponse } from '../models/common.model';
 export class ListService {
   constructor(private http: HttpClient) {}
 
-  getLists(page?: number): Observable<PaginatedResponse<List>> {
+  getLists(page?: number, excludeChildren?: boolean): Observable<PaginatedResponse<List>> {
     let params = new HttpParams();
     if (page) params = params.set('page', page.toString());
+    if (excludeChildren) params = params.set('exclude_children', 'true');
     return this.http.get<PaginatedResponse<List>>(`${API_BASE}/lists/`, { params });
   }
 

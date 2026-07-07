@@ -36,6 +36,14 @@
           </div>
         }
 
+        @if (list()!.parent_list; as parent) {
+          <div class="fork-badge parent-list-badge" role="button" tabindex="0"
+               (click)="navigateToChildList(parent.id)" (keyup.enter)="navigateToChildList(parent.id)">
+            <nb-icon icon="folder-outline"></nb-icon>
+            Sottolista di «{{ parent.title }}»
+          </div>
+        }
+
         @if (editingTags()) {
           <div class="tags-edit">
             <app-tag-input [tags]="pendingTags()" (tagsChange)="pendingTags.set($event)"></app-tag-input>
@@ -993,6 +1001,189 @@
       </nb-card>
     }
 
+    <!-- ── SeatGeek search panel (concert) ─────────────────────────────────── -->
+    @if (showConcertSearch() && canEdit) {
+      <nb-card class="add-item-card concert-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="music-outline"></nb-icon>
+          Cerca un concerto su SeatGeek
+        </nb-card-header>
+        <nb-card-body>
+          <div class="book-search-input-wrap">
+            <input nbInput fullWidth #concertInput
+                   [value]="concertQuery()"
+                   placeholder="Artista, venue o città..."
+                   (input)="onConcertQueryChange(concertInput.value)" />
+            @if (concertSearchLoading()) {
+              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+            }
+          </div>
+
+          @if (concertResults().length > 0) {
+            <div class="book-results">
+              @for (result of concertResults(); track $index) {
+                <div class="book-result" (click)="addConcertItem(result)" role="button" tabindex="0"
+                     (keyup.enter)="addConcertItem(result)">
+                  @if (result.image_url) {
+                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
+                  } @else {
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon icon="music-outline"></nb-icon>
+                    </div>
+                  }
+                  <div class="book-result-info">
+                    <p class="book-result-title">{{ result.title }}</p>
+                    @if (result.subtitle) {
+                      <p class="book-result-meta">{{ result.subtitle }}</p>
+                    }
+                    @if (result.service_url) {
+                      <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
+                         class="result-service-link" (click)="$event.stopPropagation()">
+                        <nb-icon icon="external-link-outline"></nb-icon> SeatGeek
+                      </a>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+            </div>
+          } @else if (concertQuery().trim().length >= 2 && !concertSearchLoading()) {
+            <p class="book-no-results">Nessun risultato trovato per "{{ concertQuery() }}".</p>
+          }
+
+          <div class="panel-attribution">
+            Ricerca fornita da <a href="https://seatgeek.com" target="_blank" rel="noopener noreferrer">SeatGeek</a>
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
+    <!-- ── AIFA search panel (medicine) ─────────────────────────────────────── -->
+    @if (showMedicineSearch() && canEdit) {
+      <nb-card class="add-item-card medicine-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="activity-outline"></nb-icon>
+          Cerca un farmaco (banca dati AIFA)
+        </nb-card-header>
+        <nb-card-body>
+          <div class="book-search-input-wrap">
+            <input nbInput fullWidth #medicineInput
+                   [value]="medicineQuery()"
+                   placeholder="Nome del farmaco o principio attivo..."
+                   (input)="onMedicineQueryChange(medicineInput.value)" />
+            @if (medicineSearchLoading()) {
+              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+            }
+          </div>
+
+          @if (medicineResults().length > 0) {
+            <div class="book-results">
+              @for (result of medicineResults(); track result.aic_code) {
+                <div class="book-result" (click)="addMedicineItem(result)" role="button" tabindex="0"
+                     (keyup.enter)="addMedicineItem(result)">
+                  <div class="book-result-cover book-result-cover--placeholder">
+                    <nb-icon icon="activity-outline"></nb-icon>
+                  </div>
+                  <div class="book-result-info">
+                    <p class="book-result-title">{{ result.name }}</p>
+                    <p class="book-result-meta">
+                      @if (result.active_ingredient) { {{ result.active_ingredient }} }
+                      @if (result.pharmaceutical_form) { · {{ result.pharmaceutical_form }} }
+                    </p>
+                    @if (result.prescription_requirement) {
+                      <p class="book-result-meta">{{ result.prescription_requirement }}</p>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+            </div>
+          } @else if (medicineQuery().trim().length >= 2 && !medicineSearchLoading()) {
+            <p class="book-no-results">Nessun risultato trovato per "{{ medicineQuery() }}".</p>
+          }
+
+          <div class="panel-attribution">
+            Dati forniti da <a href="https://www.aifa.gov.it" target="_blank" rel="noopener noreferrer">AIFA</a> (Banca Dati Farmaci)
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
+    <!-- ── Perenual search panel (plant) ────────────────────────────────────── -->
+    @if (showPlantSearch() && canEdit) {
+      <nb-card class="add-item-card plant-search-card" accent="info">
+        <nb-card-header>
+          <nb-icon icon="droplet-outline"></nb-icon>
+          Cerca una pianta su Perenual
+        </nb-card-header>
+        <nb-card-body>
+          <div class="book-search-input-wrap">
+            <input nbInput fullWidth #plantInput
+                   [value]="plantQuery()"
+                   placeholder="Nome comune o scientifico..."
+                   (input)="onPlantQueryChange(plantInput.value)" />
+            @if (plantSearchLoading()) {
+              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+            }
+          </div>
+
+          @if (plantResults().length > 0) {
+            <div class="book-results">
+              @for (result of plantResults(); track $index) {
+                <div class="book-result" (click)="addPlantItem(result)" role="button" tabindex="0"
+                     (keyup.enter)="addPlantItem(result)">
+                  @if (result.image_url) {
+                    <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
+                  } @else {
+                    <div class="book-result-cover book-result-cover--placeholder">
+                      <nb-icon icon="droplet-outline"></nb-icon>
+                    </div>
+                  }
+                  <div class="book-result-info">
+                    <p class="book-result-title">{{ result.title }}</p>
+                    @if (result.subtitle) {
+                      <p class="book-result-meta"><em>{{ result.subtitle }}</em></p>
+                    }
+                  </div>
+                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                </div>
+              }
+            </div>
+          } @else if (plantQuery().trim().length >= 2 && !plantSearchLoading()) {
+            <p class="book-no-results">Nessun risultato trovato per "{{ plantQuery() }}".</p>
+          }
+
+          <div class="panel-attribution">
+            Ricerca fornita da <a href="https://perenual.com" target="_blank" rel="noopener noreferrer">Perenual</a>
+          </div>
+
+          <div class="form-actions">
+            <button nbButton type="button" ghost (click)="backToTypePicker()">
+              <nb-icon icon="arrow-back-outline"></nb-icon>
+              Indietro
+            </button>
+            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    }
+
     <!-- ── Place search panel (Nominatim) ─────────────────────────────────── -->
     @if (showPlaceSearch() && canEdit) {
       <nb-card class="add-item-card place-search-card" accent="info">
@@ -1427,6 +1618,29 @@
                       }
                     }
 
+                    <div class="event-location-edit">
+                      <div class="form-group">
+                        <label class="label">Data</label>
+                        <input nbInput fullWidth type="date" formControlName="event_date" />
+                      </div>
+                      <div class="form-group">
+                        <label class="label">Ora</label>
+                        <input nbInput fullWidth type="time" formControlName="event_time" />
+                      </div>
+                      <div class="form-group form-group--wide">
+                        <label class="label">Luogo / indirizzo</label>
+                        <input nbInput fullWidth type="text" formControlName="location_address" placeholder="Indirizzo o nome del luogo..." />
+                      </div>
+                      <div class="form-group">
+                        <label class="label">Latitudine</label>
+                        <input nbInput fullWidth type="number" step="any" formControlName="location_latitude" />
+                      </div>
+                      <div class="form-group">
+                        <label class="label">Longitudine</label>
+                        <input nbInput fullWidth type="number" step="any" formControlName="location_longitude" />
+                      </div>
+                    </div>
+
                     <div class="form-actions">
                       <button nbButton type="button" size="tiny" ghost (click)="editingItem.set(null)">Annulla</button>
                       <button nbButton type="submit" size="tiny" status="primary">Salva</button>
@@ -1585,6 +1799,59 @@
                           </p>
                         </div>
                       </div>
+                    } @else if (isConcertItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        @if (concertMeta(item).image_url) {
+                          <img [src]="concertMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon icon="music-outline"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
+                            @if (concertMeta(item).venue_name) { {{ concertMeta(item).venue_name }} }
+                            @if (concertMeta(item).venue_city) { · {{ concertMeta(item).venue_city }} }
+                          </p>
+                        </div>
+                      </div>
+                    } @else if (isMedicineItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        <div class="book-cover book-cover--placeholder">
+                          <nb-icon icon="activity-outline"></nb-icon>
+                        </div>
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
+                            @if (medicineMeta(item).active_ingredient) { {{ medicineMeta(item).active_ingredient }} }
+                            @if (medicineMeta(item).pharmaceutical_form) { · {{ medicineMeta(item).pharmaceutical_form }} }
+                          </p>
+                        </div>
+                      </div>
+                    } @else if (isPlantItem(item)) {
+                      <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
+                           (keyup.enter)="openDetail(item)" title="Mostra dettagli">
+                        @if (plantMeta(item).image_url) {
+                          <img [src]="plantMeta(item).image_url" [alt]="item.text" class="book-cover" loading="lazy">
+                        } @else {
+                          <div class="book-cover book-cover--placeholder">
+                            <nb-icon icon="droplet-outline"></nb-icon>
+                          </div>
+                        }
+                        <div class="item-text">
+                          <p class="item-title">{{ item.text || '(senza titolo)' }}</p>
+                          <p class="book-meta">
+                            @if (item.item_type_detail) { <span class="item-type-badge">{{ typeLabel(item.item_type_detail) }}</span> }
+                            @if (plantMeta(item).scientific_name?.length) { <em>{{ plantMeta(item).scientific_name!.join(', ') }}</em> }
+                            @if (plantMeta(item).cycle) { · {{ plantMeta(item).cycle }} }
+                          </p>
+                        </div>
+                      </div>
                     } @else if (isPlaceItem(item)) {
                       <div class="item-media-wrap" (click)="openDetail(item)" role="button" tabindex="0"
                            (keyup.enter)="openDetail(item)" title="Mostra dettagli">
@@ -1689,6 +1956,23 @@
                       </span>
                     }
 
+                    @if (item.event_date || item.location_address) {
+                      <span class="event-location-chip">
+                        @if (item.event_date) {
+                          <span class="event-location-chip-part">
+                            <nb-icon icon="calendar-outline"></nb-icon>
+                            {{ item.event_date | date: 'dd/MM/yyyy' }}@if (item.event_time) { , {{ item.event_time!.slice(0, 5) }} }
+                          </span>
+                        }
+                        @if (item.location_address) {
+                          <span class="event-location-chip-part">
+                            <nb-icon icon="pin-outline"></nb-icon>
+                            {{ item.location_address }}
+                          </span>
+                        }
+                      </span>
+                    }
+
                     <div class="item-actions">
                       <button nbButton ghost size="tiny" (click)="openCopyPanel(item)" title="Copia in un'altra lista">
                         <nb-icon icon="copy-outline"></nb-icon>
@@ -1742,6 +2026,30 @@
                             }
                           </button>
                         }
+                        @if (isConcertItem(item)) {
+                          <button nbButton ghost size="tiny"
+                                  [disabled]="syncingItemId() === item.id"
+                                  (click)="syncConcertItem(item)"
+                                  title="Aggiorna da SeatGeek">
+                            @if (syncingItemId() === item.id) {
+                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                            } @else {
+                              <nb-icon icon="refresh-outline"></nb-icon>
+                            }
+                          </button>
+                        }
+                        @if (isPlantItem(item)) {
+                          <button nbButton ghost size="tiny"
+                                  [disabled]="syncingItemId() === item.id"
+                                  (click)="syncPlantItem(item)"
+                                  title="Aggiorna da Perenual">
+                            @if (syncingItemId() === item.id) {
+                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                            } @else {
+                              <nb-icon icon="refresh-outline"></nb-icon>
+                            }
+                          </button>
+                        }
                         @if (isImageItem(item)) {
                           <label class="item-image-upload-btn" [class.uploading]="imageUploadingItemId() === item.id" title="Carica immagine">
                             <input type="file" accept="image/*" hidden (change)="uploadItemImage(item, $event)"
@@ -1777,7 +2085,7 @@
                   </div>
 
                   <!-- ── Item detail panel ──────────────────────────────── -->
-                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || isProductItem(item) || isBggItem(item) || isVideoGameItem(item) || isTravelItem(item) || (isImageItem(item) && item.image))) {
+                  @if (detailItem()?.id === item.id && (isBookItem(item) || isTvdbItem(item) || isMusicItem(item) || isPlaceItem(item) || isEuropeanaItem(item) || isProductItem(item) || isBggItem(item) || isVideoGameItem(item) || isTravelItem(item) || isConcertItem(item) || isMedicineItem(item) || isPlantItem(item) || (isImageItem(item) && item.image) || item.event_date || item.location_address)) {
                     <div class="item-detail">
                       @if (isBookItem(item)) {
                         <div class="item-detail-grid">
@@ -2087,6 +2395,168 @@
                             }
                           </div>
                         </div>
+                      } @else if (isConcertItem(item)) {
+                        <div class="item-detail-grid">
+                          @if (concertMeta(item).image_url) {
+                            <img [src]="concertMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
+                          }
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (concertMeta(item).performers?.length) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="mic-outline"></nb-icon>
+                                {{ concertMeta(item).performers!.join(', ') }}
+                              </p>
+                            }
+                            @if (concertMeta(item).datetime_local) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="calendar-outline"></nb-icon>
+                                {{ concertMeta(item).datetime_local }}
+                              </p>
+                            }
+                            @if (concertMeta(item).venue_name) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="pin-outline"></nb-icon>
+                                {{ concertMeta(item).venue_name }}
+                                @if (concertMeta(item).venue_city) { , {{ concertMeta(item).venue_city }} }
+                                @if (concertMeta(item).venue_country) { ({{ concertMeta(item).venue_country }}) }
+                              </p>
+                            }
+                            @if (concertMeta(item).low_price || concertMeta(item).average_price || concertMeta(item).high_price) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="pricetags-outline"></nb-icon>
+                                @if (concertMeta(item).low_price) { da {{ concertMeta(item).low_price }}€ }
+                                @if (concertMeta(item).average_price) { · media {{ concertMeta(item).average_price }}€ }
+                                @if (concertMeta(item).high_price) { · fino a {{ concertMeta(item).high_price }}€ }
+                                @if (concertMeta(item).listing_count) { ({{ concertMeta(item).listing_count }} annunci) }
+                              </p>
+                            }
+                            @if (concertMeta(item).service_url) {
+                              <a [href]="concertMeta(item).service_url" target="_blank" rel="noopener noreferrer"
+                                 class="item-detail-link">
+                                <nb-icon icon="external-link-outline"></nb-icon>
+                                Apri su SeatGeek
+                              </a>
+                            }
+                          </div>
+                        </div>
+                      } @else if (isMedicineItem(item)) {
+                        <div class="item-detail-grid">
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (medicineMeta(item).active_ingredient) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="activity-outline"></nb-icon>
+                                {{ medicineMeta(item).active_ingredient }}
+                              </p>
+                            }
+                            @if (medicineMeta(item).atc_code) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="hash-outline"></nb-icon>
+                                ATC {{ medicineMeta(item).atc_code }}
+                              </p>
+                            }
+                            @if (medicineMeta(item).pharmaceutical_form || medicineMeta(item).pack_description) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="cube-outline"></nb-icon>
+                                {{ medicineMeta(item).pharmaceutical_form }}
+                                @if (medicineMeta(item).pack_description) { · {{ medicineMeta(item).pack_description }} }
+                              </p>
+                            }
+                            @if (medicineMeta(item).marketing_authorization_holder) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="briefcase-outline"></nb-icon>
+                                {{ medicineMeta(item).marketing_authorization_holder }}
+                              </p>
+                            }
+                            @if (medicineMeta(item).prescription_requirement) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="alert-triangle-outline"></nb-icon>
+                                {{ medicineMeta(item).prescription_requirement }}
+                              </p>
+                            }
+                            @if (medicineMeta(item).aic_code) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="pricetags-outline"></nb-icon>
+                                AIC {{ medicineMeta(item).aic_code }}
+                              </p>
+                            }
+                          </div>
+                        </div>
+                      } @else if (isPlantItem(item)) {
+                        <div class="item-detail-grid">
+                          @if (plantMeta(item).image_url) {
+                            <img [src]="plantMeta(item).image_url" [alt]="item.text" class="item-detail-cover" loading="lazy">
+                          }
+                          <div class="item-detail-info">
+                            <p class="item-detail-title">{{ item.text }}</p>
+                            @if (plantMeta(item).scientific_name?.length) {
+                              <p class="item-detail-row"><em>{{ plantMeta(item).scientific_name!.join(', ') }}</em></p>
+                            }
+                            @if (plantMeta(item).family) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="pricetags-outline"></nb-icon>
+                                {{ plantMeta(item).family }}
+                              </p>
+                            }
+                            @if (plantMeta(item).origin?.length) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="pin-outline"></nb-icon>
+                                {{ plantMeta(item).origin!.join(', ') }}
+                              </p>
+                            }
+                            @if (plantMeta(item).description) {
+                              <p class="item-detail-row item-detail-row--wrap">
+                                <nb-icon icon="file-text-outline"></nb-icon>
+                                {{ plantMeta(item).description }}
+                              </p>
+                            }
+                            @if (plantMeta(item).watering || plantMeta(item).watering_benchmark) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="droplet-outline"></nb-icon>
+                                {{ plantMeta(item).watering }}
+                                @if (plantMeta(item).watering_benchmark) { ({{ plantMeta(item).watering_benchmark }}) }
+                              </p>
+                            }
+                            @if (plantMeta(item).sunlight?.length) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="sun-outline"></nb-icon>
+                                {{ plantMeta(item).sunlight!.join(', ') }}
+                              </p>
+                            }
+                            @if (plantMeta(item).cycle || plantMeta(item).growth_rate || plantMeta(item).maintenance || plantMeta(item).care_level) {
+                              <p class="item-detail-row">
+                                <nb-icon icon="activity-outline"></nb-icon>
+                                @if (plantMeta(item).cycle) { {{ plantMeta(item).cycle }} }
+                                @if (plantMeta(item).growth_rate) { · crescita {{ plantMeta(item).growth_rate }} }
+                                @if (plantMeta(item).maintenance) { · manutenzione {{ plantMeta(item).maintenance }} }
+                                @if (plantMeta(item).care_level) { · cura {{ plantMeta(item).care_level }} }
+                              </p>
+                            }
+                            @if (plantMeta(item).drought_tolerant || plantMeta(item).salt_tolerant || plantMeta(item).thorny || plantMeta(item).invasive || plantMeta(item).tropical || plantMeta(item).indoor || plantMeta(item).edible_fruit || plantMeta(item).edible_leaf || plantMeta(item).medicinal) {
+                              <p class="product-badges">
+                                @if (plantMeta(item).indoor) { <span class="product-badge">Da interno</span> }
+                                @if (plantMeta(item).tropical) { <span class="product-badge">Tropicale</span> }
+                                @if (plantMeta(item).drought_tolerant) { <span class="product-badge">Resistente alla siccità</span> }
+                                @if (plantMeta(item).salt_tolerant) { <span class="product-badge">Resistente al sale</span> }
+                                @if (plantMeta(item).thorny) { <span class="product-badge">Spinosa</span> }
+                                @if (plantMeta(item).invasive) { <span class="product-badge">Invasiva</span> }
+                                @if (plantMeta(item).edible_fruit) { <span class="product-badge">Frutto commestibile</span> }
+                                @if (plantMeta(item).edible_leaf) { <span class="product-badge">Foglia commestibile</span> }
+                                @if (plantMeta(item).medicinal) { <span class="product-badge">Uso medicinale</span> }
+                              </p>
+                            }
+                            @if (plantMeta(item).poisonous_to_humans || plantMeta(item).poisonous_to_pets) {
+                              <p class="item-detail-row item-detail-row--warning">
+                                <nb-icon icon="alert-triangle-outline"></nb-icon>
+                                Tossica per
+                                @if (plantMeta(item).poisonous_to_humans) { l'uomo }
+                                @if (plantMeta(item).poisonous_to_humans && plantMeta(item).poisonous_to_pets) { e per }
+                                @if (plantMeta(item).poisonous_to_pets) { gli animali domestici }
+                              </p>
+                            }
+                          </div>
+                        </div>
                       } @else if (isPlaceItem(item)) {
                         <div class="item-detail-grid item-detail-grid--place">
                           @if (placeMeta(item).latitude != null && placeMeta(item).longitude != null) {
@@ -2274,6 +2744,29 @@
                               </a>
                             }
                           </div>
+                        </div>
+                      }
+
+                      @if (item.event_date || item.event_time || item.location_address) {
+                        <div class="item-detail-event-location">
+                          @if (item.event_date) {
+                            <p class="item-detail-row">
+                              <nb-icon icon="calendar-outline"></nb-icon>
+                              {{ item.event_date | date: 'dd/MM/yyyy' }}@if (item.event_time) { , {{ item.event_time!.slice(0, 5) }} }
+                            </p>
+                          }
+                          @if (item.location_address) {
+                            <p class="item-detail-row">
+                              <nb-icon icon="pin-outline"></nb-icon>
+                              {{ item.location_address }}
+                              @if (item.location_latitude && item.location_longitude) {
+                                <a [href]="'https://www.openstreetmap.org/?mlat=' + item.location_latitude + '&mlon=' + item.location_longitude + '#map=16/' + item.location_latitude + '/' + item.location_longitude"
+                                   target="_blank" rel="noopener noreferrer" class="item-detail-link-inline" title="Apri su OpenStreetMap">
+                                  <nb-icon icon="external-link-outline"></nb-icon>
+                                </a>
+                              }
+                            </p>
+                          }
                         </div>
                       }
                     </div>
