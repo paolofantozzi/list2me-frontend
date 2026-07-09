@@ -225,14 +225,14 @@
               </div>
             }
           </nb-card-body>
-          <nb-card-footer>
-            @if (!isOwner(group)) {
+          @if (!isOwner(group)) {
+            <nb-card-footer>
               <button nbButton ghost size="small" status="warning" (click)="leaveGroup(group)">
                 <nb-icon icon="log-out-outline"></nb-icon>
                 Lascia
               </button>
-            }
-          </nb-card-footer>
+            </nb-card-footer>
+          }
         </nb-card>
       }
     </div>

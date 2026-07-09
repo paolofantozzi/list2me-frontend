@@ -9,8 +9,20 @@ import { BookResult } from '../models/book.model';
 import { API_BASE } from './auth.service';
 
 const mockBooks: BookResult[] = [
-  { title: 'Dune', author: 'Frank Herbert', isbn: '9780441013593', cover_url: 'https://covers.openlibrary.org/b/id/1-M.jpg', open_library_key: '/works/OL118077W', year: 1965, service_url: 'https://openlibrary.org/works/OL118077W' },
-  { title: 'Dune Messiah', author: 'Frank Herbert', isbn: '', cover_url: '', open_library_key: '/works/OL118078W', year: 1969, service_url: '' },
+  {
+    title: 'Dune',
+    subtitle: 'Frank Herbert',
+    image_url: 'https://covers.openlibrary.org/b/id/1-M.jpg',
+    service_url: 'https://openlibrary.org/works/OL118077W',
+    metadata: { open_library_key: '/works/OL118077W', author: 'Frank Herbert', isbn: '9780441013593', cover_url: 'https://covers.openlibrary.org/b/id/1-M.jpg', year: 1965, service_url: 'https://openlibrary.org/works/OL118077W' },
+  },
+  {
+    title: 'Dune Messiah',
+    subtitle: 'Frank Herbert',
+    image_url: null,
+    service_url: '',
+    metadata: { open_library_key: '/works/OL118078W', author: 'Frank Herbert', isbn: '', cover_url: '', year: 1969, service_url: '' },
+  },
 ];
 
 const mockItemTypeResp = {

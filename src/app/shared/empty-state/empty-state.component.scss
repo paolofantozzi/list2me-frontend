@@ -6,11 +6,18 @@
   align-items: center;
   padding: $space-6;
   text-align: center;
-  gap: $space-4;
+  gap: $space-3;
 
   .empty-icon {
-    font-size: 3rem;
-    color: $text-hint;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: $primary-100;
+    font-size: 1.75rem;
+    color: $primary;
   }
 
   h3 {

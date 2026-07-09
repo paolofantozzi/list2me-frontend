@@ -87,12 +87,12 @@ describe('ItemService', () => {
     req.flush(null);
   });
 
-  it('reorderItems() fa POST con l\'array order corretto', () => {
+  it('reorderItems() fa POST con l\'array items corretto', () => {
     const order = [{ id: 'a', position: 1 }, { id: 'b', position: 2 }];
     service.reorderItems(LIST_ID, order).subscribe();
 
     const req = http.expectOne(r => r.url.endsWith(`/lists/${LIST_ID}/items/reorder/`) && r.method === 'POST');
-    expect(req.request.body).toEqual({ order });
+    expect(req.request.body).toEqual({ items: order });
     req.flush({});
   });
 });

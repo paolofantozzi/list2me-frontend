@@ -6,12 +6,12 @@
   } @else if (error()) {
     <nb-alert status="danger">{{ error() }}</nb-alert>
   } @else if (list()) {
-    <div class="list-header">
-      <button nbButton ghost (click)="goBack()">
-        <nb-icon icon="arrow-back-outline"></nb-icon>
-        Torna alle liste
-      </button>
+    <button nbButton ghost size="small" class="back-btn" (click)="goBack()">
+      <nb-icon icon="arrow-back-outline"></nb-icon>
+      Torna alle liste
+    </button>
 
+    <div class="list-header">
       <div class="list-meta">
         <div class="list-title-row">
           <h1 class="list-title">{{ list()!.title }}</h1>

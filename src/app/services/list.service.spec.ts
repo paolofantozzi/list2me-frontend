@@ -99,11 +99,11 @@ describe('ListService', () => {
 
   // ── Report ────────────────────────────────────────────────────────────────
 
-  it('reportList() invia il motivo nel body', () => {
-    service.reportList(LIST_ID, 'Contenuto inappropriato').subscribe();
+  it('reportList() invia destinatario e motivo nel body', () => {
+    service.reportList(LIST_ID, 'user-9', 'Contenuto inappropriato').subscribe();
     const req = http.expectOne(r => r.url.endsWith(`/lists/${LIST_ID}/report/`));
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ reason: 'Contenuto inappropriato' });
+    expect(req.request.body).toEqual({ reported_to_id: 'user-9', message: 'Contenuto inappropriato' });
     req.flush({});
   });
 
@@ -115,11 +115,12 @@ describe('ListService', () => {
     req.flush([]);
   });
 
-  it('createSuggestion() invia le azioni nel body', () => {
+  it('createSuggestion() invia descrizione e azioni nel body', () => {
+    const description = 'Aggiungi un elemento';
     const actions = [{ action: 'add', item_text: 'Elemento suggerito' }];
-    service.createSuggestion(LIST_ID, actions).subscribe();
+    service.createSuggestion(LIST_ID, description, actions).subscribe();
     const req = http.expectOne(r => r.url.endsWith(`/lists/${LIST_ID}/suggestions/`) && r.method === 'POST');
-    expect(req.request.body).toEqual({ actions });
+    expect(req.request.body).toEqual({ description, actions });
     req.flush({});
   });
 
@@ -139,10 +140,10 @@ describe('ListService', () => {
 
   // ── Shares ────────────────────────────────────────────────────────────────
 
-  it('shareList() fa POST con user_id', () => {
+  it('shareList() fa POST con shared_with_id e permesso (default view)', () => {
     service.shareList(LIST_ID, 'user-123').subscribe();
     const req = http.expectOne(r => r.url.endsWith(`/lists/${LIST_ID}/shares/`) && r.method === 'POST');
-    expect(req.request.body).toEqual({ user_id: 'user-123' });
+    expect(req.request.body).toEqual({ shared_with_id: 'user-123', permission: 'view' });
     req.flush({});
   });
 

@@ -10,10 +10,23 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { ListDetailComponent } from './list-detail.component';
 import { ListService } from '../../services/list.service';
 import { ItemService } from '../../services/item.service';
+import { ItemTypeService } from '../../services/item-type.service';
 import { BookService } from '../../services/book.service';
 import { TvdbService } from '../../services/tvdb.service';
+import { MusicBrainzService } from '../../services/musicbrainz.service';
+import { PlaceService } from '../../services/place.service';
+import { EuropeanaService } from '../../services/europeana.service';
+import { OpenFoodFactsService } from '../../services/openfoodfacts.service';
+import { BggService } from '../../services/bgg.service';
+import { IgdbService } from '../../services/igdb.service';
+import { WikivoyageService } from '../../services/wikivoyage.service';
+import { SeatGeekService } from '../../services/seatgeek.service';
+import { MedicineService } from '../../services/medicine.service';
+import { PlantService } from '../../services/plant.service';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { List, Item, Suggestion, ListDiff } from '../../models/list.model';
+import { ItemType } from '../../models/item-type.model';
 import { BookResult } from '../../models/book.model';
 import { TvdbSearchResult } from '../../models/tvdb.model';
 import { UserDetail } from '../../models/user.model';
@@ -53,19 +66,39 @@ const makeItem = (overrides: Partial<Item> = {}): Item => ({
 const makeSuggestion = (): Suggestion => ({
   id: 'sugg-1',
   list: 'list-1',
-  author: mockOwner,
+  suggested_by: mockOwner,
+  description: 'Aggiungi un elemento',
   status: 'pending',
-  actions: [{ action: 'add', item_text: 'Nuovo elemento' }],
+  actions: [{ id: 'act-1', action_type: 'add', target_item: null, text: 'Nuovo elemento' }],
+  reviewed_at: null,
   created_at: '2026-01-01T00:00:00Z',
 });
 
+const makeDiff = (overrides: Partial<ListDiff> = {}): ListDiff => ({
+  source_version: 3,
+  fork_version: 2,
+  fork_point_version: 1,
+  only_in_source: [],
+  only_in_fork: [],
+  in_both: [],
+  ...overrides,
+});
+
+const mockItemTypes: ItemType[] = [
+  { id: 'type-text-id', name: 'text', label: 'Text', icon: 'file-text', schema: {}, is_system: true, created_by: null },
+  { id: 'type-book-id', name: 'book', label: 'Book', icon: 'book', schema: {}, is_system: true, created_by: null },
+  { id: 'type-series-id', name: 'series', label: 'Series', icon: 'tv', schema: {}, is_system: true, created_by: null },
+  { id: 'type-movie-id', name: 'movie', label: 'Movie', icon: 'film', schema: {}, is_system: true, created_by: null },
+];
+
 // ── Factory ───────────────────────────────────────────────────────────────────
 
-function buildComponent(userOverride: Partial<UserDetail> = {}) {
+function buildComponent(userOverride: Partial<UserDetail> = {}, opts: { includeItems?: boolean } = {}) {
   const items = [makeItem(), makeItem({ id: 'item-2', position: '2', text: 'Elemento due' })];
+  const includeItems = opts.includeItems ?? true;
 
   const listService = {
-    getList: vi.fn().mockReturnValue(of({ ...makeList(), items })),
+    getList: vi.fn().mockReturnValue(of(includeItems ? { ...makeList(), items } : makeList())),
     forkList: vi.fn(),
     followList: vi.fn(),
     unfollowList: vi.fn(),
@@ -102,6 +135,12 @@ function buildComponent(userOverride: Partial<UserDetail> = {}) {
     getItemTypeId: vi.fn().mockReturnValue(of('type-series-id')),
   };
 
+  const itemTypeService = { getAllItemTypes: vi.fn().mockReturnValue(of(mockItemTypes)) };
+
+  // I servizi di ricerca esterna sono usati solo on-demand: basta uno stub di search().
+  const searchStub = () => ({ search: vi.fn().mockReturnValue(of([])) });
+
+  const confirmDialog = { confirm: vi.fn().mockReturnValue(of(true)) };
   const toastr = { success: vi.fn(), danger: vi.fn(), info: vi.fn() };
   const router = { navigate: vi.fn() };
   const currentUser = vi.fn().mockReturnValue({ ...mockUser, ...userOverride });
@@ -111,8 +150,20 @@ function buildComponent(userOverride: Partial<UserDetail> = {}) {
     providers: [
       { provide: ListService, useValue: listService },
       { provide: ItemService, useValue: itemService },
+      { provide: ItemTypeService, useValue: itemTypeService },
       { provide: BookService, useValue: bookService },
       { provide: TvdbService, useValue: tvdbService },
+      { provide: MusicBrainzService, useValue: searchStub() },
+      { provide: PlaceService, useValue: { ...searchStub(), reverse: vi.fn().mockReturnValue(of(null)) } },
+      { provide: EuropeanaService, useValue: searchStub() },
+      { provide: OpenFoodFactsService, useValue: { ...searchStub(), fetchByBarcode: vi.fn() } },
+      { provide: BggService, useValue: searchStub() },
+      { provide: IgdbService, useValue: { ...searchStub(), getGame: vi.fn() } },
+      { provide: WikivoyageService, useValue: { ...searchStub(), getGuide: vi.fn() } },
+      { provide: SeatGeekService, useValue: { ...searchStub(), getEvent: vi.fn() } },
+      { provide: MedicineService, useValue: searchStub() },
+      { provide: PlantService, useValue: { ...searchStub(), getPlant: vi.fn() } },
+      { provide: ConfirmDialogService, useValue: confirmDialog },
       { provide: NbToastrService, useValue: toastr },
       { provide: Router, useValue: router },
       { provide: AuthService, useValue: { currentUser } },
@@ -128,7 +179,7 @@ function buildComponent(userOverride: Partial<UserDetail> = {}) {
   const component = fixture.componentInstance;
   fixture.detectChanges();
 
-  return { fixture, component, listService, itemService, bookService, tvdbService, toastr, router };
+  return { fixture, component, listService, itemService, itemTypeService, bookService, tvdbService, confirmDialog, toastr, router };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -148,26 +199,8 @@ describe('ListDetailComponent', () => {
     });
 
     it('carica gli items separatamente se non inclusi nella lista', () => {
-      const listService2 = { getList: vi.fn().mockReturnValue(of(makeList())) };
-      const itemService2 = { getItems: vi.fn().mockReturnValue(of([makeItem()])), addItem: vi.fn(), updateItem: vi.fn(), deleteItem: vi.fn(), reorderItems: vi.fn() };
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [
-          provideAnimationsAsync(),
-          { provide: ListService, useValue: listService2 },
-          { provide: ItemService, useValue: itemService2 },
-          { provide: BookService, useValue: { search: vi.fn().mockReturnValue(of([])), getBookItemTypeId: vi.fn() } },
-          { provide: NbToastrService, useValue: { success: vi.fn(), danger: vi.fn() } },
-          { provide: Router, useValue: { navigate: vi.fn() } },
-          { provide: AuthService, useValue: { currentUser: vi.fn().mockReturnValue(mockUser) } },
-          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'list-1' } } } },
-        ],
-        schemas: [NO_ERRORS_SCHEMA],
-      });
-      TestBed.overrideComponent(ListDetailComponent, { set: { template: '', imports: [ReactiveFormsModule] } });
-      const fixture = TestBed.createComponent(ListDetailComponent);
-      fixture.detectChanges();
-      expect(itemService2.getItems).toHaveBeenCalledWith('list-1');
+      const { itemService } = buildComponent({}, { includeItems: false });
+      expect(itemService.getItems).toHaveBeenCalledWith('list-1');
     });
   });
 
@@ -262,7 +295,6 @@ describe('ListDetailComponent', () => {
     it('rimuove l\'item dalla lista locale dopo DELETE', () => {
       const { component, itemService } = buildComponent();
       itemService.deleteItem.mockReturnValue(of(undefined));
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       const initialCount = component.items().length;
       component.deleteItem(component.items()[0]);
@@ -270,9 +302,9 @@ describe('ListDetailComponent', () => {
       expect(component.items().length).toBe(initialCount - 1);
     });
 
-    it('non fa nulla se l\'utente annulla il confirm', () => {
-      const { component, itemService } = buildComponent();
-      vi.spyOn(window, 'confirm').mockReturnValue(false);
+    it('non fa nulla se l\'utente annulla la conferma', () => {
+      const { component, itemService, confirmDialog } = buildComponent();
+      confirmDialog.confirm.mockReturnValue(of(false));
       component.deleteItem(component.items()[0]);
       expect(itemService.deleteItem).not.toHaveBeenCalled();
     });
@@ -324,7 +356,7 @@ describe('ListDetailComponent', () => {
   describe('diff / merge', () => {
     it('loadDiff() chiama getDiff e popola il signal', () => {
       const { component, listService } = buildComponent();
-      const diff: ListDiff = { added: [makeItem({ id: 'item-new' })], removed: [] };
+      const diff = makeDiff({ only_in_source: ['item-new'] });
       listService.getDiff.mockReturnValue(of(diff));
 
       component.loadDiff();
@@ -333,9 +365,9 @@ describe('ListDetailComponent', () => {
       expect(component.diff()).toEqual(diff);
     });
 
-    it('toggleDiff() chiama loadDiff se il diff non è ancora caricato', () => {
+    it('toggleDiff() apre il pannello e carica il diff', () => {
       const { component, listService } = buildComponent();
-      listService.getDiff.mockReturnValue(of({ added: [], removed: [] }));
+      listService.getDiff.mockReturnValue(of(makeDiff()));
 
       component.toggleDiff();
 
@@ -343,19 +375,20 @@ describe('ListDetailComponent', () => {
       expect(listService.getDiff).toHaveBeenCalled();
     });
 
-    it('toggleDiff() non richiama getDiff se il diff è già caricato', () => {
+    it('toggleDiff() azzera il diff precedente e lo ricarica sempre', () => {
       const { component, listService } = buildComponent();
-      component.diff.set({ added: [], removed: [] });
+      component.diff.set(makeDiff({ in_both: ['item-1'] }));
+      listService.getDiff.mockReturnValue(of(makeDiff()));
 
       component.toggleDiff();
 
-      expect(listService.getDiff).not.toHaveBeenCalled();
+      expect(listService.getDiff).toHaveBeenCalled();
+      expect(component.diff()).toEqual(makeDiff());
     });
 
     it('mergeFork() chiama mergeList e ricarica la lista', () => {
       const { component, listService } = buildComponent();
       listService.mergeList.mockReturnValue(of({}));
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       component.mergeFork();
 
@@ -364,8 +397,8 @@ describe('ListDetailComponent', () => {
     });
 
     it('mergeFork() non fa nulla se l\'utente annulla', () => {
-      const { component, listService } = buildComponent();
-      vi.spyOn(window, 'confirm').mockReturnValue(false);
+      const { component, listService, confirmDialog } = buildComponent();
+      confirmDialog.confirm.mockReturnValue(of(false));
       component.mergeFork();
       expect(listService.mergeList).not.toHaveBeenCalled();
     });
@@ -387,16 +420,20 @@ describe('ListDetailComponent', () => {
       const { component, listService, toastr } = buildComponent();
       listService.createSuggestion.mockReturnValue(of(makeSuggestion()));
 
-      component.suggestForm.setValue({ action: 'add', item_text: 'Proposta' });
+      component.suggestForm.setValue({ description: 'Motivo della proposta', action: 'add', item_text: 'Proposta' });
       component.submitSuggestion();
 
-      expect(listService.createSuggestion).toHaveBeenCalledWith('list-1', [{ action: 'add', item_text: 'Proposta' }]);
+      expect(listService.createSuggestion).toHaveBeenCalledWith(
+        'list-1',
+        'Motivo della proposta',
+        [{ action_type: 'add', text: 'Proposta' }]
+      );
       expect(toastr.success).toHaveBeenCalled();
     });
 
     it('submitSuggestion() non fa nulla se il form è invalido', () => {
       const { component, listService } = buildComponent();
-      component.suggestForm.setValue({ action: 'add', item_text: '' });
+      component.suggestForm.setValue({ description: '', action: 'add', item_text: '' });
       component.submitSuggestion();
       expect(listService.createSuggestion).not.toHaveBeenCalled();
     });
@@ -436,7 +473,7 @@ describe('ListDetailComponent', () => {
 
       component.reportList();
 
-      expect(listService.reportList).toHaveBeenCalledWith('list-1', 'Spam');
+      expect(listService.reportList).toHaveBeenCalledWith('list-1', 'user-1', 'Spam');
       expect(toastr.success).toHaveBeenCalled();
     });
 
@@ -481,7 +518,7 @@ describe('ListDetailComponent', () => {
 
       component.startEditItem(item);
       component.showEditChildList.set(true);
-      component.editItemForm.setValue({ text: 'Modifica', new_child_list_title: 'Sotto', new_child_list_visibility: 'public' });
+      component.editItemForm.patchValue({ text: 'Modifica', new_child_list_title: 'Sotto', new_child_list_visibility: 'public' });
       component.saveEditItem();
 
       const patch = itemService.updateItem.mock.calls[0][2] as any;
@@ -495,7 +532,7 @@ describe('ListDetailComponent', () => {
 
       component.startEditItem(item);
       component.showEditChildList.set(false);
-      component.editItemForm.setValue({ text: 'Solo testo', new_child_list_title: 'Sotto', new_child_list_visibility: 'public' });
+      component.editItemForm.patchValue({ text: 'Solo testo', new_child_list_title: 'Sotto', new_child_list_visibility: 'public' });
       component.saveEditItem();
 
       const patch = itemService.updateItem.mock.calls[0][2] as any;
@@ -540,40 +577,43 @@ describe('ListDetailComponent', () => {
 
   describe('TVDB search', () => {
     const mockTvdbResult: TvdbSearchResult = {
-      tvdb_id: '76290',
-      type: 'series',
-      name: 'Buffy the Vampire Slayer',
-      slug: 'buffy-the-vampire-slayer',
-      overview: 'A girl with superpowers fights vampires.',
+      title: 'Buffy the Vampire Slayer',
+      subtitle: '1997 · The WB',
       image_url: 'https://artworks.thetvdb.com/banners/posters/70327-1.jpg',
-      year: '1997',
-      network: 'The WB',
-      status: 'Ended',
-      country: 'usa',
-      primary_language: 'eng',
-      available_languages: ['eng'],
       service_url: 'https://thetvdb.com/series/buffy-the-vampire-slayer',
+      metadata: {
+        thetvdb_id: '76290',
+        type: 'series',
+        slug: 'buffy-the-vampire-slayer',
+        image_url: 'https://artworks.thetvdb.com/banners/posters/70327-1.jpg',
+        language: 'eng',
+        service_url: 'https://thetvdb.com/series/buffy-the-vampire-slayer',
+        year: '1997',
+        network: 'The WB',
+        status: 'Ended',
+      },
     };
 
-    it('toggleTvdbSearch() imposta showTvdbSearch a true e chiude gli altri pannelli', () => {
-      const { component } = buildComponent();
-      component.showAddItem.set(true);
-      component.showBookSearch.set(true);
+    const seriesType = mockItemTypes.find(t => t.name === 'series')!;
 
-      component.toggleTvdbSearch();
+    it('selectItemType() con tipo series apre il pannello TVDB e chiude il type picker', () => {
+      const { component } = buildComponent();
+      component.showTypePicker.set(true);
+
+      component.selectItemType(seriesType);
 
       expect(component.showTvdbSearch()).toBe(true);
-      expect(component.showAddItem()).toBe(false);
-      expect(component.showBookSearch()).toBe(false);
+      expect(component.showTypePicker()).toBe(false);
+      expect(component.selectedType()).toEqual(seriesType);
     });
 
-    it('closeTvdbSearch() resetta lo stato', () => {
+    it('closeAddPanel() resetta lo stato della ricerca TVDB', () => {
       const { component } = buildComponent();
       component.showTvdbSearch.set(true);
       component.tvdbQuery.set('buffy');
       component.tvdbResults.set([mockTvdbResult]);
 
-      component.closeTvdbSearch();
+      component.closeAddPanel();
 
       expect(component.showTvdbSearch()).toBe(false);
       expect(component.tvdbQuery()).toBe('');
@@ -589,13 +629,12 @@ describe('ListDetailComponent', () => {
       expect(component.tvdbResults()).toHaveLength(0);
     });
 
-    it('addTvdbItem() chiama getItemTypeId e addItem con i metadati TVDB', () => {
-      const { component, tvdbService, itemService } = buildComponent();
+    it('addTvdbItem() chiama addItem con i metadati TVDB e il tipo risolto', () => {
+      const { component, itemService } = buildComponent();
       itemService.addItem.mockReturnValue(of(makeItem({ text: 'Buffy the Vampire Slayer' })));
 
       component.addTvdbItem(mockTvdbResult);
 
-      expect(tvdbService.getItemTypeId).toHaveBeenCalledWith('series');
       expect(itemService.addItem).toHaveBeenCalledWith(
         'list-1',
         expect.objectContaining({
@@ -609,14 +648,20 @@ describe('ListDetailComponent', () => {
       );
     });
 
-    it('addTvdbItem() usa type "movie" per risultati di tipo movie', () => {
-      const { component, tvdbService, itemService } = buildComponent();
-      tvdbService.getItemTypeId.mockReturnValue(of('type-movie-id'));
+    it('addTvdbItem() risolve il tipo movie per risultati di tipo movie', () => {
+      const { component, itemService } = buildComponent();
       itemService.addItem.mockReturnValue(of(makeItem({ text: 'The Matrix' })));
 
-      component.addTvdbItem({ ...mockTvdbResult, type: 'movie', name: 'The Matrix' });
+      component.addTvdbItem({
+        ...mockTvdbResult,
+        title: 'The Matrix',
+        metadata: { ...mockTvdbResult.metadata, type: 'movie' },
+      });
 
-      expect(tvdbService.getItemTypeId).toHaveBeenCalledWith('movie');
+      expect(itemService.addItem).toHaveBeenCalledWith(
+        'list-1',
+        expect.objectContaining({ item_type: 'type-movie-id' })
+      );
     });
 
     it('addTvdbItem() aggiunge l\'item ai signal dopo il successo', () => {
@@ -636,12 +681,17 @@ describe('ListDetailComponent', () => {
   describe('book editions', () => {
     const mockBook: BookResult = {
       title: 'Dune',
-      author: 'Frank Herbert',
-      isbn: '9780441013593',
-      cover_url: 'https://covers.openlibrary.org/b/id/1-M.jpg',
-      open_library_key: '/works/OL118077W',
-      year: 1965,
+      subtitle: 'Frank Herbert',
+      image_url: 'https://covers.openlibrary.org/b/id/1-M.jpg',
       service_url: 'https://openlibrary.org/works/OL118077W',
+      metadata: {
+        open_library_key: '/works/OL118077W',
+        author: 'Frank Herbert',
+        isbn: '9780441013593',
+        cover_url: 'https://covers.openlibrary.org/b/id/1-M.jpg',
+        year: 1965,
+        service_url: 'https://openlibrary.org/works/OL118077W',
+      },
     };
 
     const mockEdition = {

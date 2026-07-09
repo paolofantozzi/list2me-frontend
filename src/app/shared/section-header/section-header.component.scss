@@ -8,8 +8,15 @@
 }
 
 .section-icon {
-  font-size: 1.125rem;
-  color: $text-hint;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: $radius-sm;
+  background: $primary-100;
+  font-size: 1rem;
+  color: $primary;
 }
 
 .section-title {

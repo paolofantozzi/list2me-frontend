@@ -16,7 +16,14 @@
 }
 
 .page-header-icon {
-  font-size: $font-size-xl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: $radius-md;
+  background: $primary-100;
+  font-size: 1.25rem;
   color: $primary;
   flex-shrink: 0;
 }
@@ -24,7 +31,7 @@
 .page-title {
   margin: 0;
   font-size: $font-size-xl;
-  font-weight: 600;
+  font-weight: 800;
   color: $text-basic;
 }
 

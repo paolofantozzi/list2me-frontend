@@ -1,7 +1,7 @@
 @use '../../../styles/tokens' as *;
 
 .page-container {
-  padding: 1.5rem;
+  padding: $space-6 $space-5 $space-6;
   max-width: 720px;
   margin: 0 auto;
 }
@@ -9,7 +9,8 @@
 .page-title {
   margin: 0 0 1.5rem;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 800;
+  color: $text-basic;
 }
 
 .profile-layout {
@@ -49,10 +50,11 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: $primary;
-  color: $surface;
+  background: $gradient-brand;
+  color: #fff;
   cursor: pointer;
   font-size: 0.9rem;
+  box-shadow: 0 2px 8px $primary-glow;
   transition: opacity 0.15s;
 
   &:hover { opacity: 0.85; }

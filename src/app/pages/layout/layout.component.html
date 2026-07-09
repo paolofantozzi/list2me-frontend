@@ -2,11 +2,13 @@
   <nb-layout-header fixed>
     <div class="header-container">
       <div class="header-left">
-        <button nbButton ghost (click)="toggleSidebar()" class="sidebar-toggle">
+        <button nbButton ghost (click)="toggleSidebar()" class="sidebar-toggle" aria-label="Apri/chiudi menu">
           <nb-icon icon="menu-2-outline"></nb-icon>
         </button>
         <a routerLink="/pages/dashboard" class="logo">
-          <nb-icon icon="layers-outline" class="logo-icon"></nb-icon>
+          <span class="logo-mark">
+            <nb-icon icon="layers-outline" class="logo-icon"></nb-icon>
+          </span>
           <span class="logo-text">List2Me</span>
         </a>
       </div>
@@ -23,17 +25,16 @@
           <nb-icon [icon]="theme() === 'dark' ? 'sun-outline' : 'moon-outline'"></nb-icon>
         </button>
         @if (currentUser()) {
-          <nb-actions size="small">
-            <nb-action>
-              <nb-user
-                [name]="userFullName()"
-                [picture]="currentUser()?.avatar_url || ''"
-                [nbContextMenu]="userMenuItems"
-                nbContextMenuTag="user-context-menu"
-                nbContextMenuTrigger="click"
-              ></nb-user>
-            </nb-action>
-          </nb-actions>
+          <div class="user-chip">
+            <nb-user
+              [name]="userFullName()"
+              [picture]="currentUser()?.avatar_url || ''"
+              [nbContextMenu]="userMenuItems"
+              nbContextMenuTag="user-context-menu"
+              nbContextMenuTrigger="click"
+            ></nb-user>
+            <nb-icon icon="chevron-down-outline" class="user-chip-caret"></nb-icon>
+          </div>
         }
       </div>
     </div>
@@ -47,9 +48,9 @@
     <router-outlet></router-outlet>
   </nb-layout-column>
 
-  <nb-layout-footer fixed>
+  <nb-layout-footer>
     <span class="footer-text">
-      &copy; {{ currentYear }} List2Me
+      &copy; {{ currentYear }} List2Me — Organizza il tuo mondo, condividilo con chi ami.
     </span>
   </nb-layout-footer>
 </nb-layout>

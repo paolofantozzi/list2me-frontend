@@ -17,11 +17,12 @@ $primary-100: var(--l2m-primary-100, #ebf2ff);
 $text-basic: var(--l2m-text-basic, #1a2138);
 $text: var(--l2m-text-basic, #1a2138); // alias storico usato in alcuni componenti (list-detail, list-share)
 $text-hint: var(--l2m-text-hint, #8f9bb3);
-$border: var(--l2m-border, #edf0f7); // canonico — riconcilia la deriva #e4e9f2 già presente nelle pagine auth
+$border: var(--l2m-border, #e8ecf5); // canonico — riconcilia la deriva #e4e9f2 già presente nelle pagine auth
 $border-strong: var(--l2m-border-strong, #c5cee0); // bordo enfatizzato (es. hover), stesso valore dello scrollbar-thumb
-$background: var(--l2m-background, #f0f2f7);
+$background: var(--l2m-background, #f2f4fa);
 $bg-page: var(--l2m-bg-page, #f7f9fc); // sfondo pannello auth / riquadri dettaglio attività
 $surface: var(--l2m-surface, #ffffff);
+$surface-hover: var(--l2m-surface-hover, #f5f7fc); // sfondo di hover per righe/voci su superficie
 $warning: var(--l2m-warning, #ffaa00);
 $warning-100: var(--l2m-warning-100, #fff4db); // canonico — riconcilia la deriva #fff8e6 già presente in lists.component
 $warning-strong: var(--l2m-warning-strong, #996600); // testo leggibile su sfondo $warning-100
@@ -32,6 +33,8 @@ $success: var(--l2m-success, #00d68f);
 $success-100: var(--l2m-success-100, #e8fff6);
 $success-strong: var(--l2m-success-strong, #008a5c); // testo leggibile su sfondo $success-100
 $primary-100-hover: var(--l2m-primary-100-hover, #d1e1ff); // hover per badge/pill su sfondo $primary-100
+$gradient-brand: var(--l2m-gradient-brand, linear-gradient(135deg, #3366ff 0%, #7c5cff 100%)); // firma visiva (logo, auth, accenti)
+$primary-glow: var(--l2m-primary-glow, rgba(51, 102, 255, 0.22)); // alone per ombre/hover con tinta primary
 
 // ── Spaziatura (scala 4px) ───────────────────────────────────────────────────
 $space-1: 0.25rem; // 4px
@@ -47,10 +50,12 @@ $space-8: 3rem; // 48px
 $radius-sm: 8px;
 $radius-md: 12px;
 $radius-lg: 16px;
+$radius-xl: 20px;
 
 // ── Ombre/elevazione ─────────────────────────────────────────────────────────
-$shadow-card: var(--l2m-shadow-card, 0 4px 32px rgba(51, 102, 255, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06));
-$shadow-sm: var(--l2m-shadow-sm, 0 1px 4px rgba(0, 0, 0, 0.06));
+$shadow-card: var(--l2m-shadow-card, 0 1px 2px rgba(23, 32, 68, 0.04), 0 6px 24px rgba(23, 32, 68, 0.06));
+$shadow-sm: var(--l2m-shadow-sm, 0 1px 4px rgba(23, 32, 68, 0.06));
+$shadow-pop: var(--l2m-shadow-pop, 0 12px 40px rgba(23, 32, 68, 0.14), 0 2px 8px rgba(23, 32, 68, 0.08)); // elevazione forte (hover card, menu)
 
 // ── Scala tipografica ────────────────────────────────────────────────────────
 $font-size-xs: 0.75rem;

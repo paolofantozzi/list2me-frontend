@@ -53,9 +53,24 @@ export class ListsComponent implements OnInit {
   createLoading = signal(false);
   createTags = signal<string[]>([]);
 
+  // Filtro client-side su titolo/descrizione/tag/proprietario, applicato a tutte le sezioni.
+  filterQuery = signal('');
+  filterActive = computed(() => this.filterQuery().trim().length > 0);
+
+  private matchesFilter(l: List): boolean {
+    const q = this.filterQuery().trim().toLowerCase();
+    if (!q) return true;
+    return (
+      l.title.toLowerCase().includes(q) ||
+      (l.description ?? '').toLowerCase().includes(q) ||
+      l.tags.some(t => t.name.toLowerCase().includes(q)) ||
+      l.owner.username.toLowerCase().includes(q)
+    );
+  }
+
   myLists = computed(() => {
     const uid = this.auth.currentUser()?.id;
-    return this.lists().filter(l => l.owner.id === uid);
+    return this.lists().filter(l => l.owner.id === uid && this.matchesFilter(l));
   });
 
   // Una lista non propria con visibility 'private' è raggiungibile solo perché
@@ -64,18 +79,34 @@ export class ListsComponent implements OnInit {
   // può comparire nella risposta.
   groupLists = computed(() => {
     const uid = this.auth.currentUser()?.id;
-    return this.lists().filter(l => l.owner.id !== uid && l.visibility === 'group');
+    return this.lists().filter(l => l.owner.id !== uid && l.visibility === 'group' && this.matchesFilter(l));
   });
 
   publicLists = computed(() => {
     const uid = this.auth.currentUser()?.id;
-    return this.lists().filter(l => l.owner.id !== uid && l.visibility === 'public');
+    return this.lists().filter(l => l.owner.id !== uid && l.visibility === 'public' && this.matchesFilter(l));
   });
 
   sharedLists = computed(() => {
     const uid = this.auth.currentUser()?.id;
-    return this.lists().filter(l => l.owner.id !== uid && l.visibility === 'private');
+    return this.lists().filter(l => l.owner.id !== uid && l.visibility === 'private' && this.matchesFilter(l));
   });
+
+  filteredCount = computed(
+    () => this.myLists().length + this.groupLists().length + this.sharedLists().length + this.publicLists().length
+  );
+
+  visibilityLabel(list: List): string {
+    return list.visibility === 'public' ? 'Pubblica' : list.visibility === 'group' ? 'Gruppo' : 'Privata';
+  }
+
+  visibilityIcon(list: List): string {
+    return list.visibility === 'public'
+      ? 'globe-2-outline'
+      : list.visibility === 'group'
+        ? 'people-outline'
+        : 'lock-outline';
+  }
 
   canEdit(list: List): boolean {
     return list.my_permission === 'edit';

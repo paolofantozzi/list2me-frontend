@@ -1,8 +1,8 @@
 @use '../../../styles/tokens' as *;
 
 .page-container {
-  padding: 1.5rem;
-  max-width: 900px;
+  padding: $space-6 $space-5 $space-6;
+  max-width: 960px;
   margin: 0 auto;
 }
 
@@ -59,7 +59,17 @@
   text-align: center;
   gap: 1rem;
 
-  .empty-icon { font-size: 3rem; color: $text-hint; }
+  .empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: $primary-100;
+    font-size: 1.75rem;
+    color: $primary;
+  }
   p { margin: 0; color: $text-hint; }
 }
 
@@ -70,7 +80,17 @@
 }
 
 .user-card {
-  ::ng-deep nb-card-body {
+  margin-bottom: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-pop;
+    border-color: $border-strong;
+  }
+
+  // nb-card-body è nel template di questo componente: selettore diretto, senza ::ng-deep.
+  nb-card-body {
     display: flex;
     flex-direction: column;
     gap: 1rem;

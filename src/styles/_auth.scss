@@ -1,0 +1,196 @@
+// Pannello brand + layout condiviso delle pagine auth (login, register,
+// forgot/reset-password, verify-email). Ogni componente auth lo importa con
+// `@use '../../../styles/auth' as *;` accanto ai token: il markup del pannello
+// (`.auth-brand` e figli) è identico in tutti i template, gli stili vivono qui
+// per non divergere più tra le cinque copie.
+@use 'tokens' as *;
+
+.auth-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+// ── Pannello brand (sinistra) ────────────────────────────────────────────────
+
+.auth-brand {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #fff;
+  background:
+    radial-gradient(56rem 32rem at 85% -10%, rgba(255, 255, 255, 0.16), transparent 60%),
+    radial-gradient(48rem 30rem at -10% 110%, rgba(124, 92, 255, 0.55), transparent 62%),
+    linear-gradient(150deg, #3d6eff 0%, #2f56d9 55%, #232f96 100%);
+
+  // Cerchi decorativi sfocati.
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(2px);
+    pointer-events: none;
+  }
+
+  &::before {
+    width: 22rem;
+    height: 22rem;
+    top: -7rem;
+    right: -7rem;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 70%);
+  }
+
+  &::after {
+    width: 18rem;
+    height: 18rem;
+    bottom: -6rem;
+    left: -5rem;
+    background: radial-gradient(circle, rgba(124, 92, 255, 0.35), transparent 70%);
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.auth-brand-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+// Tile "glass" con l'icona del logo.
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(10, 20, 80, 0.25);
+  backdrop-filter: blur(6px);
+  margin-bottom: 1.5rem;
+
+  .brand-icon {
+    font-size: 2.5rem;
+    color: #fff;
+  }
+}
+
+.brand-name {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.875rem;
+}
+
+// Colore esplicito (non ereditato): la tipografia globale di Nebular imposta
+// un colore scuro su p/li che vincerebbe sull'inherit da .auth-brand.
+.brand-tagline {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.88);
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+// Punti di forza (presenti solo su login/register).
+.brand-points {
+  list-style: none;
+  margin: 2.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  font-size: 0.9375rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    color: rgba(255, 255, 255, 0.92);
+
+    nb-icon {
+      font-size: 1.125rem;
+      color: #9ecbff;
+      flex-shrink: 0;
+    }
+  }
+}
+
+// ── Pannello form (destra) ───────────────────────────────────────────────────
+
+.auth-panel {
+  width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $bg-page;
+  padding: 2.5rem;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+}
+
+.auth-box {
+  width: 100%;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-xl;
+  padding: 2.5rem;
+  box-shadow: $shadow-card;
+}
+
+.auth-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: $text-basic;
+  margin: 0 0 0.25rem;
+}
+
+.auth-subtitle {
+  color: $text-hint;
+  font-size: 0.9rem;
+  margin: 0 0 1.75rem;
+}
+
+.auth-alert {
+  margin-bottom: 1.25rem;
+}
+
+.submit-btn {
+  margin-top: 0.5rem;
+  height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.625rem;
+}
+
+.auth-footer-text {
+  text-align: center;
+  margin: 1.5rem 0 0;
+  font-size: 0.875rem;
+  color: $text-hint;
+
+  a {
+    color: $primary;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

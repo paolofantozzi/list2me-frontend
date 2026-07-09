@@ -1,7 +1,15 @@
 @use '../../../styles/tokens' as *;
 
 .page-container {
-  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $space-6 $space-5 $space-6;
+}
+
+@media (max-width: 640px) {
+  .page-container {
+    padding: $space-4;
+  }
 }
 
 .create-form-card {
@@ -39,7 +47,17 @@
   text-align: center;
   gap: 1rem;
 
-  .empty-icon { font-size: 3rem; color: $text-hint; }
+  .empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: $primary-100;
+    font-size: 1.75rem;
+    color: $primary;
+  }
   h3 { margin: 0; }
   p { margin: 0; color: $text-hint; }
 }
@@ -74,8 +92,8 @@
 }
 
 .groups-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.25rem;
   margin-bottom: 2rem;
 }
@@ -87,8 +105,14 @@
 }
 
 .group-card {
-  width: 100%;
-  max-width: 680px;
+  margin-bottom: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-pop;
+    border-color: $border-strong;
+  }
 }
 
 .group-card-header {
@@ -100,8 +124,8 @@
 
 .group-name {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.0625rem;
+  font-weight: 700;
 }
 
 .invited-badge {

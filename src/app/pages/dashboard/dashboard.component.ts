@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NbCardModule, NbIconModule, NbSpinnerModule, NbListModule, NbUserModule, NbButtonModule, NbBadgeModule } from '@nebular/theme';
@@ -8,7 +8,6 @@ import { ListService } from '../../services/list.service';
 import { GroupService } from '../../services/group.service';
 import { AuthService } from '../../services/auth.service';
 import { List } from '../../models/list.model';
-import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,7 +22,6 @@ import { PageHeaderComponent } from '../../shared/page-header/page-header.compon
     NbUserModule,
     NbButtonModule,
     NbBadgeModule,
-    PageHeaderComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
@@ -42,6 +40,18 @@ export class DashboardComponent implements OnInit {
   groupsCount = signal(0);
   pendingInvitesCount = signal(0);
   recentLists = signal<List[]>([]);
+
+  firstName = computed(() => {
+    const u = this.auth.currentUser();
+    return u?.first_name || u?.username || '';
+  });
+
+  greeting = computed(() => {
+    const hour = new Date().getHours();
+    if (hour < 13) return 'Buongiorno';
+    if (hour < 18) return 'Buon pomeriggio';
+    return 'Buonasera';
+  });
 
   constructor(
     private activityService: ActivityService,
@@ -222,5 +232,23 @@ export class DashboardComponent implements OnInit {
 
   isExpanded(id: string): boolean {
     return this.expandedIds().has(id);
+  }
+
+  /** Tempo relativo in italiano ("2 ore fa"); la data completa resta nel title della riga. */
+  timeAgo(iso: string): string {
+    const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+    if (seconds < 60) return 'adesso';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes === 1 ? '1 minuto fa' : `${minutes} minuti fa`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours === 1 ? "un'ora fa" : `${hours} ore fa`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return days === 1 ? 'ieri' : `${days} giorni fa`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return weeks === 1 ? '1 settimana fa' : `${weeks} settimane fa`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return months === 1 ? '1 mese fa' : `${months} mesi fa`;
+    const years = Math.floor(days / 365);
+    return years === 1 ? '1 anno fa' : `${years} anni fa`;
   }
 }
