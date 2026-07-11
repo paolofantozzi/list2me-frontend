@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { NbIconModule } from '@nebular/theme';
+import { TuiIcon } from '@taiga-ui/core';
 import { AttributionLogo } from '../external-search-panel/external-search-panel.component';
 import { ItemRowBadge } from '../item-row/item-row.component';
 
@@ -19,7 +19,7 @@ export interface ItemDetailLink {
 @Component({
   selector: 'app-item-detail-expand',
   standalone: true,
-  imports: [NbIconModule],
+  imports: [TuiIcon],
   templateUrl: './item-detail-expand.component.html',
   styleUrl: './item-detail-expand.component.scss',
 })

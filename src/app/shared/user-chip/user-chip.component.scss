@@ -1,0 +1,31 @@
+@use '../../../styles/tokens' as *;
+
+.uc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.uc-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.uc-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: $text-basic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uc-caption {
+  font-size: 0.75rem;
+  color: $text-hint;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

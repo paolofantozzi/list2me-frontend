@@ -2,11 +2,8 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { SlicePipe, DecimalPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import {
-  NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule, NbBadgeModule,
-  NbInputModule, NbFormFieldModule, NbToastrService, NbAlertModule, NbTagModule,
-  NbSelectModule,
-} from '@nebular/theme';
+import { ToastService } from '../../services/toast.service';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } from 'rxjs';
@@ -52,21 +49,14 @@ import { ItemDetailExpandComponent, ItemDetailRow, ItemDetailLink } from '../../
   selector: 'app-list-detail',
   standalone: true,
   imports: [
+    TuiIcon,
+    TuiButton,
+    TuiLoader,
     SlicePipe,
     DecimalPipe,
     DatePipe,
     ReactiveFormsModule,
     DragDropModule,
-    NbCardModule,
-    NbIconModule,
-    NbSpinnerModule,
-    NbButtonModule,
-    NbBadgeModule,
-    NbInputModule,
-    NbFormFieldModule,
-    NbAlertModule,
-    NbTagModule,
-    NbSelectModule,
     PlaceMapComponent,
     TagInputComponent,
     ListShareComponent,
@@ -252,7 +242,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     private medicineService: MedicineService,
     private plantService: PlantService,
     private fb: FormBuilder,
-    private toastr: NbToastrService,
+    private toastr: ToastService,
     private auth: AuthService,
     private confirmDialog: ConfirmDialogService
   ) {
@@ -860,49 +850,49 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   getDefaultIcon(name: string): string {
     const icons: Record<string, string> = {
-      book: 'book-outline',
-      series: 'tv-outline',
-      movie: 'film-outline',
-      episode: 'play-circle-outline',
-      text: 'text-outline',
-      artist: 'mic-outline',
-      album: 'headphones-outline',
-      track: 'music-outline',
-      place: 'pin-outline',
-      artwork: 'color-palette-outline',
-      art_artist: 'brush-outline',
-      food_product: 'shopping-bag-outline',
-      beauty_product: 'star-outline',
-      other_product: 'cube-outline',
-      board_game: 'grid-outline',
-      rpg: 'book-open-outline',
-      video_game: 'monitor-outline',
-      travel_destination: 'compass-outline',
-      concert: 'music-outline',
-      medicine: 'activity-outline',
-      plant: 'droplet-outline',
+      book: '@tui.book',
+      series: '@tui.tv',
+      movie: '@tui.film',
+      episode: '@tui.circle-play',
+      text: '@tui.text',
+      artist: '@tui.mic',
+      album: '@tui.headphones',
+      track: '@tui.music',
+      place: '@tui.map-pin',
+      artwork: '@tui.palette',
+      art_artist: '@tui.paintbrush',
+      food_product: '@tui.shopping-bag',
+      beauty_product: '@tui.star',
+      other_product: '@tui.box',
+      board_game: '@tui.layout-grid',
+      rpg: '@tui.book-open',
+      video_game: '@tui.monitor',
+      travel_destination: '@tui.compass',
+      concert: '@tui.music',
+      medicine: '@tui.activity',
+      plant: '@tui.droplet',
     };
-    return icons[name] ?? 'list-outline';
+    return icons[name] ?? '@tui.list';
   }
 
   // Il backend valorizza `icon` con nomi generici (es. "mic", "disc", "map-pin") non presenti
   // nel pacchetto Eva Icons usato dal frontend, che richiede il suffisso "-outline".
   private readonly iconNameFixes: Record<string, string> = {
-    mic: 'mic-outline',
-    disc: 'headphones-outline',
-    music: 'music-outline',
-    'map-pin': 'pin-outline',
-    palette: 'color-palette-outline',
-    brush: 'brush-outline',
-    utensils: 'shopping-bag-outline',
-    sparkles: 'star-outline',
-    package: 'cube-outline',
-    dice: 'grid-outline',
-    'book-open': 'book-open-outline',
-    'gamepad-2': 'monitor-outline',
-    compass: 'compass-outline',
-    pill: 'activity-outline',
-    'flower-2': 'droplet-outline',
+    mic: '@tui.mic',
+    disc: '@tui.headphones',
+    music: '@tui.music',
+    'map-pin': '@tui.map-pin',
+    palette: '@tui.palette',
+    brush: '@tui.paintbrush',
+    utensils: '@tui.shopping-bag',
+    sparkles: '@tui.star',
+    package: '@tui.box',
+    dice: '@tui.layout-grid',
+    'book-open': '@tui.book-open',
+    'gamepad-2': '@tui.monitor',
+    compass: '@tui.compass',
+    pill: '@tui.activity',
+    'flower-2': '@tui.droplet',
   };
 
   pickIcon(type: ItemType): string {
@@ -1337,9 +1327,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   musicSearchIcon(): string {
     const name = this.selectedType()?.name;
-    if (name === 'artist') return 'mic-outline';
-    if (name === 'track') return 'music-outline';
-    return 'recording-outline';
+    if (name === 'artist') return '@tui.mic';
+    if (name === 'track') return '@tui.music';
+    return '@tui.disc-3';
   }
 
   addMusicItem(result: MusicBrainzSearchResult): void {
@@ -1369,9 +1359,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   musicIcon(item: Item): string {
     const name = item.item_type_detail?.name;
-    if (name === 'artist') return 'mic-outline';
-    if (name === 'track') return 'music-outline';
-    return 'recording-outline';
+    if (name === 'artist') return '@tui.mic';
+    if (name === 'track') return '@tui.music';
+    return '@tui.disc-3';
   }
 
   isBookItem(item: Item): boolean {
@@ -1485,7 +1475,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   }
 
   europeanaSearchIcon(): string {
-    return this.selectedType()?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline';
+    return this.selectedType()?.name === 'art_artist' ? '@tui.paintbrush' : '@tui.palette';
   }
 
   europeanaSearchPlaceholder(): string {
@@ -1555,7 +1545,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   }
 
   europeanaIcon(item: Item): string {
-    return item.item_type_detail?.name === 'art_artist' ? 'brush-outline' : 'color-palette-outline';
+    return item.item_type_detail?.name === 'art_artist' ? '@tui.paintbrush' : '@tui.palette';
   }
 
   europeanaMetaLine(item: Item): string {
@@ -1573,19 +1563,19 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       rows.push({ icon: this.europeanaIcon(item), text: this.typeLabel(item.item_type_detail) });
     }
     if (item.item_type_detail?.name === 'art_artist') {
-      if (meta.biography) rows.push({ icon: 'file-text-outline', text: meta.biography });
+      if (meta.biography) rows.push({ icon: '@tui.file-text', text: meta.biography });
       if (meta.date_of_birth || meta.date_of_death) {
         const text = meta.date_of_death ? `${meta.date_of_birth ?? ''} – ${meta.date_of_death}` : (meta.date_of_birth ?? '');
-        rows.push({ icon: 'calendar-outline', text });
+        rows.push({ icon: '@tui.calendar', text });
       }
-      if (meta.place_of_birth) rows.push({ icon: 'pin-outline', text: meta.place_of_birth });
-      if (meta.professions?.length) rows.push({ icon: 'briefcase-outline', text: meta.professions.join(', ') });
+      if (meta.place_of_birth) rows.push({ icon: '@tui.map-pin', text: meta.place_of_birth });
+      if (meta.professions?.length) rows.push({ icon: '@tui.briefcase', text: meta.professions.join(', ') });
     } else {
-      if (meta.creator) rows.push({ icon: 'person-outline', text: meta.creator });
-      if (meta.year) rows.push({ icon: 'calendar-outline', text: meta.year });
-      if (meta.medium) rows.push({ icon: 'brush-outline', text: meta.medium });
-      if (meta.description) rows.push({ icon: 'file-text-outline', text: meta.description });
-      if (meta.provider) rows.push({ icon: 'briefcase-outline', text: meta.provider });
+      if (meta.creator) rows.push({ icon: '@tui.user', text: meta.creator });
+      if (meta.year) rows.push({ icon: '@tui.calendar', text: meta.year });
+      if (meta.medium) rows.push({ icon: '@tui.paintbrush', text: meta.medium });
+      if (meta.description) rows.push({ icon: '@tui.file-text', text: meta.description });
+      if (meta.provider) rows.push({ icon: '@tui.briefcase', text: meta.provider });
     }
     return rows;
   }
@@ -1683,7 +1673,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   }
 
   bggIcon(item: Item): string {
-    return item.item_type_detail?.name === 'rpg' ? 'book-open-outline' : 'shuffle-outline';
+    return item.item_type_detail?.name === 'rpg' ? '@tui.book-open' : '@tui.shuffle';
   }
 
   bggMeta(item: Item): {
@@ -1712,7 +1702,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       rows.push({ icon: this.bggIcon(item), text: this.typeLabel(item.item_type_detail) });
     }
     if (meta.year_published) {
-      rows.push({ icon: 'calendar-outline', text: String(meta.year_published) });
+      rows.push({ icon: '@tui.calendar', text: String(meta.year_published) });
     }
     return rows;
   }
@@ -1839,28 +1829,28 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const meta = this.videoGameMeta(item);
     const rows: ItemDetailRow[] = [];
     if (item.item_type_detail) {
-      rows.push({ icon: 'monitor-outline', text: this.typeLabel(item.item_type_detail) });
+      rows.push({ icon: '@tui.monitor', text: this.typeLabel(item.item_type_detail) });
     }
     if (meta.platforms?.length) {
-      rows.push({ icon: 'hard-drive-outline', text: meta.platforms.join(', ') });
+      rows.push({ icon: '@tui.hard-drive', text: meta.platforms.join(', ') });
     }
     if (meta.genres?.length) {
-      rows.push({ icon: 'pricetags-outline', text: meta.genres.join(', ') });
+      rows.push({ icon: '@tui.tags', text: meta.genres.join(', ') });
     }
     if (meta.first_release_date) {
-      rows.push({ icon: 'calendar-outline', text: meta.first_release_date });
+      rows.push({ icon: '@tui.calendar', text: meta.first_release_date });
     }
     if (meta.developers?.length) {
-      rows.push({ icon: 'code-outline', text: meta.developers.join(', ') });
+      rows.push({ icon: '@tui.code', text: meta.developers.join(', ') });
     }
     if (meta.publishers?.length) {
-      rows.push({ icon: 'briefcase-outline', text: meta.publishers.join(', ') });
+      rows.push({ icon: '@tui.briefcase', text: meta.publishers.join(', ') });
     }
     if (meta.rating) {
-      rows.push({ icon: 'star-outline', text: `${Math.round(meta.rating)}/100` });
+      rows.push({ icon: '@tui.star', text: `${Math.round(meta.rating)}/100` });
     }
     if (meta.summary) {
-      rows.push({ icon: 'file-text-outline', text: meta.summary, wrap: true });
+      rows.push({ icon: '@tui.file-text', text: meta.summary, wrap: true });
     }
     return rows;
   }
@@ -2083,16 +2073,16 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     const meta = this.concertMeta(item);
     const rows: ItemDetailRow[] = [];
     if (meta.performers?.length) {
-      rows.push({ icon: 'mic-outline', text: meta.performers.join(', ') });
+      rows.push({ icon: '@tui.mic', text: meta.performers.join(', ') });
     }
     if (meta.datetime_local) {
-      rows.push({ icon: 'calendar-outline', text: meta.datetime_local });
+      rows.push({ icon: '@tui.calendar', text: meta.datetime_local });
     }
     if (meta.venue_name) {
       let venueText = meta.venue_name;
       if (meta.venue_city) venueText += `, ${meta.venue_city}`;
       if (meta.venue_country) venueText += ` (${meta.venue_country})`;
-      rows.push({ icon: 'pin-outline', text: venueText });
+      rows.push({ icon: '@tui.map-pin', text: venueText });
     }
     if (meta.low_price || meta.average_price || meta.high_price) {
       const parts: string[] = [];
@@ -2100,7 +2090,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       if (meta.average_price) parts.push(`· media ${meta.average_price}€`);
       if (meta.high_price) parts.push(`· fino a ${meta.high_price}€`);
       if (meta.listing_count) parts.push(`(${meta.listing_count} annunci)`);
-      rows.push({ icon: 'pricetags-outline', text: parts.join(' ') });
+      rows.push({ icon: '@tui.tags', text: parts.join(' ') });
     }
     return rows;
   }
@@ -2180,16 +2170,16 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   medicineDetailRows(item: Item): ItemDetailRow[] {
     const meta = this.medicineMeta(item);
     const rows: ItemDetailRow[] = [];
-    if (meta.active_ingredient) rows.push({ icon: 'activity-outline', text: meta.active_ingredient });
-    if (meta.atc_code) rows.push({ icon: 'hash-outline', text: `ATC ${meta.atc_code}` });
+    if (meta.active_ingredient) rows.push({ icon: '@tui.activity', text: meta.active_ingredient });
+    if (meta.atc_code) rows.push({ icon: '@tui.hash', text: `ATC ${meta.atc_code}` });
     if (meta.pharmaceutical_form || meta.pack_description) {
       let text = meta.pharmaceutical_form ?? '';
       if (meta.pack_description) text += ` · ${meta.pack_description}`;
-      rows.push({ icon: 'cube-outline', text });
+      rows.push({ icon: '@tui.box', text });
     }
-    if (meta.marketing_authorization_holder) rows.push({ icon: 'briefcase-outline', text: meta.marketing_authorization_holder });
-    if (meta.prescription_requirement) rows.push({ icon: 'alert-triangle-outline', text: meta.prescription_requirement });
-    if (meta.aic_code) rows.push({ icon: 'pricetags-outline', text: `AIC ${meta.aic_code}` });
+    if (meta.marketing_authorization_holder) rows.push({ icon: '@tui.briefcase', text: meta.marketing_authorization_holder });
+    if (meta.prescription_requirement) rows.push({ icon: '@tui.triangle-alert', text: meta.prescription_requirement });
+    if (meta.aic_code) rows.push({ icon: '@tui.tags', text: `AIC ${meta.aic_code}` });
     return rows;
   }
 
@@ -2336,21 +2326,21 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       rows.push({ text: meta.scientific_name.join(', '), italic: true });
     }
     if (meta.family) {
-      rows.push({ icon: 'pricetags-outline', text: meta.family });
+      rows.push({ icon: '@tui.tags', text: meta.family });
     }
     if (meta.origin?.length) {
-      rows.push({ icon: 'pin-outline', text: meta.origin.join(', ') });
+      rows.push({ icon: '@tui.map-pin', text: meta.origin.join(', ') });
     }
     if (meta.description) {
-      rows.push({ icon: 'file-text-outline', text: meta.description, wrap: true });
+      rows.push({ icon: '@tui.file-text', text: meta.description, wrap: true });
     }
     if (meta.watering || meta.watering_benchmark) {
       let text = meta.watering ?? '';
       if (meta.watering_benchmark) text += ` (${meta.watering_benchmark})`;
-      rows.push({ icon: 'droplet-outline', text });
+      rows.push({ icon: '@tui.droplet', text });
     }
     if (meta.sunlight?.length) {
-      rows.push({ icon: 'sun-outline', text: meta.sunlight.join(', ') });
+      rows.push({ icon: '@tui.sun', text: meta.sunlight.join(', ') });
     }
     if (meta.cycle || meta.growth_rate || meta.maintenance || meta.care_level) {
       const parts: string[] = [];
@@ -2358,7 +2348,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       if (meta.growth_rate) parts.push(`· crescita ${meta.growth_rate}`);
       if (meta.maintenance) parts.push(`· manutenzione ${meta.maintenance}`);
       if (meta.care_level) parts.push(`· cura ${meta.care_level}`);
-      rows.push({ icon: 'activity-outline', text: parts.join(' ') });
+      rows.push({ icon: '@tui.activity', text: parts.join(' ') });
     }
     return rows;
   }
@@ -2398,9 +2388,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   productSearchIcon(): string {
     const name = this.selectedType()?.name;
-    if (name === 'food_product') return 'shopping-bag-outline';
-    if (name === 'beauty_product') return 'star-outline';
-    return 'cube-outline';
+    if (name === 'food_product') return '@tui.shopping-bag';
+    if (name === 'beauty_product') return '@tui.star';
+    return '@tui.box';
   }
 
   onProductQueryChange(q: string): void {
@@ -2477,9 +2467,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
 
   productIcon(item: Item): string {
     const name = item.item_type_detail?.name;
-    if (name === 'food_product') return 'shopping-bag-outline';
-    if (name === 'beauty_product') return 'star-outline';
-    return 'cube-outline';
+    if (name === 'food_product') return '@tui.shopping-bag';
+    if (name === 'beauty_product') return '@tui.star';
+    return '@tui.box';
   }
 
   productMeta(item: Item): {
@@ -2538,14 +2528,14 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   productDetailRows(item: Item): ItemDetailRow[] {
     const meta = this.productMeta(item);
     const rows: ItemDetailRow[] = [];
-    if (meta.brands) rows.push({ icon: 'pricetags-outline', text: meta.brands });
-    if (meta.quantity) rows.push({ icon: 'cube-outline', text: meta.quantity });
-    if (meta.categories) rows.push({ icon: 'grid-outline', text: meta.categories });
-    if (meta.barcode) rows.push({ icon: 'hash-outline', text: meta.barcode });
+    if (meta.brands) rows.push({ icon: '@tui.tags', text: meta.brands });
+    if (meta.quantity) rows.push({ icon: '@tui.box', text: meta.quantity });
+    if (meta.categories) rows.push({ icon: '@tui.layout-grid', text: meta.categories });
+    if (meta.barcode) rows.push({ icon: '@tui.hash', text: meta.barcode });
     // Nel markup originale ingredienti/etichette comparivano dopo i badge punteggio;
     // qui restano nello stesso elenco di righe, subito prima dei badge (riordino cosmetico minore).
-    if (meta.ingredients_text) rows.push({ icon: 'file-text-outline', text: meta.ingredients_text, wrap: true });
-    if (meta.labels?.length) rows.push({ icon: 'pricetags-outline', text: meta.labels.join(', ') });
+    if (meta.ingredients_text) rows.push({ icon: '@tui.file-text', text: meta.ingredients_text, wrap: true });
+    if (meta.labels?.length) rows.push({ icon: '@tui.tags', text: meta.labels.join(', ') });
     return rows;
   }
 
@@ -2677,9 +2667,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   bookDetailRows(item: Item): ItemDetailRow[] {
     const meta = this.bookMeta(item);
     const rows: ItemDetailRow[] = [];
-    if (meta.author) rows.push({ icon: 'person-outline', text: meta.author });
-    if (meta.year) rows.push({ icon: 'calendar-outline', text: String(meta.year) });
-    if (meta.isbn) rows.push({ icon: 'hash-outline', text: `ISBN ${meta.isbn}` });
+    if (meta.author) rows.push({ icon: '@tui.user', text: meta.author });
+    if (meta.year) rows.push({ icon: '@tui.calendar', text: String(meta.year) });
+    if (meta.isbn) rows.push({ icon: '@tui.hash', text: `ISBN ${meta.isbn}` });
     return rows;
   }
 
@@ -2702,7 +2692,7 @@ export class ListDetailComponent implements OnInit, OnDestroy {
   }
 
   tvdbDetailIcon(item: Item): string {
-    return item.item_type_detail?.name === 'movie' ? 'film-outline' : 'tv-outline';
+    return item.item_type_detail?.name === 'movie' ? '@tui.film' : '@tui.tv';
   }
 
   tvdbDetailRows(item: Item): ItemDetailRow[] {
@@ -2711,9 +2701,9 @@ export class ListDetailComponent implements OnInit, OnDestroy {
     if (item.item_type_detail) {
       rows.push({ icon: this.tvdbDetailIcon(item), text: this.typeLabel(item.item_type_detail) });
     }
-    if (meta.year) rows.push({ icon: 'calendar-outline', text: String(meta.year) });
-    if (meta.network) rows.push({ icon: 'monitor-outline', text: meta.network });
-    if (meta.status) rows.push({ icon: 'info-outline', text: meta.status });
+    if (meta.year) rows.push({ icon: '@tui.calendar', text: String(meta.year) });
+    if (meta.network) rows.push({ icon: '@tui.monitor', text: meta.network });
+    if (meta.status) rows.push({ icon: '@tui.info', text: meta.status });
     return rows;
   }
 
@@ -2763,23 +2753,23 @@ export class ListDetailComponent implements OnInit, OnDestroy {
       rows.push({ icon: this.musicIcon(item), text: this.typeLabel(item.item_type_detail) });
     }
     if (meta.artist_name) {
-      rows.push({ icon: 'mic-outline', text: meta.artist_name });
+      rows.push({ icon: '@tui.mic', text: meta.artist_name });
     }
     if (meta.album_name) {
-      rows.push({ icon: 'recording-outline', text: meta.album_name });
+      rows.push({ icon: '@tui.disc-3', text: meta.album_name });
     }
     if (meta.first_release_date) {
-      rows.push({ icon: 'calendar-outline', text: meta.first_release_date });
+      rows.push({ icon: '@tui.calendar', text: meta.first_release_date });
     }
     if (meta.country) {
-      rows.push({ icon: 'globe-2-outline', text: meta.country });
+      rows.push({ icon: '@tui.globe', text: meta.country });
     }
     if (meta.life_span_begin) {
       const text = meta.life_span_end ? `${meta.life_span_begin} – ${meta.life_span_end}` : meta.life_span_begin;
-      rows.push({ icon: 'calendar-outline', text });
+      rows.push({ icon: '@tui.calendar', text });
     }
     if (meta.track_number) {
-      rows.push({ icon: 'hash-outline', text: `Traccia ${meta.track_number}` });
+      rows.push({ icon: '@tui.hash', text: `Traccia ${meta.track_number}` });
     }
     return rows;
   }

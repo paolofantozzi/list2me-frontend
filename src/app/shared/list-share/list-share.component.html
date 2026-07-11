@@ -1,29 +1,29 @@
 <div class="share-section">
   <h3 class="share-section-title">
-    <nb-icon icon="person-outline"></nb-icon>
+    <tui-icon icon="@tui.user"></tui-icon>
     Condividi con utenti
   </h3>
 
   @if (sharesLoading()) {
-    <div class="share-loading"><nb-spinner size="small" status="primary"></nb-spinner></div>
+    <div class="share-loading"><tui-loader size="s"></tui-loader></div>
   } @else if (shares().length > 0) {
     <ul class="share-list">
       @for (share of shares(); track share.id) {
         <li class="share-item">
-          <nb-user [name]="share.shared_with.username" [picture]="share.shared_with.avatar_url" size="small"></nb-user>
+          <app-user-chip [name]="share.shared_with.username" [picture]="share.shared_with.avatar_url" size="s"></app-user-chip>
           <select class="permission-select" [value]="share.permission"
                   [disabled]="revokingShareId() === share.id"
                   (change)="onShareRowPermissionChange(share, $event)">
             <option value="view">Sola lettura</option>
             <option value="edit">Modifica</option>
           </select>
-          <button nbButton ghost size="tiny" status="danger"
+          <button tuiButton appearance="flat" size="xs" status="danger"
                   [disabled]="revokingShareId() === share.id"
                   (click)="revokeShare(share)" title="Revoca accesso">
             @if (revokingShareId() === share.id) {
-              <nb-spinner size="tiny" status="danger"></nb-spinner>
+              <tui-loader size="s"></tui-loader>
             } @else {
-              <nb-icon icon="close-outline"></nb-icon>
+              <tui-icon icon="@tui.x"></tui-icon>
             }
           </button>
         </li>
@@ -35,12 +35,12 @@
 
   <div class="share-add-row">
     <div class="user-search-wrap">
-      <input nbInput fullWidth #userSearchInput
+      <input class="l2m-input" #userSearchInput
              [value]="userSearchQuery()"
              placeholder="Cerca un utente per username..."
              (input)="onUserSearchChange(userSearchInput.value)" />
       @if (userSearchLoading()) {
-        <nb-spinner size="small" status="primary" class="search-spinner"></nb-spinner>
+        <tui-loader size="s"></tui-loader>
       }
     </div>
     <select class="permission-select" [value]="newSharePermission()" (change)="onSharePermissionSelectChange($event)">
@@ -54,14 +54,14 @@
       @for (user of userSearchResults(); track user.id) {
         @if (!isAlreadyShared(user) && user.id !== currentUserId) {
           <li class="share-item">
-            <nb-user [name]="user.username" [picture]="user.avatar_url" size="small"></nb-user>
-            <button nbButton ghost size="tiny" status="primary"
+            <app-user-chip [name]="user.username" [picture]="user.avatar_url" size="s"></app-user-chip>
+            <button tuiButton appearance="flat" size="xs" appearance="primary"
                     [disabled]="addingUserId() === user.id"
                     (click)="shareWithUser(user)" title="Condividi">
               @if (addingUserId() === user.id) {
-                <nb-spinner size="tiny" status="primary"></nb-spinner>
+                <tui-loader size="s"></tui-loader>
               } @else {
-                <nb-icon icon="share-outline"></nb-icon>
+                <tui-icon icon="@tui.share-2"></tui-icon>
               }
             </button>
           </li>
@@ -75,18 +75,18 @@
 
 <div class="share-section">
   <h3 class="share-section-title">
-    <nb-icon icon="people-outline"></nb-icon>
+    <tui-icon icon="@tui.users"></tui-icon>
     Condividi con gruppi
   </h3>
 
   @if (groupVisibilityLoading()) {
-    <div class="share-loading"><nb-spinner size="small" status="primary"></nb-spinner></div>
+    <div class="share-loading"><tui-loader size="s"></tui-loader></div>
   } @else if (groupVisibilities().length > 0) {
     <ul class="share-list">
       @for (gv of groupVisibilities(); track gv.id) {
         <li class="share-item">
           <span class="group-name">
-            <nb-icon icon="people-outline"></nb-icon>
+            <tui-icon icon="@tui.users"></tui-icon>
             {{ gv.group.name }}
           </span>
           <select class="permission-select" [value]="gv.permission"
@@ -95,13 +95,13 @@
             <option value="view">Sola lettura</option>
             <option value="edit">Modifica</option>
           </select>
-          <button nbButton ghost size="tiny" status="danger"
+          <button tuiButton appearance="flat" size="xs" status="danger"
                   [disabled]="revokingGroupVisibilityId() === gv.id"
                   (click)="revokeGroupVisibility(gv)" title="Rimuovi visibilità">
             @if (revokingGroupVisibilityId() === gv.id) {
-              <nb-spinner size="tiny" status="danger"></nb-spinner>
+              <tui-loader size="s"></tui-loader>
             } @else {
-              <nb-icon icon="close-outline"></nb-icon>
+              <tui-icon icon="@tui.x"></tui-icon>
             }
           </button>
         </li>
@@ -123,13 +123,13 @@
         <option value="view">Sola lettura</option>
         <option value="edit">Modifica</option>
       </select>
-      <button nbButton size="tiny" status="primary"
+      <button tuiButton size="xs" appearance="primary"
               [disabled]="!selectedGroupId() || addingGroup()"
               (click)="addGroupVisibility()">
         @if (addingGroup()) {
-          <nb-spinner size="tiny" status="basic"></nb-spinner>
+          <tui-loader size="s"></tui-loader>
         } @else {
-          <nb-icon icon="plus-outline"></nb-icon> Condividi
+          <tui-icon icon="@tui.plus"></tui-icon> Condividi
         }
       </button>
     </div>

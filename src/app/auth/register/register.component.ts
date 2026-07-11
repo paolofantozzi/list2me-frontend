@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { NbInputModule, NbButtonModule, NbIconModule, NbAlertModule, NbSpinnerModule } from '@nebular/theme';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
 import { AuthService } from '../../services/auth.service';
 
 function passwordMatchValidator(control: AbstractControl) {
@@ -14,13 +14,11 @@ function passwordMatchValidator(control: AbstractControl) {
   selector: 'app-register',
   standalone: true,
   imports: [
+    TuiIcon,
+    TuiButton,
+    TuiLoader,
     ReactiveFormsModule,
     RouterLink,
-    NbInputModule,
-    NbButtonModule,
-    NbIconModule,
-    NbAlertModule,
-    NbSpinnerModule,
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss'

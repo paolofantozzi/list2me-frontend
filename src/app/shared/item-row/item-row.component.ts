@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NbIconModule } from '@nebular/theme';
+import { TuiIcon } from '@taiga-ui/core';
 
 export interface ItemRowBadge {
   text: string;
@@ -10,7 +10,7 @@ export interface ItemRowBadge {
 @Component({
   selector: 'app-item-row',
   standalone: true,
-  imports: [NbIconModule],
+  imports: [TuiIcon],
   templateUrl: './item-row.component.html',
   styleUrl: './item-row.component.scss',
 })

@@ -1,13 +1,16 @@
 import { Component, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { NbInputModule, NbButtonModule, NbIconModule, NbAlertModule, NbSpinnerModule } from '@nebular/theme';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, NbInputModule, NbButtonModule, NbIconModule, NbAlertModule, NbSpinnerModule],
+  imports: [
+    TuiIcon,
+    TuiButton,
+    TuiLoader,ReactiveFormsModule, RouterLink],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss',
 })

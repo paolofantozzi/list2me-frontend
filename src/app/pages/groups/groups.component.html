@@ -1,39 +1,39 @@
 <div class="page-container">
-  <app-page-header title="Gruppi" icon="people-outline">
-    <button actions nbButton status="primary" (click)="showCreateForm.update(v => !v)">
-      <nb-icon icon="plus-outline"></nb-icon>
+  <app-page-header title="Gruppi" icon="@tui.users">
+    <button actions tuiButton appearance="primary" (click)="showCreateForm.update(v => !v)">
+      <tui-icon icon="@tui.plus"></tui-icon>
       Nuovo gruppo
     </button>
   </app-page-header>
 
   @if (showCreateForm()) {
-    <nb-card class="create-form-card" accent="primary">
-      <nb-card-header>Crea nuovo gruppo</nb-card-header>
-      <nb-card-body>
+    <div class="l2m-card create-form-card">
+      <div class="l2m-card__header">Crea nuovo gruppo</div>
+      <div class="l2m-card__body">
         <form [formGroup]="createForm" (ngSubmit)="createGroup()">
           <div class="form-group">
             <label class="label">Nome *</label>
-            <input nbInput fullWidth formControlName="name" placeholder="Nome del gruppo..." />
+            <input class="l2m-input" formControlName="name" placeholder="Nome del gruppo..." />
           </div>
           <div class="form-group">
             <label class="label">Descrizione</label>
-            <textarea nbInput fullWidth formControlName="description"
+            <textarea class="l2m-textarea" formControlName="description"
                       placeholder="Descrizione opzionale..." rows="2"></textarea>
           </div>
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="showCreateForm.set(false)">Annulla</button>
-            <button nbButton type="submit" status="primary"
+            <button tuiButton type="button" appearance="flat" (click)="showCreateForm.set(false)">Annulla</button>
+            <button tuiButton type="submit" appearance="primary"
                     [disabled]="createForm.invalid || createLoading()">
               @if (createLoading()) {
-                <nb-spinner size="small" status="basic"></nb-spinner>
+                <tui-loader size="s"></tui-loader>
               } @else {
                 Crea
               }
             </button>
           </div>
         </form>
-      </nb-card-body>
-    </nb-card>
+      </div>
+    </div>
   }
 
   @if (pendingInvites().length > 0) {
@@ -43,103 +43,103 @@
     </div>
     <div class="groups-list">
       @for (invite of pendingInvites(); track invite.id) {
-        <nb-card class="group-card invite-card" accent="warning">
-          <nb-card-header>
+        <div class="l2m-card group-card invite-card">
+          <div class="l2m-card__header">
             <h3 class="group-name">{{ invite.group.name }}</h3>
-          </nb-card-header>
-          <nb-card-body>
+          </div>
+          <div class="l2m-card__body">
             @if (invite.group.description) {
               <p class="group-description">{{ invite.group.description }}</p>
             }
             <div class="group-meta">
-              <nb-user
+              <app-user-chip
                 [name]="invite.invited_by.username"
                 [picture]="invite.invited_by.avatar_url"
-                size="small"
+                size="s"
                 caption="Ti ha invitato"
-              ></nb-user>
+              ></app-user-chip>
             </div>
-          </nb-card-body>
-          <nb-card-footer>
+          </div>
+          <div class="l2m-card__footer">
             <div class="invite-actions">
-              <button nbButton size="small" ghost status="danger"
+              <button tuiButton size="s" appearance="flat" status="danger"
                       [disabled]="respondingInviteId() === invite.id"
                       (click)="declineInvite(invite)">
-                <nb-icon icon="close-outline"></nb-icon>
+                <tui-icon icon="@tui.x"></tui-icon>
                 Rifiuta
               </button>
-              <button nbButton size="small" status="success"
+              <button tuiButton size="s" status="success"
                       [disabled]="respondingInviteId() === invite.id"
                       (click)="acceptInvite(invite)">
                 @if (respondingInviteId() === invite.id) {
-                  <nb-spinner size="tiny" status="basic"></nb-spinner>
+                  <tui-loader size="s"></tui-loader>
                 } @else {
-                  <nb-icon icon="checkmark-outline"></nb-icon>
+                  <tui-icon icon="@tui.check"></tui-icon>
                 }
                 Accetta
               </button>
             </div>
-          </nb-card-footer>
-        </nb-card>
+          </div>
+        </div>
       }
     </div>
   }
 
   @if (loading()) {
     <div class="loading-center">
-      <nb-spinner status="primary" size="giant"></nb-spinner>
+      <tui-loader size="xl"></tui-loader>
     </div>
   } @else if (error()) {
-    <nb-alert status="danger">{{ error() }}</nb-alert>
+    <div class="l2m-alert l2m-alert--danger">{{ error() }}</div>
   } @else if (groups().length === 0) {
-    <nb-card>
-      <nb-card-body class="empty-state">
-        <nb-icon icon="people-outline" class="empty-icon"></nb-icon>
+    <div class="l2m-card">
+      <div class="l2m-card__body empty-state">
+        <tui-icon icon="@tui.users" class="empty-icon"></tui-icon>
         <h3>Nessun gruppo</h3>
         <p>Crea un gruppo per condividere liste con amici e colleghi.</p>
-        <button nbButton status="primary" (click)="showCreateForm.set(true)">
-          <nb-icon icon="plus-outline"></nb-icon>
+        <button tuiButton appearance="primary" (click)="showCreateForm.set(true)">
+          <tui-icon icon="@tui.plus"></tui-icon>
           Crea un gruppo
         </button>
-      </nb-card-body>
-    </nb-card>
+      </div>
+    </div>
   } @else {
     <div class="groups-list">
       @for (group of groups(); track group.id) {
-        <nb-card class="group-card">
-          <nb-card-header>
+        <div class="l2m-card group-card">
+          <div class="l2m-card__header">
             <div class="group-card-header">
               <div>
                 <h3 class="group-name">{{ group.name }}</h3>
               </div>
               <div class="group-header-actions">
                 @if (isOwner(group)) {
-                  <button nbButton ghost size="tiny" status="primary"
+                  <button tuiButton appearance="flat" size="xs" appearance="primary"
                           (click)="toggleManage(group)"
                           [title]="managingGroupId() === group.id ? 'Chiudi gestione' : 'Gestisci membri'">
-                    <nb-icon [icon]="managingGroupId() === group.id ? 'close-outline' : 'people-outline'"></nb-icon>
+                    <tui-icon [icon]="managingGroupId() === group.id ? '@tui.x' : '@tui.users'"></tui-icon>
                   </button>
-                  <button nbButton ghost size="tiny" status="danger"
+                  <button tuiButton appearance="flat" size="xs" status="danger"
                           (click)="deleteGroup(group)" title="Elimina gruppo">
-                    <nb-icon icon="trash-2-outline"></nb-icon>
+                    <tui-icon icon="@tui.trash-2"></tui-icon>
                   </button>
                 }
               </div>
             </div>
-          </nb-card-header>
-          <nb-card-body>
+          </div>
+          <div class="l2m-card__body">
             @if (group.description) {
               <p class="group-description">{{ group.description }}</p>
             }
             <div class="group-meta">
-              <nb-user
+              <app-user-chip
                 [name]="group.owner.username"
                 [picture]="group.owner.avatar_url"
-                size="small"
+                size="s"
                 caption="Proprietario"
-              ></nb-user>
+              ></app-user-chip>
               <span class="member-count">
-                <nb-icon icon="people-outline"></nb-icon>
+                <tui-icon icon="@tui.users"></tui-icon>
                 {{ group.members_count }} {{ group.members_count === 1 ? 'membro' : 'membri' }}
               </span>
             </div>
@@ -149,16 +149,16 @@
               <div class="manage-panel">
                 <div class="manage-section">
                   <p class="manage-label">
-                    <nb-icon icon="person-add-outline"></nb-icon>
+                    <tui-icon icon="@tui.user-plus"></tui-icon>
                     Invita utente
                   </p>
                   <div class="user-search-wrap">
-                    <input nbInput fullWidth #userSearchInput
+                    <input class="l2m-input" #userSearchInput
                            [value]="userSearchQuery()"
                            placeholder="Cerca per username..."
                            (input)="onUserSearchChange(userSearchInput.value)" />
                     @if (userSearchLoading()) {
-                      <nb-spinner size="small" status="primary" class="search-spinner"></nb-spinner>
+                      <tui-loader size="s"></tui-loader>
                     }
                   </div>
                   @if (userSearchResults().length > 0) {
@@ -166,15 +166,15 @@
                       @for (user of userSearchResults(); track user.id) {
                         @if (!isMember(user) && user.id !== currentUserId) {
                           <li class="user-result">
-                            <nb-user [name]="user.username" [picture]="user.avatar_url" size="small"></nb-user>
-                            <button nbButton ghost size="tiny" status="primary"
+                            <app-user-chip [name]="user.username" [picture]="user.avatar_url" size="s"></app-user-chip>
+                            <button tuiButton appearance="flat" size="xs" appearance="primary"
                                     [disabled]="invitingUserId() === user.id"
                                     (click)="inviteUser(group.id, user)"
                                     title="Invita">
                               @if (invitingUserId() === user.id) {
-                                <nb-spinner size="tiny" status="primary"></nb-spinner>
+                                <tui-loader size="s"></tui-loader>
                               } @else {
-                                <nb-icon icon="person-add-outline"></nb-icon>
+                                <tui-icon icon="@tui.user-plus"></tui-icon>
                               }
                             </button>
                           </li>
@@ -188,12 +188,12 @@
 
                 <div class="manage-section">
                   <p class="manage-label">
-                    <nb-icon icon="people-outline"></nb-icon>
+                    <tui-icon icon="@tui.users"></tui-icon>
                     Membri
                   </p>
                   @if (membersLoading()) {
                     <div class="members-loading">
-                      <nb-spinner size="small" status="primary"></nb-spinner>
+                      <tui-loader size="s"></tui-loader>
                     </div>
                   } @else if (members().length === 0) {
                     <p class="no-results">Nessun membro oltre a te.</p>
@@ -202,17 +202,17 @@
                       @for (member of members(); track member.id) {
                         @if (member.user.id !== currentUserId) {
                           <li class="member-item">
-                            <nb-user [name]="member.user.username" [picture]="member.user.avatar_url" size="small"
-                                     [title]="member.role === 'admin' ? 'Amministratore' : 'Membro'"></nb-user>
+                            <app-user-chip [name]="member.user.username" [picture]="member.user.avatar_url" size="s"
+                                     [caption]="member.role === 'admin' ? 'Amministratore' : 'Membro'"></app-user-chip>
                             @if (member.role !== 'admin') {
-                              <button nbButton ghost size="tiny" status="danger"
+                              <button tuiButton appearance="flat" size="xs" status="danger"
                                       [disabled]="removingUserId() === member.user.id"
                                       (click)="removeMember(group.id, member)"
                                       title="Rimuovi">
                                 @if (removingUserId() === member.user.id) {
-                                  <nb-spinner size="tiny" status="danger"></nb-spinner>
+                                  <tui-loader size="s"></tui-loader>
                                 } @else {
-                                  <nb-icon icon="person-remove-outline"></nb-icon>
+                                  <tui-icon icon="@tui.user-minus"></tui-icon>
                                 }
                               </button>
                             }
@@ -224,16 +224,16 @@
                 </div>
               </div>
             }
-          </nb-card-body>
+          </div>
           @if (!isOwner(group)) {
-            <nb-card-footer>
-              <button nbButton ghost size="small" status="warning" (click)="leaveGroup(group)">
-                <nb-icon icon="log-out-outline"></nb-icon>
+            <div class="l2m-card__footer">
+              <button tuiButton appearance="flat" size="s" status="warning" (click)="leaveGroup(group)">
+                <tui-icon icon="@tui.log-out"></tui-icon>
                 Lascia
               </button>
-            </nb-card-footer>
+            </div>
           }
-        </nb-card>
+        </div>
       }
     </div>
   }

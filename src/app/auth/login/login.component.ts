@@ -1,7 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NbInputModule, NbButtonModule, NbIconModule, NbAlertModule, NbSpinnerModule, NbToastrService } from '@nebular/theme';
+import { ToastService } from '../../services/toast.service';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 
@@ -9,13 +10,11 @@ import { environment } from '../../../environments/environment';
   selector: 'app-login',
   standalone: true,
   imports: [
+    TuiIcon,
+    TuiButton,
+    TuiLoader,
     ReactiveFormsModule,
     RouterLink,
-    NbInputModule,
-    NbButtonModule,
-    NbIconModule,
-    NbAlertModule,
-    NbSpinnerModule,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
@@ -35,7 +34,7 @@ export class LoginComponent implements OnInit {
     private auth: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private toastr: NbToastrService,
+    private toastr: ToastService,
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],

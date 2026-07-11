@@ -1,7 +1,8 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { NbCardModule, NbIconModule, NbSpinnerModule, NbListModule, NbUserModule, NbButtonModule, NbBadgeModule } from '@nebular/theme';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
+import { TuiAvatar } from '@taiga-ui/kit';
 import { ActivityService } from '../../services/activity.service';
 import { Activity } from '../../models/activity.model';
 import { ListService } from '../../services/list.service';
@@ -15,13 +16,10 @@ import { List } from '../../models/list.model';
   imports: [
     DatePipe,
     RouterLink,
-    NbCardModule,
-    NbIconModule,
-    NbSpinnerModule,
-    NbListModule,
-    NbUserModule,
-    NbButtonModule,
-    NbBadgeModule,
+    TuiIcon,
+    TuiButton,
+    TuiLoader,
+    TuiAvatar,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
@@ -112,22 +110,22 @@ export class DashboardComponent implements OnInit {
 
   activityIcon(verb: string): string {
     const map: Record<string, string> = {
-      'created_list': 'plus-circle-outline',
-      'updated_list': 'edit-outline',
-      'deleted_list': 'trash-2-outline',
-      'forked_list': 'copy-outline',
-      'added_item': 'plus-outline',
-      'removed_item': 'minus-outline',
-      'followed_user': 'person-add-outline',
-      'followed_list': 'heart-outline',
-      'created_group': 'people-outline',
-      'joined_group': 'person-done-outline',
-      'shared_list': 'share-outline',
-      'suggested_change': 'bulb-outline',
-      'accepted_suggestion': 'checkmark-circle-outline',
-      'reported_list': 'flag-outline',
+      'created_list': '@tui.circle-plus',
+      'updated_list': '@tui.pencil',
+      'deleted_list': '@tui.trash-2',
+      'forked_list': '@tui.copy',
+      'added_item': '@tui.plus',
+      'removed_item': '@tui.minus',
+      'followed_user': '@tui.user-plus',
+      'followed_list': '@tui.heart',
+      'created_group': '@tui.users',
+      'joined_group': '@tui.user-check',
+      'shared_list': '@tui.share-2',
+      'suggested_change': '@tui.lightbulb',
+      'accepted_suggestion': '@tui.circle-check',
+      'reported_list': '@tui.flag',
     };
-    return map[verb] ?? 'activity-outline';
+    return map[verb] ?? '@tui.activity';
   }
 
   verbLabel(verb: string): string {

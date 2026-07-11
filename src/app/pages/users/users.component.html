@@ -1,34 +1,34 @@
 <div class="page-container">
-  <app-page-header title="Trova utenti" icon="person-outline"></app-page-header>
+  <app-page-header title="Trova utenti" icon="@tui.user"></app-page-header>
 
-  <nb-card class="search-card">
-    <nb-card-body>
+  <div class="l2m-card search-card">
+    <div class="l2m-card__body">
       <div class="search-wrap">
-        <nb-icon icon="search-outline" pack="eva" class="search-icon"></nb-icon>
-        <input nbInput fullWidth [formControl]="searchControl"
-               class="has-icon" placeholder="Cerca per nome utente o nome..."
+        <tui-icon icon="@tui.search" class="search-icon"></tui-icon>
+        <input [formControl]="searchControl"
+               class="l2m-input has-icon" placeholder="Cerca per nome utente o nome..."
                (keydown.enter)="search()" />
         @if (loading()) {
-          <nb-spinner class="search-spinner" size="small" status="primary"></nb-spinner>
+          <tui-loader size="s"></tui-loader>
         }
       </div>
-    </nb-card-body>
-  </nb-card>
+    </div>
+  </div>
 
   @if (isAdmin()) {
-    <nb-card class="admin-card" status="warning">
-      <nb-card-header>Amministrazione utenti</nb-card-header>
-      <nb-card-body>
+    <div class="l2m-card admin-card">
+      <div class="l2m-card__header">Amministrazione utenti</div>
+      <div class="l2m-card__body">
         <div class="admin-search-wrap">
-          <input nbInput fullWidth [formControl]="adminQueryControl"
+          <input class="l2m-input" [formControl]="adminQueryControl"
                  placeholder="Cerca per nome utente o nome (anche disattivati)..." />
-          <nb-select [formControl]="adminStatusControl" class="admin-status-select">
-            <nb-option value="all">Tutti</nb-option>
-            <nb-option value="active">Solo attivi</nb-option>
-            <nb-option value="inactive">Solo disattivati</nb-option>
-          </nb-select>
+          <select [formControl]="adminStatusControl" class="l2m-input admin-status-select">
+            <option value="all">Tutti</option>
+            <option value="active">Solo attivi</option>
+            <option value="inactive">Solo disattivati</option>
+          </select>
           @if (adminLoading()) {
-            <nb-spinner size="small" status="warning"></nb-spinner>
+            <tui-loader size="s"></tui-loader>
           }
         </div>
 
@@ -37,26 +37,26 @@
           <div class="admin-users-list">
             @for (user of adminUsers(); track user.id) {
               <div class="admin-user-row">
-                <nb-user [name]="displayName(user)" [picture]="user.avatar_url" [title]="'@' + user.username"></nb-user>
+                <app-user-chip [name]="displayName(user)" [picture]="user.avatar_url" [caption]="'@' + user.username"></app-user-chip>
                 @if (!user.is_active) {
                   <span class="status-badge inactive">Disattivato</span>
                 }
                 @if (!isSelf(user)) {
                   <div class="admin-actions">
                     @if (isSuperUser()) {
-                      <button nbButton status="info" size="tiny" ghost (click)="adminPromote(user)">
-                        <nb-icon icon="shield-outline"></nb-icon>
+                      <button tuiButton status="info" size="xs" appearance="flat" (click)="adminPromote(user)">
+                        <tui-icon icon="@tui.shield"></tui-icon>
                         Promuovi ad admin
                       </button>
                     }
                     @if (user.is_active) {
-                      <button nbButton status="danger" size="tiny" ghost (click)="adminDeactivate(user)">
-                        <nb-icon icon="slash-outline"></nb-icon>
+                      <button tuiButton status="danger" size="xs" appearance="flat" (click)="adminDeactivate(user)">
+                        <tui-icon icon="@tui.slash"></tui-icon>
                         Disattiva
                       </button>
                     } @else {
-                      <button nbButton status="success" size="tiny" ghost (click)="adminReactivate(user)">
-                        <nb-icon icon="checkmark-circle-outline"></nb-icon>
+                      <button tuiButton status="success" size="xs" appearance="flat" (click)="adminReactivate(user)">
+                        <tui-icon icon="@tui.circle-check"></tui-icon>
                         Riattiva
                       </button>
                     }
@@ -68,12 +68,12 @@
         } @else if (!adminLoading()) {
           <p class="admin-hint">Nessun utente trovato.</p>
         }
-      </nb-card-body>
-    </nb-card>
+      </div>
+    </div>
   }
 
   @if (error()) {
-    <nb-alert status="danger">{{ error() }}</nb-alert>
+    <div class="l2m-alert l2m-alert--danger">{{ error() }}</div>
   }
 
   @if (users().length > 0) {
@@ -83,44 +83,43 @@
 
     <div class="users-grid">
       @for (user of users(); track user.id) {
-        <nb-card class="user-card">
-          <nb-card-body>
+        <div class="l2m-card user-card">
+          <div class="l2m-card__body">
             <div class="user-info">
-              <nb-user
+              <app-user-chip
                 [name]="displayName(user)"
                 [picture]="user.avatar_url"
-                [title]="'@' + user.username"
-                size="large"
-              ></nb-user>
+                [caption]="'@' + user.username"
+                size="l"
+              ></app-user-chip>
               @if (user.bio) {
                 <p class="user-bio">{{ user.bio }}</p>
               }
             </div>
-            <button nbButton
-                    [status]="isFollowing(user) ? 'basic' : 'primary'"
-                    size="small"
-                    ghost
+            <button tuiButton
+                    [appearance]="isFollowing(user) ? 'secondary' : 'primary'"
+                    size="s"
                     (click)="toggleFollow(user)">
-              <nb-icon [icon]="isFollowing(user) ? 'person-remove-outline' : 'person-add-outline'"></nb-icon>
+              <tui-icon [icon]="isFollowing(user) ? '@tui.user-minus' : '@tui.user-plus'"></tui-icon>
               {{ isFollowing(user) ? 'Non seguire' : 'Segui' }}
             </button>
-          </nb-card-body>
-        </nb-card>
+          </div>
+        </div>
       }
     </div>
   } @else if (!loading() && searchControl.value) {
-    <nb-card>
-      <nb-card-body class="empty-state">
-        <nb-icon icon="search-outline" class="empty-icon"></nb-icon>
+    <div class="l2m-card">
+      <div class="l2m-card__body empty-state">
+        <tui-icon icon="@tui.search" class="empty-icon"></tui-icon>
         <p>Nessun utente trovato per "{{ searchControl.value }}".</p>
-      </nb-card-body>
-    </nb-card>
+      </div>
+    </div>
   } @else if (!loading() && !searchControl.value) {
-    <nb-card>
-      <nb-card-body class="empty-state">
-        <nb-icon icon="people-outline" class="empty-icon"></nb-icon>
+    <div class="l2m-card">
+      <div class="l2m-card__body empty-state">
+        <tui-icon icon="@tui.users" class="empty-icon"></tui-icon>
         <p>Cerca utenti per nome utente o nome.</p>
-      </nb-card-body>
-    </nb-card>
+      </div>
+    </div>
   }
 </div>

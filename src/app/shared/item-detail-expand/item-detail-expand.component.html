@@ -7,7 +7,7 @@
     @for (row of rows; track $index) {
       <p class="item-detail-row" [class.item-detail-row--wrap]="row.wrap">
         @if (row.icon) {
-          <nb-icon [icon]="row.icon"></nb-icon>
+          <tui-icon [icon]="row.icon"></tui-icon>
         }
         @if (row.italic) { <em>{{ row.text }}</em> } @else { {{ row.text }} }
       </p>
@@ -21,7 +21,7 @@
     }
     @if (warningText) {
       <p class="item-detail-row item-detail-row--warning">
-        <nb-icon icon="alert-triangle-outline"></nb-icon>
+        <tui-icon icon="@tui.triangle-alert"></tui-icon>
         {{ warningText }}
       </p>
     }
@@ -34,7 +34,7 @@
     }
     @if (externalLink) {
       <a [href]="externalLink.url" target="_blank" rel="noopener noreferrer" class="item-detail-link">
-        <nb-icon icon="external-link-outline"></nb-icon>
+        <tui-icon icon="@tui.external-link"></tui-icon>
         {{ externalLink.label }}
       </a>
     }

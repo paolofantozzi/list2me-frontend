@@ -1,24 +1,23 @@
-// Use Nebular prebuilt default + dark theme
-@use '@nebular/theme/styles/all' as *;
+// Bridge Taiga ⇄ list2me: classi UI riusabili (.l2m-card, .l2m-input, .l2m-alert…)
+@use './styles/bridge';
 
-// Configure and register default + dark theme (must be before nb-install).
-// Le CSS custom properties sono necessarie per cambiare tema a runtime senza
-// ricaricare la pagina (NbThemeService.changeTheme() aggiorna solo la classe
-// nb-theme-{name} su <body>, i valori dei componenti Nebular seguono da soli).
-$nb-enabled-themes: (default, dark);
-$nb-enable-css-custom-properties: true;
-
-@include nb-install() {
-  @include nb-theme-global();
+// ── Allineamento accent Taiga UI al brand list2me ────────────────────────────
+// Taiga usa di default #526ed3 come accent; lo portiamo al blu del brand così
+// i tuiButton/link Taiga usano il colore di list2me.
+:root {
+  --tui-background-accent-1: #3366ff;
+  --tui-background-accent-1-hover: #274bdb;
+  --tui-background-accent-1-pressed: #1f3ec2;
+  --tui-text-action: #3366ff;
+  --tui-text-action-hover: #274bdb;
 }
 
 // ── Design token custom properties (list2me) ───────────────────────────────
-// Seguono lo stesso meccanismo di NbThemeService: la classe nb-theme-{name}
-// su <body> (impostata da Nebular stesso) seleziona il set di valori. I
-// componenti dell'app leggono questi valori tramite le variabili Sass in
-// src/styles/_tokens.scss (var(--l2m-x, fallback)), quindi cambiano aspetto
-// automaticamente al cambio tema senza bisogno di ricompilare o duplicare gli
-// stili in ogni componente.
+// La classe nb-theme-{name} su <body> (impostata da ThemeService) seleziona il
+// set di valori. I componenti leggono questi valori tramite le variabili Sass in
+// src/styles/_tokens.scss (var(--l2m-x, fallback)), quindi seguono il tema
+// chiaro/scuro automaticamente. (Il prefisso "nb-theme-" è storico: nessuna
+// dipendenza da Nebular, è solo il nome della classe.)
 body.nb-theme-default {
   --l2m-primary: #3366ff;
   --l2m-primary-dark: #274bdb;
@@ -45,36 +44,9 @@ body.nb-theme-default {
   --l2m-shadow-sm: 0 1px 4px rgba(23, 32, 68, 0.06);
   --l2m-shadow-pop: 0 12px 40px rgba(23, 32, 68, 0.14), 0 2px 8px rgba(23, 32, 68, 0.08);
   --l2m-scrollbar-thumb: #c5cee0;
-  // Firma visiva: gradiente blu → viola usato per logo, accenti e pannello auth.
   --l2m-gradient-brand: linear-gradient(135deg, #3366ff 0%, #7c5cff 100%);
   --l2m-primary-glow: rgba(51, 102, 255, 0.22);
   --l2m-header-bg: rgba(255, 255, 255, 0.82);
-
-  // ── Re-theming Nebular (colori, tema chiaro) ─────────────────────────────
-  --layout-background-color: var(--l2m-background);
-  --header-background-color: transparent;
-  --sidebar-background-color: var(--l2m-surface);
-  --card-background-color: var(--l2m-surface);
-  --card-border-color: var(--l2m-border);
-  --card-divider-color: var(--l2m-border);
-  --card-shadow: var(--l2m-shadow-card);
-  --list-item-divider-color: var(--l2m-border);
-  --divider-color: var(--l2m-border);
-  --menu-background-color: transparent;
-  --menu-item-hover-background-color: var(--l2m-surface-hover);
-  --menu-item-active-background-color: var(--l2m-primary-100);
-  --menu-item-icon-color: #8f9bb3;
-  --menu-item-icon-active-color: var(--l2m-primary);
-  --menu-item-icon-hover-color: var(--l2m-primary);
-  --menu-item-hover-text-color: var(--l2m-text-basic);
-  --menu-item-active-text-color: var(--l2m-primary-dark);
-  --menu-text-color: #4b5675;
-  --input-basic-background-color: #f4f6fb;
-  --input-basic-border-color: #e4e9f2;
-  --input-basic-focus-background-color: var(--l2m-surface);
-  --input-basic-hover-background-color: #eef1f8;
-  --context-menu-shadow: var(--l2m-shadow-pop);
-  --context-menu-border-color: var(--l2m-border);
 }
 
 body.nb-theme-dark {
@@ -106,86 +78,9 @@ body.nb-theme-dark {
   --l2m-gradient-brand: linear-gradient(135deg, #5b8aff 0%, #9d7bff 100%);
   --l2m-primary-glow: rgba(91, 138, 255, 0.28);
   --l2m-header-bg: rgba(23, 28, 51, 0.82);
-
-  // ── Re-theming Nebular (colori, tema scuro) ──────────────────────────────
-  --layout-background-color: var(--l2m-background);
-  --header-background-color: transparent;
-  --sidebar-background-color: var(--l2m-bg-page);
-  --card-background-color: var(--l2m-surface);
-  --card-border-color: var(--l2m-border);
-  --card-divider-color: var(--l2m-border);
-  --card-shadow: var(--l2m-shadow-card);
-  --list-item-divider-color: var(--l2m-border);
-  --divider-color: var(--l2m-border);
-  --menu-background-color: transparent;
-  --menu-item-hover-background-color: var(--l2m-surface-hover);
-  --menu-item-active-background-color: var(--l2m-primary-100);
-  --menu-item-icon-color: #9aa5c0;
-  --menu-item-icon-active-color: var(--l2m-primary);
-  --menu-item-icon-hover-color: var(--l2m-primary);
-  --menu-item-hover-text-color: var(--l2m-text-basic);
-  --menu-item-active-text-color: var(--l2m-primary-dark);
-  --menu-text-color: #b4bdd6;
-  --input-basic-background-color: #171c33;
-  --input-basic-border-color: #2a3352;
-  --input-basic-focus-background-color: #171c33;
-  --input-basic-hover-background-color: #1b2140;
-  --context-menu-shadow: var(--l2m-shadow-pop);
-  --context-menu-border-color: var(--l2m-border);
-}
-
-// ── Re-theming Nebular (valori condivisi tra i temi) ────────────────────────
-body.nb-theme-default,
-body.nb-theme-dark {
-  --font-family-primary: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
-
-  // Bottoni: niente maiuscolo, peso 600, angoli più morbidi.
-  --text-button-font-weight: 600;
-  --button-filled-text-transform: none;
-  --button-outline-text-transform: none;
-  --button-ghost-text-transform: none;
-  --button-hero-text-transform: none;
-  --button-rectangle-border-radius: 0.625rem;
-
-  // Card: angoli ampi, bordo sottile, divisori leggeri.
-  --card-border-radius: 1rem;
-  --card-border-width: 1px;
-  --card-margin-bottom: 1.25rem;
-
-  // Input e form.
-  --input-rectangle-border-radius: 0.625rem;
-  --checkbox-border-radius: 0.375rem;
-
-  // Shell: header più compatto, sidebar leggermente più stretta.
-  --header-height: 4rem;
-  --header-padding: 0.75rem 1.25rem;
-  --header-shadow: none;
-  --sidebar-width: 16.5rem;
-  --sidebar-padding: 1rem 0.875rem;
-  --sidebar-shadow: none;
-  --layout-padding: 0;
-  --footer-background-color: transparent;
-  --footer-shadow: none;
-  --footer-divider-width: 0;
-  --footer-padding: 1rem 1.25rem;
-
-  // Menu laterale: voci a pill, nessun divisore.
-  --menu-item-padding: 0.625rem 0.875rem;
-  --menu-item-divider-width: 0;
-  --menu-text-font-size: 0.9375rem;
-  --menu-text-font-weight: 500;
-
-  // nb-actions nell'header: niente divisori verticali.
-  --actions-divider-width: 0;
-  --actions-background-color: transparent;
-
-  --alert-border-radius: 0.75rem;
-  --context-menu-border-radius: 0.75rem;
-  --context-menu-min-width: 11rem;
 }
 
 // ── Global overrides ────────────────────────────────────────────────────────
-
 * {
   box-sizing: border-box;
 }
@@ -208,111 +103,18 @@ h1, h2, h3, h4, h5, h6 {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
   background: var(--l2m-scrollbar-thumb);
   border-radius: 3px;
 }
 
-// Focus visibile e coerente su elementi interattivi non-Nebular.
+// Focus visibile e coerente su elementi interattivi.
 a:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--l2m-primary);
   outline-offset: 2px;
   border-radius: 4px;
-}
-
-// ── Shell: header, sidebar, footer ──────────────────────────────────────────
-
-// Header traslucido con blur e bordo inferiore.
-nb-layout-header nav {
-  background: var(--l2m-header-bg) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--l2m-border);
-}
-
-// Sidebar: bordo destro al posto dell'ombra.
-nb-sidebar {
-  border-right: 1px solid var(--l2m-border);
-}
-
-// Voci del menu laterale come pill arrotondate e distanziate.
-nb-sidebar nb-menu {
-  .menu-items {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .menu-item {
-    border-bottom: none;
-
-    a {
-      border-radius: 0.625rem;
-      transition: background-color 0.15s ease, color 0.15s ease;
-    }
-
-    // Stato attivo ben visibile: pill tinta primary con testo/icona in evidenza.
-    a.active {
-      font-weight: 600;
-      background: var(--l2m-primary-100);
-      color: var(--l2m-primary-dark);
-
-      .menu-icon {
-        color: var(--l2m-primary);
-      }
-    }
-  }
-}
-
-// Footer discreto in fondo alla colonna.
-nb-layout-footer nav {
-  border-top: 1px solid var(--l2m-border);
-}
-
-// L'avatar/nome utente nell'header è un trigger di menu: rendilo cliccabile.
-nb-layout-header nb-user {
-  cursor: pointer;
-}
-
-// Su schermi stretti mostra solo l'avatar nel chip utente dell'header.
-@media (max-width: 640px) {
-  nb-layout-header .user-chip .user-name {
-    display: none;
-  }
-}
-
-// Dimensiona l'SVG dell'icona logo nel pannello brand delle pagine auth
-// (l'SVG è generato da eva-icons fuori dallo scope dei componenti).
-.auth-brand .brand-icon svg {
-  width: 2.5rem;
-  height: 2.5rem;
-  fill: #fff;
-}
-
-.auth-brand .brand-points nb-icon svg {
-  width: 1.125rem;
-  height: 1.125rem;
-  fill: #9ecbff;
-}
-
-// Fix nb-icon SVG size when used as nbPrefix/nbSuffix inside nb-form-field
-nb-form-field nb-icon svg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-// Constrain the nb-icon element itself inside form-field slots
-nb-form-field nb-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  font-size: 1.25rem;
 }

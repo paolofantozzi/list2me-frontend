@@ -39,7 +39,7 @@
   font-size: 0.8125rem;
   color: $text-hint;
 
-  nb-icon {
+  tui-icon {
     font-size: 0.875rem;
     flex-shrink: 0;
   }
@@ -47,7 +47,7 @@
   &--wrap {
     align-items: flex-start;
 
-    nb-icon {
+    tui-icon {
       margin-top: 0.125rem;
     }
   }
@@ -91,7 +91,7 @@
   color: $primary;
   text-decoration: none;
 
-  nb-icon {
+  tui-icon {
     font-size: 0.875rem;
   }
 

@@ -4,7 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { vi } from 'vitest';
 import { of } from 'rxjs';
-import { NbToastrService, NbThemeModule } from '@nebular/theme';
+import { ToastService } from '../../services/toast.service';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 import { ListDetailComponent } from './list-detail.component';
@@ -164,7 +164,7 @@ function buildComponent(userOverride: Partial<UserDetail> = {}, opts: { includeI
       { provide: MedicineService, useValue: searchStub() },
       { provide: PlantService, useValue: { ...searchStub(), getPlant: vi.fn() } },
       { provide: ConfirmDialogService, useValue: confirmDialog },
-      { provide: NbToastrService, useValue: toastr },
+      { provide: ToastService, useValue: toastr },
       { provide: Router, useValue: router },
       { provide: AuthService, useValue: { currentUser } },
       { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'list-1' } } } },

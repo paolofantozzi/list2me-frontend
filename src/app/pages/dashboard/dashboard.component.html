@@ -10,47 +10,47 @@
   <section class="stats-section" aria-label="Panoramica">
     @if (statsLoading()) {
       <div class="loading-center">
-        <nb-spinner status="primary" size="medium"></nb-spinner>
+        <tui-loader size="xl"></tui-loader>
       </div>
     } @else if (statsError()) {
-      <nb-card status="danger" size="small">
-        <nb-card-body>
-          <nb-icon icon="alert-circle-outline"></nb-icon>
+      <div class="l2m-card l2m-card--danger">
+        <div class="card-inline">
+          <tui-icon icon="@tui.circle-alert"></tui-icon>
           {{ statsError() }}
-          <button nbButton ghost size="small" status="danger" (click)="loadStats()">Riprova</button>
-        </nb-card-body>
-      </nb-card>
+          <button tuiButton type="button" appearance="flat" size="s" (click)="loadStats()">Riprova</button>
+        </div>
+      </div>
     } @else {
       <div class="stats-row">
         <a class="stat-tile stat-tile--primary" routerLink="/pages/lists">
           <span class="stat-tile-icon-wrap">
-            <nb-icon icon="list-outline" class="stat-tile-icon"></nb-icon>
+            <tui-icon icon="@tui.list" class="stat-tile-icon"></tui-icon>
           </span>
           <span class="stat-tile-info">
             <span class="stat-tile-value">{{ listsCount() }}</span>
             <span class="stat-tile-label">Le mie liste</span>
           </span>
-          <nb-icon icon="arrow-forward-outline" class="stat-tile-arrow"></nb-icon>
+          <tui-icon icon="@tui.arrow-right" class="stat-tile-arrow"></tui-icon>
         </a>
         <a class="stat-tile stat-tile--success" routerLink="/pages/groups">
           <span class="stat-tile-icon-wrap">
-            <nb-icon icon="people-outline" class="stat-tile-icon"></nb-icon>
+            <tui-icon icon="@tui.users" class="stat-tile-icon"></tui-icon>
           </span>
           <span class="stat-tile-info">
             <span class="stat-tile-value">{{ groupsCount() }}</span>
             <span class="stat-tile-label">Gruppi</span>
           </span>
-          <nb-icon icon="arrow-forward-outline" class="stat-tile-arrow"></nb-icon>
+          <tui-icon icon="@tui.arrow-right" class="stat-tile-arrow"></tui-icon>
         </a>
         <a class="stat-tile stat-tile--warning" [class.stat-tile--highlight]="pendingInvitesCount() > 0" routerLink="/pages/groups">
           <span class="stat-tile-icon-wrap">
-            <nb-icon icon="email-outline" class="stat-tile-icon"></nb-icon>
+            <tui-icon icon="@tui.mail" class="stat-tile-icon"></tui-icon>
           </span>
           <span class="stat-tile-info">
             <span class="stat-tile-value">{{ pendingInvitesCount() }}</span>
             <span class="stat-tile-label">Inviti in sospeso</span>
           </span>
-          <nb-icon icon="arrow-forward-outline" class="stat-tile-arrow"></nb-icon>
+          <tui-icon icon="@tui.arrow-right" class="stat-tile-arrow"></tui-icon>
         </a>
       </div>
 
@@ -60,7 +60,7 @@
           <div class="recent-lists-row">
             @for (list of recentLists(); track list.id) {
               <a class="recent-list-chip" [routerLink]="['/pages/lists', list.id]">
-                <nb-icon icon="list-outline"></nb-icon>
+                <tui-icon icon="@tui.list"></tui-icon>
                 <span class="recent-list-chip-title">{{ list.title }}</span>
                 <span class="recent-list-chip-count">{{ list.items_count }}</span>
               </a>
@@ -73,50 +73,50 @@
 
   <div class="feed-header">
     <h2 class="feed-title">Feed attività</h2>
-    <button nbButton status="primary" ghost size="small" (click)="loadFeed()">
-      <nb-icon icon="refresh-outline"></nb-icon>
+    <button tuiButton type="button" appearance="flat" size="s" (click)="loadFeed()">
+      <tui-icon icon="@tui.refresh-cw"></tui-icon>
       Aggiorna
     </button>
   </div>
 
   @if (loading()) {
     <div class="loading-center">
-      <nb-spinner status="primary" size="giant"></nb-spinner>
+      <tui-loader size="xl"></tui-loader>
     </div>
   } @else if (error()) {
-    <nb-card status="danger">
-      <nb-card-body>
-        <nb-icon icon="alert-circle-outline"></nb-icon>
+    <div class="l2m-card l2m-card--danger">
+      <div class="card-inline">
+        <tui-icon icon="@tui.circle-alert"></tui-icon>
         {{ error() }}
-        <button nbButton ghost status="danger" (click)="loadFeed()">Riprova</button>
-      </nb-card-body>
-    </nb-card>
+        <button tuiButton type="button" appearance="flat" size="s" (click)="loadFeed()">Riprova</button>
+      </div>
+    </div>
   } @else if (activities().length === 0) {
-    <nb-card>
-      <nb-card-body class="empty-state">
+    <div class="l2m-card">
+      <div class="empty-state">
         <span class="empty-icon-wrap">
-          <nb-icon icon="inbox-outline" class="empty-icon"></nb-icon>
+          <tui-icon icon="@tui.inbox" class="empty-icon"></tui-icon>
         </span>
         <h3>Nessuna attività</h3>
         <p>Segui utenti e liste per vedere la loro attività qui.</p>
-        <button nbButton status="primary" routerLink="/pages/users">
-          <nb-icon icon="person-add-outline"></nb-icon>
+        <button tuiButton type="button" appearance="primary" size="m" routerLink="/pages/users">
+          <tui-icon icon="@tui.user-plus"></tui-icon>
           Trova utenti da seguire
         </button>
-      </nb-card-body>
-    </nb-card>
+      </div>
+    </div>
   } @else {
-    <nb-card class="feed-card">
-      <nb-list>
+    <div class="l2m-card feed-card">
+      <div class="feed-list">
         @for (activity of activities(); track activity.id) {
-          <nb-list-item>
+          <div class="feed-row">
             <div class="activity-item" [title]="activity.created_at | date:'medium'">
-              <nb-user
-                [name]="activity.actor.username"
-                [picture]="activity.actor.avatar_url"
-                size="medium"
-                onlyPicture
-              ></nb-user>
+              <span
+                [tuiAvatar]="activity.actor.avatar_url || activity.actor.username"
+                size="m"
+                [round]="true"
+                class="activity-avatar"
+              ></span>
               <div class="activity-content">
                 <div class="activity-description">
                   <strong>{{ activity.actor.username }}</strong>
@@ -145,19 +145,20 @@
                 }
               </div>
               <span class="activity-type-icon-wrap">
-                <nb-icon [icon]="activityIcon(activity.verb)" class="activity-type-icon"></nb-icon>
+                <tui-icon [icon]="activityIcon(activity.verb)" class="activity-type-icon"></tui-icon>
               </span>
               @if (activityDetails(activity).length > 0) {
-                <button nbButton ghost size="tiny" class="activity-expand-btn"
+                <button tuiIconButton type="button" appearance="flat" size="xs" class="activity-expand-btn"
+                        [iconStart]="isExpanded(activity.id) ? '@tui.chevron-up' : '@tui.chevron-down'"
                         (click)="toggleExpand(activity.id)"
                         [title]="isExpanded(activity.id) ? 'Nascondi dettagli' : 'Mostra dettagli'">
-                  <nb-icon [icon]="isExpanded(activity.id) ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
+                  {{ isExpanded(activity.id) ? 'Nascondi dettagli' : 'Mostra dettagli' }}
                 </button>
               }
             </div>
-          </nb-list-item>
+          </div>
         }
-      </nb-list>
-    </nb-card>
+      </div>
+    </div>
   }
 </div>

@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { NbIconModule } from '@nebular/theme';
+import { TuiIcon } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-section-header',
   standalone: true,
-  imports: [NbIconModule],
+  imports: [TuiIcon],
   templateUrl: './section-header.component.html',
   styleUrl: './section-header.component.scss',
 })

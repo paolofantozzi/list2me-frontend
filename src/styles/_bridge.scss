@@ -1,0 +1,195 @@
+// ── Bridge Taiga ⇄ list2me ───────────────────────────────────────────────────
+// Classi UI riusabili che sostituiscono i componenti Nebular durante la
+// migrazione a Taiga UI. Ogni pagina migrata usa queste classi invece di
+// ridefinire il "chrome" (card, input, alert…) nel proprio SCSS.
+// I valori vengono dai design token (--l2m-*), quindi seguono il tema chiaro/scuro.
+@use 'tokens' as *;
+
+// ── Card (sostituisce nb-card / nb-card-header / nb-card-body) ────────────────
+.l2m-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+}
+.l2m-card--danger {
+  border-color: $danger;
+  background: $danger-100;
+}
+.l2m-card__header {
+  padding: $space-4 $space-4 0;
+  font-weight: 700;
+  font-size: $font-size-md;
+  color: $text-basic;
+}
+.l2m-card__body {
+  padding: $space-4;
+}
+.l2m-card__footer {
+  padding: $space-3 $space-4;
+  border-top: 1px solid $border;
+}
+
+// Riga compatta usata per messaggi d'errore con icona + azione dentro una card
+.card-inline {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-4;
+  color: $text-basic;
+
+  tui-icon { color: $danger; font-size: 1.25rem; }
+}
+
+// ── Input / textarea nativi (sostituiscono nbInput) ──────────────────────────
+.l2m-input,
+.l2m-textarea {
+  width: 100%;
+  font: inherit;
+  color: $text-basic;
+  background: $surface;
+  border: 1px solid $border-strong;
+  border-radius: $radius-md;
+  padding: 0.5rem 0.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::placeholder { color: $text-hint; }
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px $primary-glow;
+  }
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+.l2m-textarea {
+  resize: vertical;
+  min-height: 3rem;
+  line-height: 1.5;
+}
+
+// Campo input con icona a sinistra (es. filtro/ricerca) + eventuale bottone a destra
+.l2m-input-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  > tui-icon {
+    position: absolute;
+    left: 0.75rem;
+    color: $text-hint;
+    pointer-events: none;
+  }
+  .l2m-input {
+    padding-left: 2.4rem;
+  }
+  .l2m-input-clear {
+    position: absolute;
+    right: 0.4rem;
+  }
+}
+
+// ── Alert (sostituisce nb-alert) ─────────────────────────────────────────────
+.l2m-alert {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  background: $primary-100;
+  color: $text-basic;
+  border: 1px solid $border;
+
+  tui-icon { flex: none; }
+}
+.l2m-alert--danger {
+  background: $danger-100;
+  border-color: $danger;
+  color: $danger-strong;
+}
+.l2m-alert--warning {
+  background: $warning-100;
+  border-color: $warning;
+  color: $warning-strong;
+}
+.l2m-alert--success {
+  background: $success-100;
+  border-color: $success;
+  color: $success-strong;
+}
+
+// Bottone a piena larghezza (sostituisce l'attributo nbButton fullWidth)
+.l2m-btn-block {
+  width: 100%;
+  justify-content: center;
+}
+
+// Colore dei bottoni-azione: Taiga non ha l'input `status`, quindi l'attributo
+// resta nel DOM come no-op e viene usato solo per colorare l'icona/testo via CSS
+// (le tui-icon ereditano il `color` corrente).
+// `!important` per vincere sul colore testo dell'appearance flat di Taiga.
+button[status='danger'], a[status='danger'] { color: $danger !important; }
+button[status='warning'], a[status='warning'] { color: $warning-strong !important; }
+button[status='success'], a[status='success'] { color: $success-strong !important; }
+button[status='info'], a[status='info'] { color: $primary !important; }
+
+// Bottone solido "pericoloso" (Taiga non ha un'appearance destructive): si parte
+// da appearance="primary" e se ne cambia lo sfondo.
+.l2m-btn-danger-solid { background: $danger !important; color: #fff !important; }
+
+// ── Toast (ToastService) ─────────────────────────────────────────────────────
+.l2m-toasts {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+.l2m-toast {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 240px;
+  max-width: 380px;
+  padding: 0.75rem 1rem;
+  border-radius: $radius-md;
+  background: $surface;
+  color: $text-basic;
+  box-shadow: $shadow-pop;
+  border-left: 4px solid $primary;
+  font-size: $font-size-sm;
+  opacity: 0;
+  transform: translateX(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+
+  strong { font-size: 0.85rem; }
+  &.is-visible { opacity: 1; transform: none; }
+  &--success { border-left-color: $success; }
+  &--danger { border-left-color: $danger; }
+  &--warning { border-left-color: $warning; }
+  &--info { border-left-color: $primary; }
+}
+
+// ── Radio nativi (sostituiscono nb-radio-group / nb-radio) ───────────────────
+.l2m-radio-group {
+  display: flex;
+  gap: $space-4;
+  flex-wrap: wrap;
+}
+.l2m-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  color: $text-basic;
+
+  input[type='radio'] { accent-color: $primary; width: 1rem; height: 1rem; }
+}

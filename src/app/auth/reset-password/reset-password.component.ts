@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NbInputModule, NbButtonModule, NbIconModule, NbAlertModule, NbSpinnerModule } from '@nebular/theme';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
 import { AuthService } from '../../services/auth.service';
 
 function passwordMatchValidator(control: AbstractControl) {
@@ -13,7 +13,10 @@ function passwordMatchValidator(control: AbstractControl) {
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, NbInputModule, NbButtonModule, NbIconModule, NbAlertModule, NbSpinnerModule],
+  imports: [
+    TuiIcon,
+    TuiButton,
+    TuiLoader,ReactiveFormsModule, RouterLink],
   templateUrl: './reset-password.component.html',
   styleUrl: './reset-password.component.scss',
 })

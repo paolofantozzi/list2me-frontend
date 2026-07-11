@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, signal } from '@angular/core';
-import { NbCardModule, NbIconModule, NbInputModule, NbButtonModule, NbSpinnerModule } from '@nebular/theme';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } from 'rxjs';
 
@@ -20,7 +20,7 @@ export interface AttributionLogo {
 @Component({
   selector: 'app-external-search-panel',
   standalone: true,
-  imports: [NbCardModule, NbIconModule, NbInputModule, NbButtonModule, NbSpinnerModule],
+  imports: [TuiIcon, TuiButton, TuiLoader],
   templateUrl: './external-search-panel.component.html',
   styleUrl: './external-search-panel.component.scss',
 })

@@ -1,27 +1,32 @@
 import { Component } from '@angular/core';
-import { NbCardModule, NbButtonModule, NbDialogRef } from '@nebular/theme';
+import { TuiButton, TuiDialogContext } from '@taiga-ui/core';
+import { injectContext } from '@taiga-ui/polymorpheus';
+
+export interface ConfirmDialogOptions {
+  title?: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  danger?: boolean;
+}
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [NbCardModule, NbButtonModule],
+  imports: [TuiButton],
   templateUrl: './confirm-dialog.component.html',
   styleUrl: './confirm-dialog.component.scss',
 })
 export class ConfirmDialogComponent {
-  title = 'Conferma';
-  message = '';
-  confirmLabel = 'Conferma';
-  cancelLabel = 'Annulla';
-  danger = false;
+  private readonly context =
+    injectContext<TuiDialogContext<boolean, ConfirmDialogOptions>>();
 
-  constructor(private dialogRef: NbDialogRef<ConfirmDialogComponent>) {}
+  get title(): string { return this.context.data.title ?? 'Conferma'; }
+  get message(): string { return this.context.data.message; }
+  get confirmLabel(): string { return this.context.data.confirmLabel ?? 'Conferma'; }
+  get cancelLabel(): string { return this.context.data.cancelLabel ?? 'Annulla'; }
+  get danger(): boolean { return this.context.data.danger ?? false; }
 
-  confirm(): void {
-    this.dialogRef.close(true);
-  }
-
-  cancel(): void {
-    this.dialogRef.close(false);
-  }
+  confirm(): void { this.context.completeWith(true); }
+  cancel(): void { this.context.completeWith(false); }
 }

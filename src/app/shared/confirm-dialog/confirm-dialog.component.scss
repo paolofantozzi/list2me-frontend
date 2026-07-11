@@ -1,13 +1,27 @@
 @use '../../../styles/tokens' as *;
 
 .confirm-dialog {
-  width: 360px;
-  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.confirm-dialog-title {
   margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: $text-basic;
+}
+
+.confirm-dialog-message {
+  margin: 0;
+  color: $text-hint;
+  line-height: 1.5;
 }
 
 .confirm-dialog-actions {
   display: flex;
   justify-content: flex-end;
   gap: $space-3;
+  margin-top: $space-2;
 }

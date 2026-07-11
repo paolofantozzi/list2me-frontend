@@ -1,8 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges, signal } from '@angular/core';
-import {
-  NbIconModule, NbSpinnerModule, NbButtonModule, NbInputModule, NbSelectModule,
-  NbUserModule, NbToastrService,
-} from '@nebular/theme';
+import { ToastService } from '../../services/toast.service';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
+import { UserChipComponent } from '../user-chip/user-chip.component';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } from 'rxjs';
 import { ListService } from '../../services/list.service';
@@ -17,7 +16,7 @@ import { ConfirmDialogService } from '../confirm-dialog/confirm-dialog.service';
 @Component({
   selector: 'app-list-share',
   standalone: true,
-  imports: [NbIconModule, NbSpinnerModule, NbButtonModule, NbInputModule, NbSelectModule, NbUserModule],
+  imports: [TuiIcon, TuiButton, TuiLoader, UserChipComponent],
   templateUrl: './list-share.component.html',
   styleUrl: './list-share.component.scss',
 })
@@ -48,7 +47,7 @@ export class ListShareComponent implements OnChanges, OnDestroy {
     private listService: ListService,
     private groupService: GroupService,
     private userService: UserService,
-    private toastr: NbToastrService,
+    private toastr: ToastService,
     private auth: AuthService,
     private confirmDialog: ConfirmDialogService,
   ) {

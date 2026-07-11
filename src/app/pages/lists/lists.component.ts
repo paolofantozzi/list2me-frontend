@@ -2,11 +2,8 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import {
-  NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule, NbBadgeModule,
-  NbDialogModule, NbInputModule, NbFormFieldModule,
-  NbToastrService, NbAlertModule, NbTagModule, NbCheckboxModule, NbRadioModule
-} from '@nebular/theme';
+import { ToastService } from '../../services/toast.service';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
 import { ListService } from '../../services/list.service';
 import { ItemService } from '../../services/item.service';
 import { AuthService } from '../../services/auth.service';
@@ -27,18 +24,9 @@ interface SublistEntry {
     NgTemplateOutlet,
     RouterLink,
     ReactiveFormsModule,
-    NbCardModule,
-    NbIconModule,
-    NbSpinnerModule,
-    NbButtonModule,
-    NbBadgeModule,
-    NbDialogModule,
-    NbInputModule,
-    NbFormFieldModule,
-    NbAlertModule,
-    NbTagModule,
-    NbCheckboxModule,
-    NbRadioModule,
+    TuiIcon,
+    TuiButton,
+    TuiLoader,
     TagInputComponent,
     PageHeaderComponent,
   ],
@@ -102,10 +90,10 @@ export class ListsComponent implements OnInit {
 
   visibilityIcon(list: List): string {
     return list.visibility === 'public'
-      ? 'globe-2-outline'
+      ? '@tui.globe'
       : list.visibility === 'group'
-        ? 'people-outline'
-        : 'lock-outline';
+        ? '@tui.users'
+        : '@tui.lock';
   }
 
   canEdit(list: List): boolean {
@@ -203,7 +191,7 @@ export class ListsComponent implements OnInit {
     private itemService: ItemService,
     private auth: AuthService,
     private fb: FormBuilder,
-    private toastr: NbToastrService,
+    private toastr: ToastService,
     private router: Router,
     private confirmDialog: ConfirmDialogService,
   ) {

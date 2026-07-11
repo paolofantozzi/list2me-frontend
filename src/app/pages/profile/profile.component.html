@@ -3,27 +3,27 @@
 
   @if (currentUser(); as user) {
     <div class="profile-layout">
-      <nb-card class="profile-card">
-        <nb-card-body>
+      <div class="l2m-card profile-card">
+        <div class="l2m-card__body">
           <div class="avatar-section">
             <div class="avatar-upload-wrap">
-              <nb-user
+              <app-user-chip
                 [name]="user.first_name || user.username"
                 [picture]="avatarPicture()"
-                size="giant"
-              ></nb-user>
+                size="xl"
+              ></app-user-chip>
               <div class="avatar-actions">
                 <label class="avatar-upload-btn" title="Carica avatar" [class.loading]="avatarUploading()">
                   <input type="file" accept="image/*" hidden (change)="uploadAvatar($event)" [disabled]="avatarUploading()">
                   @if (avatarUploading()) {
-                    <nb-spinner size="small" status="primary"></nb-spinner>
+                    <tui-loader size="s"></tui-loader>
                   } @else {
-                    <nb-icon icon="camera-outline"></nb-icon>
+                    <tui-icon icon="@tui.camera"></tui-icon>
                   }
                 </label>
                 @if (user.avatar) {
-                  <button nbButton ghost size="tiny" status="danger" (click)="removeAvatar()" title="Rimuovi avatar caricato">
-                    <nb-icon icon="trash-2-outline"></nb-icon>
+                  <button tuiButton appearance="flat" size="xs" status="danger" (click)="removeAvatar()" title="Rimuovi avatar caricato">
+                    <tui-icon icon="@tui.trash-2"></tui-icon>
                   </button>
                 }
               </div>
@@ -40,69 +40,69 @@
               <p class="joined">Membro dal {{ user.date_joined | date:'mediumDate' }}</p>
             </div>
           </div>
-        </nb-card-body>
-        <nb-card-footer>
+        </div>
+        <div class="l2m-card__footer">
           <div class="card-actions">
             @if (!editing()) {
-              <button nbButton status="primary" (click)="startEditing()">
-                <nb-icon icon="edit-2-outline"></nb-icon>
+              <button tuiButton appearance="primary" (click)="startEditing()">
+                <tui-icon icon="@tui.pencil"></tui-icon>
                 Modifica profilo
               </button>
             }
           </div>
-        </nb-card-footer>
-      </nb-card>
+        </div>
+      </div>
 
       @if (editing()) {
-        <nb-card>
-          <nb-card-header>Modifica profilo</nb-card-header>
-          <nb-card-body>
+        <div class="l2m-card">
+          <div class="l2m-card__header">Modifica profilo</div>
+          <div class="l2m-card__body">
             <form [formGroup]="form" (ngSubmit)="saveProfile()">
               <div class="form-row">
                 <div class="form-group">
                   <label class="label">Nome</label>
-                  <input nbInput fullWidth formControlName="first_name" placeholder="Nome" />
+                  <input class="l2m-input" formControlName="first_name" placeholder="Nome" />
                 </div>
                 <div class="form-group">
                   <label class="label">Cognome</label>
-                  <input nbInput fullWidth formControlName="last_name" placeholder="Cognome" />
+                  <input class="l2m-input" formControlName="last_name" placeholder="Cognome" />
                 </div>
               </div>
               <div class="form-group">
                 <label class="label">Bio</label>
-                <textarea nbInput fullWidth formControlName="bio"
+                <textarea class="l2m-textarea" formControlName="bio"
                           placeholder="Raccontati al mondo..." rows="4"></textarea>
               </div>
               <div class="form-group">
                 <label class="label">URL avatar</label>
-                <input nbInput fullWidth formControlName="avatar_url" type="url"
+                <input class="l2m-input" formControlName="avatar_url" type="url"
                        placeholder="https://..." />
               </div>
               <div class="form-actions">
-                <button nbButton type="button" ghost (click)="editing.set(false)">Annulla</button>
-                <button nbButton type="submit" status="primary" [disabled]="loading()">
+                <button tuiButton type="button" appearance="flat" (click)="editing.set(false)">Annulla</button>
+                <button tuiButton type="submit" appearance="primary" [disabled]="loading()">
                   @if (loading()) {
-                    <nb-spinner size="small" status="basic"></nb-spinner>
+                    <tui-loader size="s"></tui-loader>
                   } @else {
                     Salva modifiche
                   }
                 </button>
               </div>
             </form>
-          </nb-card-body>
-        </nb-card>
+          </div>
+        </div>
       }
 
-      <nb-card status="danger" class="danger-zone">
-        <nb-card-header>Zona pericolosa</nb-card-header>
-        <nb-card-body>
+      <div class="l2m-card l2m-card--danger danger-zone">
+        <div class="l2m-card__header">Zona pericolosa</div>
+        <div class="l2m-card__body">
           <p>La disattivazione dell'account è irreversibile.</p>
-          <button nbButton status="danger" ghost (click)="confirmDeactivate()">
-            <nb-icon icon="trash-2-outline"></nb-icon>
+          <button tuiButton status="danger" appearance="flat" (click)="confirmDeactivate()">
+            <tui-icon icon="@tui.trash-2"></tui-icon>
             Disattiva account
           </button>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     </div>
   }
 </div>

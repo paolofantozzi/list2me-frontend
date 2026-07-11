@@ -146,11 +146,14 @@
 .list-card {
   cursor: pointer;
   margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 
   // Ancora la riga delle statistiche al fondo, così le card della stessa riga
   // (rese di pari altezza dalla grid) restano allineate anche senza descrizione.
-  nb-card-body {
+  .l2m-card__body {
+    flex: 1;
     display: flex;
     flex-direction: column;
   }
@@ -165,6 +168,12 @@
     }
   }
 }
+
+// Colore dei bottoni-icona d'azione (Taiga non ha `status`; l'attributo resta
+// nel DOM come no-op ed è usato qui solo come selettore CSS).
+.list-delete-btn { color: $danger; }
+.sublist-row button[status='warning'] { color: $warning-strong; }
+.sublist-row button[status='danger'] { color: $danger; }
 
 .list-card-top {
   display: flex;
@@ -216,7 +225,7 @@
   border: 1px solid $border;
   color: $text-hint;
 
-  nb-icon { font-size: 0.8125rem; }
+  tui-icon { font-size: 0.8125rem; }
 }
 
 .visibility-pill--public {
@@ -270,7 +279,7 @@
   font-size: 0.75rem;
   color: $text-hint;
 
-  nb-icon { font-size: 1rem; }
+  tui-icon { font-size: 1rem; }
 
   &--following {
     color: $danger;
@@ -299,7 +308,7 @@
   font-weight: 600;
   cursor: pointer;
 
-  nb-icon { font-size: 1rem; }
+  tui-icon { font-size: 1rem; }
 
   &:hover {
     text-decoration: underline;
@@ -332,7 +341,7 @@
     border-top: 1px solid $border;
   }
 
-  nb-icon:first-child {
+  tui-icon:first-child {
     font-size: 0.95rem;
     color: $primary;
     flex-shrink: 0;

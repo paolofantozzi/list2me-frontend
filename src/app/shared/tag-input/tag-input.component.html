@@ -1,17 +1,21 @@
-<nb-tag-list (tagRemove)="removeTag($event.text)">
+<div class="tag-chips">
   @for (tag of tags; track tag) {
-    <nb-tag [text]="tag" removable status="primary"></nb-tag>
+    <span class="tag-chip">
+      {{ tag }}
+      <button type="button" class="tag-chip-remove" (click)="removeTag(tag)" aria-label="Rimuovi tag">
+        <tui-icon icon="@tui.x"></tui-icon>
+      </button>
+    </span>
   }
   <input
     type="text"
-    nbTagInput
-    fullWidth
+    class="tag-input-field"
+    #tagField
     placeholder="Aggiungi tag e premi invio..."
-    (tagAdd)="onTagAdd($event)"
-    (input)="onQueryChange($any($event.target).value)"
-    (keydown.enter)="$event.preventDefault()"
+    (input)="onQueryChange(tagField.value)"
+    (keydown.enter)="$event.preventDefault(); addTagFromInput(tagField)"
   />
-</nb-tag-list>
+</div>
 @if (suggestions().length) {
   <div class="tag-suggestions">
     @for (s of suggestions(); track s.id) {

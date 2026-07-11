@@ -1,13 +1,13 @@
 <div class="auth-wrapper">
   <div class="auth-brand">
     <div class="auth-brand-content">
-      <span class="brand-mark"><nb-icon icon="layers-outline" class="brand-icon"></nb-icon></span>
+      <span class="brand-mark"><tui-icon icon="@tui.layers" class="brand-icon"></tui-icon></span>
       <span class="brand-name">List2Me</span>
       <p class="brand-tagline">Organizza il tuo mondo, condividilo con chi ami.</p>
       <ul class="brand-points">
-        <li><nb-icon icon="checkmark-circle-2-outline"></nb-icon> Liste per libri, film, viaggi e molto altro</li>
-        <li><nb-icon icon="checkmark-circle-2-outline"></nb-icon> Condividi con amici e con i tuoi gruppi</li>
-        <li><nb-icon icon="checkmark-circle-2-outline"></nb-icon> Segui le liste delle persone che ami</li>
+        <li><tui-icon icon="@tui.circle-check"></tui-icon> Liste per libri, film, viaggi e molto altro</li>
+        <li><tui-icon icon="@tui.circle-check"></tui-icon> Condividi con amici e con i tuoi gruppi</li>
+        <li><tui-icon icon="@tui.circle-check"></tui-icon> Segui le liste delle persone che ami</li>
       </ul>
     </div>
   </div>
@@ -18,42 +18,42 @@
       <p class="auth-subtitle">Inserisci le tue credenziali per accedere.</p>
 
       @if (registered()) {
-        <nb-alert status="success" closable (close)="registered.set(false)" class="auth-alert">
+        <div class="l2m-alert l2m-alert--success auth-alert">
           Registrazione completata! Controlla la tua email per verificare l'account, poi accedi.
-        </nb-alert>
+        </div>
       }
 
       @if (error()) {
-        <nb-alert status="danger" closable (close)="error.set('')" class="auth-alert">
+        <div class="l2m-alert l2m-alert--danger auth-alert">
           {{ error() }}
-        </nb-alert>
+        </div>
       }
 
       @if (emailNotVerified()) {
-        <nb-alert status="warning" class="auth-alert">
+        <div class="l2m-alert l2m-alert--warning auth-alert">
           <p class="verify-msg">Il tuo indirizzo email non è ancora stato verificato.</p>
           @if (resendSuccess()) {
             <p class="verify-sent">Email di verifica inviata! Controlla la tua casella di posta.</p>
           } @else {
-            <button nbButton size="small" status="warning" [disabled]="resendLoading()" (click)="resendVerification()" class="resend-btn">
+            <button tuiButton size="s" appearance="warning" [disabled]="resendLoading()" (click)="resendVerification()" class="resend-btn l2m-btn-block">
               @if (resendLoading()) {
-                <nb-spinner size="tiny" status="basic"></nb-spinner>
+                <tui-loader size="s"></tui-loader>
               } @else {
-                <nb-icon icon="email-outline"></nb-icon>
+                <tui-icon icon="@tui.mail"></tui-icon>
               }
               Invia di nuovo l'email di verifica
             </button>
           }
-        </nb-alert>
+        </div>
       }
 
       <form [formGroup]="form" (ngSubmit)="submit()">
         <div class="form-group">
           <label class="label" for="email">Email</label>
           <div class="input-wrap">
-            <nb-icon icon="email-outline" pack="eva" class="input-icon"></nb-icon>
-            <input nbInput fullWidth id="email" formControlName="email"
-                   class="has-icon" placeholder="la-tua@email.com"
+            <tui-icon icon="@tui.mail" class="input-icon"></tui-icon>
+            <input id="email" formControlName="email"
+                   class="l2m-input has-icon" placeholder="la-tua@email.com"
                    autocomplete="email" type="email" />
           </div>
         </div>
@@ -61,20 +61,20 @@
         <div class="form-group">
           <label class="label" for="password">Password</label>
           <div class="input-wrap">
-            <nb-icon icon="lock-outline" pack="eva" class="input-icon"></nb-icon>
-            <input nbInput fullWidth id="password" formControlName="password"
-                   class="has-icon has-suffix" [type]="getInputType()"
+            <tui-icon icon="@tui.lock" class="input-icon"></tui-icon>
+            <input id="password" formControlName="password"
+                   class="l2m-input has-icon has-suffix" [type]="getInputType()"
                    placeholder="La tua password" autocomplete="current-password" />
             <button type="button" class="toggle-btn" (click)="togglePassword()" tabindex="-1">
-              <nb-icon [icon]="showPassword() ? 'eye-outline' : 'eye-off-outline'" pack="eva"></nb-icon>
+              <tui-icon [icon]="showPassword() ? '@tui.eye' : '@tui.eye-off'"></tui-icon>
             </button>
           </div>
         </div>
 
-        <button nbButton fullWidth status="primary" type="submit"
-                [disabled]="form.invalid || loading()" class="submit-btn">
+        <button tuiButton appearance="primary" type="submit"
+                [disabled]="form.invalid || loading()" class="submit-btn l2m-btn-block">
           @if (loading()) {
-            <nb-spinner size="small" status="basic"></nb-spinner>
+            <tui-loader size="s"></tui-loader>
           } @else {
             Accedi
           }

@@ -9,9 +9,9 @@ Questo file viene caricato automaticamente da Claude Code all'inizio di ogni ses
 | Voce | Valore |
 |---|---|
 | Framework | Angular 21 (standalone components, no NgModule) |
-| UI Library | Nebular 17 (`@nebular/theme`, `@nebular/auth`, `@nebular/security`) |
-| Icone | Eva Icons via `@nebular/eva-icons` |
-| Stili | SCSS — tema Nebular default |
+| UI Library | Taiga UI 5 (`@taiga-ui/core`, `@taiga-ui/kit`, `@taiga-ui/cdk`) |
+| Icone | Lucide via `@taiga-ui/icons` (asset in `assets/taiga-ui/icons`, riferite come `@tui.<nome>`) |
+| Stili | SCSS + design token `--l2m-*`; bridge condiviso `src/styles/_bridge.scss` |
 | HTTP | `HttpClient` + interceptor funzionale (`authInterceptor`) |
 | State | Nessuno store globale — servizi RxJS + Angular Signals |
 | Test | Vitest + jsdom |
@@ -33,14 +33,14 @@ src/
 │   ├── services/              # AuthService, ListService, ItemService, BookService, GroupService,
 │   │                          # UserService, ActivityService, TagService, ItemTypeService, TvdbService
 │   ├── models/                # Interfacce TypeScript (User, List, Item, Group, Tag, Activity…)
-│   ├── app.ts                 # Root component (selector: app-root)
-│   ├── app.config.ts          # Bootstrap config: router, HttpClient, Nebular providers
+│   ├── app.ts                 # Root component (selector: app-root, wrappa <tui-root>)
+│   ├── app.config.ts          # Bootstrap config: router, HttpClient, provideTaiga()
 │   ├── app.routes.ts          # Routing lazy-loaded con authGuard / guestGuard
 │   └── app.scss
 ├── environments/
 │   ├── environment.ts         # Dev — apiBase: http://localhost:8000/api/v1
 │   └── environment.production.ts  # Prod — apiBase: https://api.list2me.it/api/v1
-├── styles.scss                # Stili globali + import tema Nebular
+├── styles.scss                # Stili globali + token --l2m-* (light/dark) + accent Taiga
 └── index.html
 public/
 ├── 404.html                   # Redirect SPA per GitHub Pages
@@ -78,7 +78,9 @@ Router configurato con `withComponentInputBinding()` — i parametri di route so
 
 ### Componenti
 - **Tutti standalone** — nessun NgModule condiviso.
-- Ogni componente importa direttamente i moduli Nebular che usa.
+- Ogni componente importa direttamente i componenti/direttive Taiga che usa (`TuiIcon`, `TuiButton`, `TuiLoader`, `TuiAvatar`…).
+- Componenti UI riusabili al posto di quelli Nebular: `app-user-chip` (avatar+nome), `app-page-header`, `app-empty-state`, e le classi bridge (`.l2m-card`, `.l2m-input`, `.l2m-alert`…).
+- Icone: `<tui-icon icon="@tui.<nome-lucide>">`; scegliere l'icona Lucide più adatta al significato.
 - Naming: cartella `kebab-case`, classe `PascalCase`, selector `app-kebab-case`.
 - File per componente: `.ts`, `.html`, `.scss`, `.spec.ts` (opzionale).
 
@@ -88,17 +90,12 @@ Router configurato con `withComponentInputBinding()` — i parametri di route so
 - Modello paginato: `PaginatedResponse<T>` per le liste.
 
 ### SCSS
-- Nebular default theme; custom properties CSS disabilitate (`$nb-enable-css-custom-properties: false`).
-- Stili globali in `src/styles.scss`; stili componente nel proprio `.scss`.
+- **Design token `--l2m-*`** come unica fonte di verità (colori/spaziatura/radius/ombre): definiti in `src/styles.scss` per `body.nb-theme-default`/`body.nb-theme-dark` (il prefisso `nb-theme-` è solo il nome della classe, nessuna dipendenza Nebular). I componenti li usano via le variabili Sass in `src/styles/_tokens.scss` — così seguono automaticamente il tema chiaro/scuro.
+- **Bridge condiviso** `src/styles/_bridge.scss`: classi UI riusabili (`.l2m-card`, `.l2m-input`, `.l2m-alert`, `.l2m-radio`, toast…). Usarle invece di ridefinire il "chrome" in ogni componente.
+- Stili globali in `src/styles.scss`; stili componente nel proprio `.scss` (importano i token con `@use '.../styles/tokens' as *;`).
 - Non usare `::ng-deep` — preferire classi CSS specifiche del componente.
-- **Non usare `nb-theme()` nei file SCSS dei componenti** — Angular 21 compila ogni SCSS in isolamento, quindi la funzione è fuori scope. Usare i valori hex diretti del tema Nebular default:
-  - Primary: `#3366ff`
-  - Text: `#1a2138`
-  - Text hint: `#8f9bb3`
-  - Background: `#f0f2f7`
-  - Border: `#edf0f7`
-  - Danger: `#ff3d71`
-  - Warning: `#ffaa00`
+- Accent Taiga allineato al brand via override `--tui-background-accent-1: #3366ff` in `styles.scss`.
+- Valori brand principali: Primary `#3366ff` · Text `#1a2138` · Text hint `#8f9bb3` · Border `#e8ecf5` · Danger `#ff3d71` · Warning `#ffaa00`.
 
 ### TypeScript
 - Strict mode completo (`strict`, `strictTemplates`, `noImplicitReturns`, `noFallthroughCasesInSwitch`).
@@ -207,7 +204,8 @@ npm test             # Vitest
 
 ## Compatibilità e dipendenze critiche
 
-- **`@angular/cdk` va tenuto fisso a `^21.0.6`** — NON aggiornare a 21.1.x o superiore. Nebular 17.0.0 usa internamente `_VIEW_REPEATER_STRATEGY` da `@angular/cdk/collections`, rimossa in 21.1.0. L'upgrade rompe la build con "No matching export". Il `package.json` e il lockfile già lo pinnano; verificare dopo ogni `npm install` o `npm update`.
+- **Migrazione a Taiga UI 5** (branch `feat/taiga-migration`, 2026-07-11): Nebular è stato **rimosso completamente**. Il pin storico di `@angular/cdk` a `^21.0.6` (richiesto da Nebular 17) **non è più necessario** — Taiga usa il proprio `@taiga-ui/cdk`; l'`@angular/cdk` di Angular resta usato solo da `cdkDrag` in list-detail. Peer deps Taiga: `@angular/core >=19`.
+- **`less`** è una devDependency necessaria: gli stili globali di Taiga (`@taiga-ui/styles/*.less` in `angular.json`) sono in Less e l'Angular CLI li compila.
 
 ---
 
@@ -221,5 +219,6 @@ npm test             # Vitest
 
 - Il deploy avviene automaticamente al push su `main` via GitHub Actions.
 - `public/404.html` gestisce il redirect SPA su GitHub Pages — non modificare senza testare il routing.
-- La configurazione Nebular globale (tema, moduli condivisi come `NbToastrModule`, `NbDialogModule`) è in `app.config.ts` — aggiungi lì i nuovi moduli Nebular usati in più componenti.
+- Bootstrap Taiga in `app.config.ts` (`provideTaiga()`) e `<tui-root>` in `app.ts`.
+- Servizi globali custom (non più Nebular): `ThemeService` (dark mode via classe body + `TUI_DARK_MODE`), `ToastService` (`.success/.danger/.warning/.info(msg, title?)`), `ConfirmDialogService` (via `TuiDialogService`). Notifiche → iniettare `ToastService`, non un modulo.
 - Non esistono proxy Angular — le chiamate dev vanno direttamente a `localhost:8000` (backend locale).

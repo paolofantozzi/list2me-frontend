@@ -1,13 +1,13 @@
 <div class="page-container">
   @if (loading()) {
     <div class="loading-center">
-      <nb-spinner status="primary" size="giant"></nb-spinner>
+      <tui-loader size="xl"></tui-loader>
     </div>
   } @else if (error()) {
-    <nb-alert status="danger">{{ error() }}</nb-alert>
+    <div class="l2m-alert l2m-alert--danger">{{ error() }}</div>
   } @else if (list()) {
-    <button nbButton ghost size="small" class="back-btn" (click)="goBack()">
-      <nb-icon icon="arrow-back-outline"></nb-icon>
+    <button tuiButton appearance="flat" size="s" class="back-btn" (click)="goBack()">
+      <tui-icon icon="@tui.arrow-left"></tui-icon>
       Torna alle liste
     </button>
 
@@ -15,11 +15,11 @@
       <div class="list-meta">
         <div class="list-title-row">
           <h1 class="list-title">{{ list()!.title }}</h1>
-          <nb-icon
-            [icon]="list()!.visibility === 'public' ? 'globe-2-outline' : list()!.visibility === 'group' ? 'people-outline' : 'lock-outline'"
+          <tui-icon
+            [icon]="list()!.visibility === 'public' ? '@tui.globe' : list()!.visibility === 'group' ? '@tui.users' : '@tui.lock'"
             class="visibility-icon"
             [title]="list()!.visibility === 'public' ? 'Pubblica' : list()!.visibility === 'group' ? 'Gruppo' : 'Privata'">
-          </nb-icon>
+          </tui-icon>
         </div>
         @if (list()!.description) {
           <p class="list-description">{{ list()!.description }}</p>
@@ -31,7 +31,7 @@
 
         @if (list()!.is_fork && list()!.forked_from) {
           <div class="fork-badge">
-            <nb-icon icon="copy-outline"></nb-icon>
+            <tui-icon icon="@tui.copy"></tui-icon>
             Lista forkata
           </div>
         }
@@ -39,7 +39,7 @@
         @if (list()!.parent_list; as parent) {
           <div class="fork-badge parent-list-badge" role="button" tabindex="0"
                (click)="navigateToChildList(parent.id)" (keyup.enter)="navigateToChildList(parent.id)">
-            <nb-icon icon="folder-outline"></nb-icon>
+            <tui-icon icon="@tui.folder"></tui-icon>
             Sottolista di «{{ parent.title }}»
           </div>
         }
@@ -48,10 +48,10 @@
           <div class="tags-edit">
             <app-tag-input [tags]="pendingTags()" (tagsChange)="pendingTags.set($event)"></app-tag-input>
             <div class="tags-edit-actions">
-              <button nbButton ghost size="tiny" type="button" [disabled]="savingTags()" (click)="cancelEditTags()">Annulla</button>
-              <button nbButton status="primary" size="tiny" type="button" [disabled]="savingTags()" (click)="saveTags()">
+              <button tuiButton appearance="flat" size="xs" type="button" [disabled]="savingTags()" (click)="cancelEditTags()">Annulla</button>
+              <button tuiButton appearance="primary" size="xs" type="button" [disabled]="savingTags()" (click)="saveTags()">
                 @if (savingTags()) {
-                  <nb-spinner size="tiny" status="basic"></nb-spinner>
+                  <tui-loader size="s"></tui-loader>
                 } @else {
                   Salva
                 }
@@ -64,8 +64,8 @@
               <span class="tag">{{ tag.name }}</span>
             }
             @if (canEdit) {
-              <button nbButton ghost size="tiny" type="button" class="edit-tags-btn" (click)="startEditTags()" title="Modifica tag">
-                <nb-icon icon="edit-2-outline"></nb-icon>
+              <button tuiButton appearance="flat" size="xs" type="button" class="edit-tags-btn" (click)="startEditTags()" title="Modifica tag">
+                <tui-icon icon="@tui.pencil"></tui-icon>
                 @if (!list()!.tags.length) { Aggiungi tag }
               </button>
             }
@@ -76,56 +76,56 @@
       <div class="list-actions">
         <div class="list-stats">
           <span class="stat">
-            <nb-icon icon="checkmark-square-outline"></nb-icon>
+            <tui-icon icon="@tui.square-check"></tui-icon>
             {{ list()!.items_count }} {{ list()!.items_count === 1 ? 'elemento' : 'elementi' }}
           </span>
           <span class="stat">
-            <nb-icon icon="layers-outline"></nb-icon>
+            <tui-icon icon="@tui.layers"></tui-icon>
             v{{ list()!.version }}
           </span>
         </div>
         <div class="action-buttons">
           @if (!isOwner) {
-            <button nbButton ghost status="primary" (click)="toggleFollow()">
-              <nb-icon [icon]="list()!.is_following ? 'heart' : 'heart-outline'"></nb-icon>
+            <button tuiButton appearance="flat" appearance="primary" (click)="toggleFollow()">
+              <tui-icon [icon]="list()!.is_following ? 'heart' : 'heart-outline'"></tui-icon>
               {{ list()!.is_following ? 'Non seguire' : 'Segui' }}
             </button>
-            <button nbButton ghost status="info" (click)="forkList()">
-              <nb-icon icon="copy-outline"></nb-icon>
+            <button tuiButton appearance="flat" status="info" (click)="forkList()">
+              <tui-icon icon="@tui.copy"></tui-icon>
               Fork
             </button>
             @if (!canEdit) {
-              <button nbButton ghost status="warning" (click)="toggleSuggestions()">
-                <nb-icon icon="bulb-outline"></nb-icon>
+              <button tuiButton appearance="flat" status="warning" (click)="toggleSuggestions()">
+                <tui-icon icon="@tui.lightbulb"></tui-icon>
                 Suggerisci
               </button>
             }
-            <button nbButton ghost status="danger" size="small" (click)="reportList()" title="Segnala lista">
-              <nb-icon icon="flag-outline"></nb-icon>
+            <button tuiButton appearance="flat" status="danger" size="s" (click)="reportList()" title="Segnala lista">
+              <tui-icon icon="@tui.flag"></tui-icon>
             </button>
           }
           @if (isOwner) {
             @if (list()!.is_fork) {
-              <button nbButton ghost status="warning" (click)="toggleDiff()">
-                <nb-icon icon="code-download-outline"></nb-icon>
+              <button tuiButton appearance="flat" status="warning" (click)="toggleDiff()">
+                <tui-icon icon="@tui.git-merge"></tui-icon>
                 {{ showDiff() ? 'Nascondi diff' : 'Diff / Merge' }}
               </button>
             }
-            <button nbButton ghost status="warning" (click)="toggleSuggestions()">
-              <nb-icon icon="bulb-outline"></nb-icon>
+            <button tuiButton appearance="flat" status="warning" (click)="toggleSuggestions()">
+              <tui-icon icon="@tui.lightbulb"></tui-icon>
               Suggerimenti
               @if (suggestions().length > 0) {
                 <span class="badge-count">{{ suggestions().length }}</span>
               }
             </button>
-            <button nbButton ghost status="info" (click)="toggleSharePanel()">
-              <nb-icon icon="share-outline"></nb-icon>
+            <button tuiButton appearance="flat" status="info" (click)="toggleSharePanel()">
+              <tui-icon icon="@tui.share-2"></tui-icon>
               Condividi
             </button>
           }
           @if (canEdit) {
-            <button nbButton status="primary" (click)="openAddPanel()">
-              <nb-icon icon="plus-outline"></nb-icon>
+            <button tuiButton appearance="primary" (click)="openAddPanel()">
+              <tui-icon icon="@tui.plus"></tui-icon>
               Aggiungi elemento
             </button>
           }
@@ -135,26 +135,26 @@
 
     <!-- ── Diff / Merge panel ─────────────────────────────────────────────── -->
     @if (showDiff() && isOwner && list()!.is_fork) {
-      <nb-card class="diff-card" accent="warning">
-        <nb-card-header>
-          <nb-icon icon="code-download-outline"></nb-icon>
+      <div class="l2m-card diff-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.git-merge"></tui-icon>
           Differenze dalla lista originale
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           @if (diffLoading()) {
-            <div class="loading-center"><nb-spinner status="warning" size="medium"></nb-spinner></div>
+            <div class="loading-center"><tui-loader size="m"></tui-loader></div>
           } @else if (diff()) {
             @let added = diff()!.only_in_source ?? [];
             @let removed = diff()!.only_in_fork ?? [];
             @if (added.length === 0 && removed.length === 0) {
               <p class="diff-empty">La tua lista è già aggiornata con la fonte.</p>
               <div class="form-actions" style="margin-top: 1rem;">
-                <button nbButton type="button" ghost (click)="showDiff.set(false)">Chiudi</button>
+                <button tuiButton type="button" appearance="flat" (click)="showDiff.set(false)">Chiudi</button>
               </div>
             } @else {
               @if (added.length > 0) {
                 <p class="diff-section-label diff-added-label">
-                  <nb-icon icon="plus-circle-outline"></nb-icon>
+                  <tui-icon icon="@tui.circle-plus"></tui-icon>
                   Elementi aggiunti alla fonte ({{ added.length }})
                 </p>
                 <ul class="diff-list">
@@ -165,7 +165,7 @@
               }
               @if (removed.length > 0) {
                 <p class="diff-section-label diff-removed-label">
-                  <nb-icon icon="minus-circle-outline"></nb-icon>
+                  <tui-icon icon="@tui.circle-minus"></tui-icon>
                   Elementi rimossi dalla fonte ({{ removed.length }})
                 </p>
                 <ul class="diff-list">
@@ -175,12 +175,12 @@
                 </ul>
               }
               <div class="form-actions" style="margin-top: 1rem;">
-                <button nbButton type="button" ghost (click)="showDiff.set(false)">Chiudi</button>
-                <button nbButton status="warning" [disabled]="mergeLoading()" (click)="mergeFork()">
+                <button tuiButton type="button" appearance="flat" (click)="showDiff.set(false)">Chiudi</button>
+                <button tuiButton status="warning" [disabled]="mergeLoading()" (click)="mergeFork()">
                   @if (mergeLoading()) {
-                    <nb-spinner size="small" status="basic"></nb-spinner>
+                    <tui-loader size="s"></tui-loader>
                   } @else {
-                    <nb-icon icon="code-download-outline"></nb-icon>
+                    <tui-icon icon="@tui.git-merge"></tui-icon>
                     Importa modifiche (Merge)
                   }
                 </button>
@@ -189,27 +189,27 @@
           } @else {
             <p class="diff-empty">Impossibile caricare le differenze.</p>
             <div class="form-actions" style="margin-top: 1rem;">
-              <button nbButton type="button" ghost (click)="showDiff.set(false)">Chiudi</button>
-              <button nbButton status="warning" ghost (click)="loadDiff()">
-                <nb-icon icon="refresh-outline"></nb-icon>
+              <button tuiButton type="button" appearance="flat" (click)="showDiff.set(false)">Chiudi</button>
+              <button tuiButton status="warning" appearance="flat" (click)="loadDiff()">
+                <tui-icon icon="@tui.refresh-cw"></tui-icon>
                 Riprova
               </button>
             </div>
           }
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Suggestions panel ──────────────────────────────────────────────── -->
     @if (showSuggestions()) {
-      <nb-card class="suggestions-card" accent="warning">
-        <nb-card-header>
-          <nb-icon icon="bulb-outline"></nb-icon>
+      <div class="l2m-card suggestions-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.lightbulb"></tui-icon>
           @if (isOwner) { Suggerimenti ricevuti } @else { Invia un suggerimento }
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           @if (suggestionsLoading()) {
-            <div class="loading-center"><nb-spinner status="warning" size="medium"></nb-spinner></div>
+            <div class="loading-center"><tui-loader size="m"></tui-loader></div>
           } @else if (isOwner) {
             @if (suggestions().length === 0) {
               <p class="diff-empty">Nessun suggerimento in attesa.</p>
@@ -226,18 +226,18 @@
                     <ul class="suggestion-actions-list">
                       @for (action of s.actions; track $index) {
                         <li [class]="action.action_type === 'add' ? 'diff-item--added' : 'diff-item--removed'">
-                          <nb-icon [icon]="action.action_type === 'add' ? 'plus-circle-outline' : 'minus-circle-outline'"></nb-icon>
+                          <tui-icon [icon]="action.action_type === 'add' ? '@tui.circle-plus' : '@tui.circle-minus'"></tui-icon>
                           {{ action.text }}
                         </li>
                       }
                     </ul>
                     @if (s.status === 'pending') {
                       <div class="suggestion-btns">
-                        <button nbButton size="small" status="success" ghost (click)="acceptSuggestion(s)">
-                          <nb-icon icon="checkmark-outline"></nb-icon> Accetta
+                        <button tuiButton size="s" status="success" appearance="flat" (click)="acceptSuggestion(s)">
+                          <tui-icon icon="@tui.check"></tui-icon> Accetta
                         </button>
-                        <button nbButton size="small" status="danger" ghost (click)="rejectSuggestion(s)">
-                          <nb-icon icon="close-outline"></nb-icon> Rifiuta
+                        <button tuiButton size="s" status="danger" appearance="flat" (click)="rejectSuggestion(s)">
+                          <tui-icon icon="@tui.x"></tui-icon> Rifiuta
                         </button>
                       </div>
                     }
@@ -249,9 +249,9 @@
             @if (!showSuggestForm()) {
               <p class="diff-empty">Hai un'idea per migliorare questa lista? Proponi l'aggiunta o la rimozione di un elemento.</p>
               <div class="form-actions">
-                <button nbButton type="button" ghost (click)="showSuggestions.set(false)">Chiudi</button>
-                <button nbButton status="warning" (click)="showSuggestForm.set(true)">
-                  <nb-icon icon="edit-outline"></nb-icon>
+                <button tuiButton type="button" appearance="flat" (click)="showSuggestions.set(false)">Chiudi</button>
+                <button tuiButton status="warning" (click)="showSuggestForm.set(true)">
+                  <tui-icon icon="@tui.pencil"></tui-icon>
                   Crea suggerimento
                 </button>
               </div>
@@ -259,63 +259,63 @@
               <form [formGroup]="suggestForm" (ngSubmit)="submitSuggestion()">
                 <div class="form-group">
                   <label class="label">Motivazione *</label>
-                  <input nbInput fullWidth formControlName="description"
+                  <input class="l2m-input" formControlName="description"
                          placeholder="Perché suggerisci questa modifica?" />
                 </div>
                 <div class="form-group">
                   <label class="label">Azione *</label>
-                  <nb-select formControlName="action" fullWidth>
-                    <nb-option value="add">Aggiungi elemento</nb-option>
-                    <nb-option value="remove">Rimuovi elemento</nb-option>
-                  </nb-select>
+                  <select class="l2m-input" formControlName="action">
+                    <option value="add">Aggiungi elemento</option>
+                    <option value="remove">Rimuovi elemento</option>
+                  </select>
                 </div>
                 <div class="form-group">
                   <label class="label">Testo elemento *</label>
-                  <input nbInput fullWidth formControlName="item_text"
+                  <input class="l2m-input" formControlName="item_text"
                          placeholder="Testo dell'elemento da aggiungere o rimuovere..." />
                 </div>
                 <div class="form-actions">
-                  <button nbButton type="button" ghost (click)="showSuggestForm.set(false)">Annulla</button>
-                  <button nbButton type="submit" status="warning" [disabled]="suggestForm.invalid">
-                    <nb-icon icon="paper-plane-outline"></nb-icon>
+                  <button tuiButton type="button" appearance="flat" (click)="showSuggestForm.set(false)">Annulla</button>
+                  <button tuiButton type="submit" status="warning" [disabled]="suggestForm.invalid">
+                    <tui-icon icon="@tui.send"></tui-icon>
                     Invia suggerimento
                   </button>
                 </div>
               </form>
             }
           }
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Share panel ───────────────────────────────────────────────────── -->
     @if (showSharePanel() && isOwner) {
-      <nb-card class="share-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="share-outline"></nb-icon>
+      <div class="l2m-card share-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.share-2"></tui-icon>
           Condividi lista
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           <app-list-share [listId]="list()!.id"></app-list-share>
-        </nb-card-body>
-        <nb-card-footer>
+        </div>
+        <div class="l2m-card__footer">
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="showSharePanel.set(false)">Chiudi</button>
+            <button tuiButton type="button" appearance="flat" (click)="showSharePanel.set(false)">Chiudi</button>
           </div>
-        </nb-card-footer>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Copy item panel ───────────────────────────────────────────────── -->
     @if (copySourceItem()) {
-      <nb-card class="copy-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="copy-outline"></nb-icon>
+      <div class="l2m-card copy-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.copy"></tui-icon>
           Copia "{{ copySourceItem()!.text || '(senza titolo)' }}" in un'altra lista
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           @if (copyDestinationsLoading()) {
-            <div class="loading-center"><nb-spinner status="info" size="medium"></nb-spinner></div>
+            <div class="loading-center"><tui-loader size="m"></tui-loader></div>
           } @else if (copyDestinations().length === 0) {
             <p class="diff-empty">Non hai altre liste tue in cui copiare questo elemento.</p>
           } @else {
@@ -329,40 +329,40 @@
               </select>
             </div>
           }
-        </nb-card-body>
-        <nb-card-footer>
+        </div>
+        <div class="l2m-card__footer">
           <div class="form-actions">
-            <button nbButton type="button" ghost [disabled]="copyLoading()" (click)="closeCopyPanel()">Annulla</button>
+            <button tuiButton type="button" appearance="flat" [disabled]="copyLoading()" (click)="closeCopyPanel()">Annulla</button>
             @if (copyDestinations().length > 0) {
-              <button nbButton status="info" [disabled]="!copySelectedListId() || copyLoading()" (click)="confirmCopy()">
+              <button tuiButton status="info" [disabled]="!copySelectedListId() || copyLoading()" (click)="confirmCopy()">
                 @if (copyLoading()) {
-                  <nb-spinner size="tiny" status="basic"></nb-spinner>
+                  <tui-loader size="s"></tui-loader>
                 } @else {
-                  <nb-icon icon="copy-outline"></nb-icon> Copia
+                  <tui-icon icon="@tui.copy"></tui-icon> Copia
                 }
               </button>
             }
           </div>
-        </nb-card-footer>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Type picker panel ─────────────────────────────────────────────── -->
     @if (showTypePicker() && canEdit) {
-      <nb-card class="add-item-card type-picker-card" accent="primary">
-        <nb-card-header>
-          <nb-icon icon="plus-circle-outline"></nb-icon>
+      <div class="l2m-card add-item-card type-picker-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.circle-plus"></tui-icon>
           Aggiungi elemento — scegli il tipo
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           @if (itemTypesLoading()) {
-            <div class="loading-center"><nb-spinner status="primary" size="medium"></nb-spinner></div>
+            <div class="loading-center"><tui-loader size="m"></tui-loader></div>
           } @else if (itemTypes().length > 0) {
             <div class="type-picker-grid">
               @for (type of itemTypes(); track type.id) {
                 <div class="type-picker-item" (click)="selectItemType(type)" role="button" tabindex="0"
                      (keyup.enter)="selectItemType(type)">
-                  <nb-icon [icon]="pickIcon(type)" class="type-picker-icon"></nb-icon>
+                  <tui-icon [icon]="pickIcon(type)" class="type-picker-icon"></tui-icon>
                   <span class="type-picker-label">{{ typeLabel(type) }}</span>
                 </div>
               }
@@ -371,27 +371,27 @@
             <p class="diff-empty">Nessun tipo disponibile.</p>
           }
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+            <button tuiButton type="button" appearance="flat" (click)="closeAddPanel()">Annulla</button>
           </div>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Book search panel ──────────────────────────────────────────────── -->
     @if (showBookSearch() && canEdit) {
-      <nb-card class="add-item-card book-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="book-outline"></nb-icon>
+      <div class="l2m-card add-item-card book-search-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.book"></tui-icon>
           Cerca libro su OpenLibrary
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           <div class="book-search-input-wrap">
-            <input nbInput fullWidth #bookInput
+            <input class="l2m-input" #bookInput
                    [value]="bookQuery()"
                    placeholder="Titolo, autore o ISBN..."
                    (input)="onBookQueryChange(bookInput.value)" />
             @if (bookSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+              <tui-loader size="s"></tui-loader>
             }
           </div>
 
@@ -405,7 +405,7 @@
                       <img [src]="book.image_url" [alt]="book.title" class="book-result-cover" loading="lazy">
                     } @else {
                       <div class="book-result-cover book-result-cover--placeholder">
-                        <nb-icon icon="book-outline"></nb-icon>
+                        <tui-icon icon="@tui.book"></tui-icon>
                       </div>
                     }
                     <div class="book-result-info">
@@ -418,19 +418,19 @@
                       @if (book.service_url) {
                         <a [href]="book.service_url" target="_blank" rel="noopener noreferrer"
                            class="result-service-link" (click)="$event.stopPropagation()">
-                          <nb-icon icon="external-link-outline"></nb-icon> OpenLibrary
+                          <tui-icon icon="@tui.external-link"></tui-icon> OpenLibrary
                         </a>
                       }
                     </div>
                   </div>
                   <div class="book-result-actions">
-                    <button nbButton ghost size="tiny" status="info" (click)="openEditions(book)"
+                    <button tuiButton appearance="flat" size="xs" status="info" (click)="openEditions(book)"
                             title="Vedi edizioni">
-                      <nb-icon icon="layers-outline"></nb-icon>
+                      <tui-icon icon="@tui.layers"></tui-icon>
                     </button>
-                    <button nbButton ghost size="tiny" status="primary" (click)="addBookItem(book)"
+                    <button tuiButton appearance="flat" size="xs" appearance="primary" (click)="addBookItem(book)"
                             title="Aggiungi">
-                      <nb-icon icon="plus-circle-outline"></nb-icon>
+                      <tui-icon icon="@tui.circle-plus"></tui-icon>
                     </button>
                   </div>
                 </div>
@@ -445,27 +445,27 @@
           </div>
 
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
+            <button tuiButton type="button" appearance="flat" (click)="backToTypePicker()">
+              <tui-icon icon="@tui.arrow-left"></tui-icon>
               Indietro
             </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+            <button tuiButton type="button" appearance="flat" (click)="closeAddPanel()">Annulla</button>
           </div>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Image item panel ──────────────────────────────────────────────────── -->
     @if (showImagePanel() && canEdit) {
-      <nb-card class="add-item-card image-panel-card" accent="warning">
-        <nb-card-header>
-          <nb-icon icon="image-outline"></nb-icon>
+      <div class="l2m-card add-item-card image-panel-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.image"></tui-icon>
           Aggiungi immagine
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           <div class="form-group">
             <label class="label">Didascalia (opzionale)</label>
-            <input nbInput fullWidth
+            <input class="l2m-input"
                    [value]="pendingImageCaption()"
                    (input)="pendingImageCaption.set($any($event.target).value)"
                    placeholder="Descrizione dell'immagine..." />
@@ -475,7 +475,7 @@
             <label class="label">Immagine</label>
             <label class="image-file-label" [class.has-file]="pendingImageFile()">
               <input type="file" accept="image/*" hidden (change)="onImageFileChange($event)">
-              <nb-icon [icon]="pendingImageFile() ? 'checkmark-circle-2-outline' : 'upload-outline'"></nb-icon>
+              <tui-icon [icon]="pendingImageFile() ? '@tui.circle-check' : 'upload-outline'"></tui-icon>
               {{ pendingImageFile() ? pendingImageFile()!.name : 'Seleziona un file...' }}
             </label>
           </div>
@@ -487,33 +487,33 @@
           }
 
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
+            <button tuiButton type="button" appearance="flat" (click)="backToTypePicker()">
+              <tui-icon icon="@tui.arrow-left"></tui-icon>
               Indietro
             </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
-            <button nbButton status="warning" [disabled]="imageAddLoading()" (click)="addImageItem()">
+            <button tuiButton type="button" appearance="flat" (click)="closeAddPanel()">Annulla</button>
+            <button tuiButton status="warning" [disabled]="imageAddLoading()" (click)="addImageItem()">
               @if (imageAddLoading()) {
-                <nb-spinner size="small" status="basic"></nb-spinner>
+                <tui-loader size="s"></tui-loader>
               } @else {
                 Aggiungi
               }
             </button>
           </div>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Book editions panel ──────────────────────────────────────────────── -->
     @if (showEditions() && canEdit && editionsBook()) {
-      <nb-card class="add-item-card editions-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="layers-outline"></nb-icon>
+      <div class="l2m-card add-item-card editions-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.layers"></tui-icon>
           Edizioni di "{{ editionsBook()!.title }}"
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           @if (editionsLoading()) {
-            <div class="loading-center"><nb-spinner status="info" size="medium"></nb-spinner></div>
+            <div class="loading-center"><tui-loader size="m"></tui-loader></div>
           } @else if (editions().length > 0) {
             <div class="editions-list">
               @for (ed of editions(); track ed.edition_key) {
@@ -523,7 +523,7 @@
                     <img [src]="ed.cover_url" [alt]="ed.title" class="book-result-cover" loading="lazy">
                   } @else {
                     <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon icon="book-outline"></nb-icon>
+                      <tui-icon icon="@tui.book"></tui-icon>
                     </div>
                   }
                   <div class="edition-info">
@@ -538,11 +538,11 @@
                     @if (ed.service_url) {
                       <a [href]="ed.service_url" target="_blank" rel="noopener noreferrer"
                          class="result-service-link" (click)="$event.stopPropagation()">
-                        <nb-icon icon="external-link-outline"></nb-icon> OpenLibrary
+                        <tui-icon icon="@tui.external-link"></tui-icon> OpenLibrary
                       </a>
                     }
                   </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                  <tui-icon icon="@tui.circle-plus" class="book-result-add"></tui-icon>
                 </div>
               }
             </div>
@@ -550,24 +550,24 @@
             <p class="book-no-results">Nessuna edizione trovata.</p>
           }
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="closeEditions()">Indietro</button>
+            <button tuiButton type="button" appearance="flat" (click)="closeEditions()">Indietro</button>
           </div>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── TVDB search panel ─────────────────────────────────────────────────── -->
     @if (showTvdbSearch() && canEdit) {
-      <nb-card class="add-item-card tvdb-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="tv-outline"></nb-icon>
+      <div class="l2m-card add-item-card tvdb-search-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.tv"></tui-icon>
           @if (selectedType()?.name === 'episode') {
             Cerca la serie TV per scegliere un episodio
           } @else {
             Cerca serie o film su TheTVDB
           }
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           <div class="tvdb-filters">
             <select class="tvdb-select" [value]="tvdbType()" (change)="onTvdbTypeSelectChange($event)">
               <option value="">Tutto</option>
@@ -585,12 +585,12 @@
             </select>
           </div>
           <div class="book-search-input-wrap">
-            <input nbInput fullWidth #tvdbInput
+            <input class="l2m-input" #tvdbInput
                    [value]="tvdbQuery()"
                    placeholder="Titolo della serie o del film..."
                    (input)="onTvdbQueryChange(tvdbInput.value)" />
             @if (tvdbSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+              <tui-loader size="s"></tui-loader>
             }
           </div>
 
@@ -603,7 +603,7 @@
                     <img [src]="result.image_url" [alt]="result.title" class="book-result-cover tvdb-cover" loading="lazy">
                   } @else {
                     <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon icon="tv-outline"></nb-icon>
+                      <tui-icon icon="@tui.tv"></tui-icon>
                     </div>
                   }
                   <div class="book-result-info">
@@ -619,11 +619,11 @@
                     @if (result.service_url) {
                       <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
                          class="result-service-link" (click)="$event.stopPropagation()">
-                        <nb-icon icon="external-link-outline"></nb-icon> TheTVDB
+                        <tui-icon icon="@tui.external-link"></tui-icon> TheTVDB
                       </a>
                     }
                   </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                  <tui-icon icon="@tui.circle-plus" class="book-result-add"></tui-icon>
                 </div>
               }
             </div>
@@ -636,33 +636,33 @@
           </div>
 
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
+            <button tuiButton type="button" appearance="flat" (click)="backToTypePicker()">
+              <tui-icon icon="@tui.arrow-left"></tui-icon>
               Indietro
             </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+            <button tuiButton type="button" appearance="flat" (click)="closeAddPanel()">Annulla</button>
           </div>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     @if (showEpisodePicker() && canEdit) {
-      <nb-card class="add-item-card tvdb-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="play-circle-outline"></nb-icon>
+      <div class="l2m-card add-item-card tvdb-search-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.circle-play"></tui-icon>
           {{ episodeSeriesName() }} — Scegli un episodio
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           @if (episodesLoading()) {
             <div class="book-search-input-wrap">
-              <nb-spinner size="small" status="info"></nb-spinner>
+              <tui-loader size="s"></tui-loader>
               <span style="margin-left: 0.5rem; color: #8f9bb3;">Caricamento episodi...</span>
             </div>
           } @else if (episodesPage()) {
             <div class="episode-season-tabs">
               @for (season of episodeSeasons(); track season) {
-                <button nbButton size="tiny"
-                        [status]="episodeSeasonFilter() === season ? 'info' : 'basic'"
+                <button tuiButton size="xs"
+                        [appearance]="episodeSeasonFilter() === season ? 'primary' : 'flat'"
                         (click)="episodeSeasonFilter.set(season)">
                   @if (season === 0) { Speciali } @else { Stagione {{ season }} }
                 </button>
@@ -676,7 +676,7 @@
                     <img [src]="ep.image_url" [alt]="ep.name" class="book-result-cover episode-thumb" loading="lazy">
                   } @else {
                     <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon icon="play-circle-outline"></nb-icon>
+                      <tui-icon icon="@tui.circle-play"></tui-icon>
                     </div>
                   }
                   <div class="book-result-info">
@@ -690,11 +690,11 @@
                     @if (ep.service_url) {
                       <a [href]="ep.service_url" target="_blank" rel="noopener noreferrer"
                          class="result-service-link" (click)="$event.stopPropagation()">
-                        <nb-icon icon="external-link-outline"></nb-icon> TheTVDB
+                        <tui-icon icon="@tui.external-link"></tui-icon> TheTVDB
                       </a>
                     }
                   </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                  <tui-icon icon="@tui.circle-plus" class="book-result-add"></tui-icon>
                 </div>
               }
               @if (filteredEpisodes().length === 0) {
@@ -708,14 +708,14 @@
           </div>
 
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToSeriesSearch()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
+            <button tuiButton type="button" appearance="flat" (click)="backToSeriesSearch()">
+              <tui-icon icon="@tui.arrow-left"></tui-icon>
               Cambia serie
             </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+            <button tuiButton type="button" appearance="flat" (click)="closeAddPanel()">Annulla</button>
           </div>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── MusicBrainz search panel ──────────────────────────────────────────── -->
@@ -737,7 +737,7 @@
     @if (showBggSearch() && canEdit) {
       <app-external-search-panel
         [title]="selectedType()?.name === 'rpg' ? 'Cerca gioco di ruolo su BoardGameGeek' : 'Cerca gioco da tavolo su BoardGameGeek'"
-        [icon]="selectedType()?.name === 'rpg' ? 'book-open-outline' : 'shuffle-outline'"
+        [icon]="selectedType()?.name === 'rpg' ? '@tui.book-open' : '@tui.shuffle'"
         placeholder="Titolo del gioco..."
         [attributionLogo]="bggAttributionLogo"
         [searchFn]="bggSearch"
@@ -751,7 +751,7 @@
     @if (showVideoGameSearch() && canEdit) {
       <app-external-search-panel
         title="Cerca videogioco su IGDB"
-        icon="monitor-outline"
+        icon="@tui.monitor"
         placeholder="Titolo del videogioco..."
         attributionName="IGDB"
         attributionUrl="https://www.igdb.com"
@@ -766,7 +766,7 @@
     @if (showTravelSearch() && canEdit) {
       <app-external-search-panel #travelPanel
         title="Cerca una destinazione di viaggio su Wikivoyage"
-        icon="compass-outline"
+        icon="@tui.compass"
         placeholder="Nome della destinazione (città, regione, paese)..."
         attributionName="Wikivoyage"
         attributionUrl="https://www.wikivoyage.org"
@@ -792,7 +792,7 @@
     @if (showConcertSearch() && canEdit) {
       <app-external-search-panel
         title="Cerca un concerto su SeatGeek"
-        icon="music-outline"
+        icon="@tui.music"
         placeholder="Artista, venue o città..."
         attributionName="SeatGeek"
         attributionUrl="https://seatgeek.com"
@@ -805,19 +805,19 @@
 
     <!-- ── AIFA search panel (medicine) ─────────────────────────────────────── -->
     @if (showMedicineSearch() && canEdit) {
-      <nb-card class="add-item-card medicine-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="activity-outline"></nb-icon>
+      <div class="l2m-card add-item-card medicine-search-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.activity"></tui-icon>
           Cerca un farmaco (banca dati AIFA)
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           <div class="book-search-input-wrap">
-            <input nbInput fullWidth #medicineInput
+            <input class="l2m-input" #medicineInput
                    [value]="medicineQuery()"
                    placeholder="Nome del farmaco o principio attivo..."
                    (input)="onMedicineQueryChange(medicineInput.value)" />
             @if (medicineSearchLoading()) {
-              <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+              <tui-loader size="s"></tui-loader>
             }
           </div>
 
@@ -827,7 +827,7 @@
                 <div class="book-result" (click)="addMedicineItem(result)" role="button" tabindex="0"
                      (keyup.enter)="addMedicineItem(result)">
                   <div class="book-result-cover book-result-cover--placeholder">
-                    <nb-icon icon="activity-outline"></nb-icon>
+                    <tui-icon icon="@tui.activity"></tui-icon>
                   </div>
                   <div class="book-result-info">
                     <p class="book-result-title">{{ result.name }}</p>
@@ -839,7 +839,7 @@
                       <p class="book-result-meta">{{ result.prescription_requirement }}</p>
                     }
                   </div>
-                  <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                  <tui-icon icon="@tui.circle-plus" class="book-result-add"></tui-icon>
                 </div>
               }
             </div>
@@ -852,21 +852,21 @@
           </div>
 
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
+            <button tuiButton type="button" appearance="flat" (click)="backToTypePicker()">
+              <tui-icon icon="@tui.arrow-left"></tui-icon>
               Indietro
             </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+            <button tuiButton type="button" appearance="flat" (click)="closeAddPanel()">Annulla</button>
           </div>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Perenual search panel (plant) ────────────────────────────────────── -->
     @if (showPlantSearch() && canEdit) {
       <app-external-search-panel
         title="Cerca una pianta su Perenual"
-        icon="droplet-outline"
+        icon="@tui.droplet"
         placeholder="Nome comune o scientifico..."
         attributionName="Perenual"
         attributionUrl="https://perenual.com"
@@ -880,20 +880,20 @@
 
     <!-- ── Place search panel (Nominatim) ─────────────────────────────────── -->
     @if (showPlaceSearch() && canEdit) {
-      <nb-card class="add-item-card place-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon icon="pin-outline"></nb-icon>
+      <div class="l2m-card add-item-card place-search-card">
+        <div class="l2m-card__header">
+          <tui-icon icon="@tui.map-pin"></tui-icon>
           Cerca un luogo
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           @if (!placeManualMode()) {
             <div class="book-search-input-wrap">
-              <input nbInput fullWidth #placeInput
+              <input class="l2m-input" #placeInput
                      [value]="placeQuery()"
                      placeholder="Nome del luogo o indirizzo..."
                      (input)="onPlaceQueryChange(placeInput.value)" />
               @if (placeSearchLoading()) {
-                <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+                <tui-loader size="s"></tui-loader>
               }
             </div>
 
@@ -903,7 +903,7 @@
                   <div class="book-result" (click)="addPlaceItem(result)" role="button" tabindex="0"
                        (keyup.enter)="addPlaceItem(result)">
                     <div class="book-result-cover book-result-cover--placeholder">
-                      <nb-icon icon="pin-outline"></nb-icon>
+                      <tui-icon icon="@tui.map-pin"></tui-icon>
                     </div>
                     <div class="book-result-info">
                       <p class="book-result-title">{{ result.title }}</p>
@@ -913,11 +913,11 @@
                       @if (result.service_url) {
                         <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
                            class="result-service-link" (click)="$event.stopPropagation()">
-                          <nb-icon icon="external-link-outline"></nb-icon> OpenStreetMap
+                          <tui-icon icon="@tui.external-link"></tui-icon> OpenStreetMap
                         </a>
                       }
                     </div>
-                    <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                    <tui-icon icon="@tui.circle-plus" class="book-result-add"></tui-icon>
                   </div>
                 }
               </div>
@@ -926,8 +926,8 @@
             }
 
             <div class="place-manual-toggle">
-              <button nbButton ghost size="small" type="button" (click)="togglePlaceManualMode()">
-                <nb-icon icon="pin-outline"></nb-icon>
+              <button tuiButton appearance="flat" size="s" type="button" (click)="togglePlaceManualMode()">
+                <tui-icon icon="@tui.map-pin"></tui-icon>
                 Inserisci coordinate manualmente
               </button>
             </div>
@@ -935,14 +935,14 @@
             <div class="place-manual-coords">
               <div class="form-group">
                 <label class="label">Latitudine</label>
-                <input nbInput fullWidth type="number" step="any" #latInput
+                <input class="l2m-input" type="number" step="any" #latInput
                        [value]="placePickedLat() ?? ''"
                        placeholder="es. 41.9028"
                        (input)="onPlaceLatInput(latInput.value)" />
               </div>
               <div class="form-group">
                 <label class="label">Longitudine</label>
-                <input nbInput fullWidth type="number" step="any" #lonInput
+                <input class="l2m-input" type="number" step="any" #lonInput
                        [value]="placePickedLon() ?? ''"
                        placeholder="es. 12.4964"
                        (input)="onPlaceLonInput(lonInput.value)" />
@@ -960,11 +960,11 @@
             <p class="place-picker-hint">Clicca sulla mappa o trascina il pin per selezionare un punto.</p>
 
             @if (placeReverseLoading()) {
-              <div class="loading-center"><nb-spinner status="info" size="medium"></nb-spinner></div>
+              <div class="loading-center"><tui-loader size="m"></tui-loader></div>
             } @else if (placeReverseResult()) {
               <div class="book-result book-result--static">
                 <div class="book-result-cover book-result-cover--placeholder">
-                  <nb-icon icon="pin-outline"></nb-icon>
+                  <tui-icon icon="@tui.map-pin"></tui-icon>
                 </div>
                 <div class="book-result-info">
                   <p class="book-result-title">{{ placeReverseResult()!.title }}</p>
@@ -972,16 +972,16 @@
                     <p class="book-result-meta">{{ placeReverseResult()!.subtitle }}</p>
                   }
                 </div>
-                <button nbButton status="primary" size="small" type="button" (click)="addPlaceItem(placeReverseResult()!)">
-                  <nb-icon icon="plus-outline"></nb-icon>
+                <button tuiButton appearance="primary" size="s" type="button" (click)="addPlaceItem(placeReverseResult()!)">
+                  <tui-icon icon="@tui.plus"></tui-icon>
                   Aggiungi
                 </button>
               </div>
             }
 
             <div class="place-manual-toggle">
-              <button nbButton ghost size="small" type="button" (click)="togglePlaceManualMode()">
-                <nb-icon icon="search-outline"></nb-icon>
+              <button tuiButton appearance="flat" size="s" type="button" (click)="togglePlaceManualMode()">
+                <tui-icon icon="@tui.search"></tui-icon>
                 Torna alla ricerca testuale
               </button>
             </div>
@@ -992,14 +992,14 @@
           </div>
 
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
+            <button tuiButton type="button" appearance="flat" (click)="backToTypePicker()">
+              <tui-icon icon="@tui.arrow-left"></tui-icon>
               Indietro
             </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+            <button tuiButton type="button" appearance="flat" (click)="closeAddPanel()">Annulla</button>
           </div>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Europeana search panel ─────────────────────────────────────────── -->
@@ -1019,20 +1019,20 @@
 
     <!-- ── Open Food/Beauty/Products Facts search panel ─────────────────────── -->
     @if (showProductSearch() && canEdit) {
-      <nb-card class="add-item-card product-search-card" accent="info">
-        <nb-card-header>
-          <nb-icon [icon]="productSearchIcon()"></nb-icon>
+      <div class="l2m-card add-item-card product-search-card">
+        <div class="l2m-card__header">
+          <tui-icon [icon]="productSearchIcon()"></tui-icon>
           {{ productSearchTitle() }}
-        </nb-card-header>
-        <nb-card-body>
+        </div>
+        <div class="l2m-card__body">
           @if (!productBarcodeMode()) {
             <div class="book-search-input-wrap">
-              <input nbInput fullWidth #productInput
+              <input class="l2m-input" #productInput
                      [value]="productQuery()"
                      placeholder="Nome del prodotto o marca..."
                      (input)="onProductQueryChange(productInput.value)" />
               @if (productSearchLoading()) {
-                <nb-spinner size="small" status="info" class="book-spinner"></nb-spinner>
+                <tui-loader size="s"></tui-loader>
               }
             </div>
 
@@ -1045,7 +1045,7 @@
                       <img [src]="result.image_url" [alt]="result.title" class="book-result-cover" loading="lazy">
                     } @else {
                       <div class="book-result-cover book-result-cover--placeholder">
-                        <nb-icon [icon]="productSearchIcon()"></nb-icon>
+                        <tui-icon [icon]="productSearchIcon()"></tui-icon>
                       </div>
                     }
                     <div class="book-result-info">
@@ -1056,11 +1056,11 @@
                       @if (result.service_url) {
                         <a [href]="result.service_url" target="_blank" rel="noopener noreferrer"
                            class="result-service-link" (click)="$event.stopPropagation()">
-                          <nb-icon icon="external-link-outline"></nb-icon> Open Food Facts
+                          <tui-icon icon="@tui.external-link"></tui-icon> Open Food Facts
                         </a>
                       }
                     </div>
-                    <nb-icon icon="plus-circle-outline" class="book-result-add"></nb-icon>
+                    <tui-icon icon="@tui.circle-plus" class="book-result-add"></tui-icon>
                   </div>
                 }
               </div>
@@ -1069,26 +1069,26 @@
             }
 
             <div class="place-manual-toggle">
-              <button nbButton ghost size="small" type="button" (click)="toggleProductBarcodeMode()">
-                <nb-icon icon="hash-outline"></nb-icon>
+              <button tuiButton appearance="flat" size="s" type="button" (click)="toggleProductBarcodeMode()">
+                <tui-icon icon="@tui.hash"></tui-icon>
                 Cerca per codice a barre
               </button>
             </div>
           } @else {
             <div class="form-group">
               <label class="label">Codice a barre</label>
-              <input nbInput fullWidth #barcodeInput
+              <input class="l2m-input" #barcodeInput
                      [value]="productBarcode()"
                      placeholder="es. 3017620422003"
                      (input)="onProductBarcodeInput(barcodeInput.value)"
                      (keyup.enter)="lookupProductBarcode()" />
             </div>
             <div class="form-actions">
-              <button nbButton status="primary" size="small" type="button"
+              <button tuiButton appearance="primary" size="s" type="button"
                       [disabled]="!productBarcode().trim() || productBarcodeLoading()"
                       (click)="lookupProductBarcode()">
                 @if (productBarcodeLoading()) {
-                  <nb-spinner size="tiny" status="basic"></nb-spinner>
+                  <tui-loader size="s"></tui-loader>
                 } @else {
                   Cerca
                 }
@@ -1105,7 +1105,7 @@
                   <img [src]="productBarcodeResult()!.image_url" [alt]="productBarcodeResult()!.title" class="book-result-cover" loading="lazy">
                 } @else {
                   <div class="book-result-cover book-result-cover--placeholder">
-                    <nb-icon [icon]="productSearchIcon()"></nb-icon>
+                    <tui-icon [icon]="productSearchIcon()"></tui-icon>
                   </div>
                 }
                 <div class="book-result-info">
@@ -1114,16 +1114,16 @@
                     <p class="book-result-meta">{{ productBarcodeResult()!.subtitle }}</p>
                   }
                 </div>
-                <button nbButton status="primary" size="small" type="button" (click)="addProductItem(productBarcodeResult()!)">
-                  <nb-icon icon="plus-outline"></nb-icon>
+                <button tuiButton appearance="primary" size="s" type="button" (click)="addProductItem(productBarcodeResult()!)">
+                  <tui-icon icon="@tui.plus"></tui-icon>
                   Aggiungi
                 </button>
               </div>
             }
 
             <div class="place-manual-toggle">
-              <button nbButton ghost size="small" type="button" (click)="toggleProductBarcodeMode()">
-                <nb-icon icon="search-outline"></nb-icon>
+              <button tuiButton appearance="flat" size="s" type="button" (click)="toggleProductBarcodeMode()">
+                <tui-icon icon="@tui.search"></tui-icon>
                 Torna alla ricerca testuale
               </button>
             </div>
@@ -1134,30 +1134,30 @@
           </div>
 
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="backToTypePicker()">
-              <nb-icon icon="arrow-back-outline"></nb-icon>
+            <button tuiButton type="button" appearance="flat" (click)="backToTypePicker()">
+              <tui-icon icon="@tui.arrow-left"></tui-icon>
               Indietro
             </button>
-            <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
+            <button tuiButton type="button" appearance="flat" (click)="closeAddPanel()">Annulla</button>
           </div>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Add item form ──────────────────────────────────────────────────── -->
     @if (showAddItem() && canEdit) {
-      <nb-card class="add-item-card" accent="primary">
-        <nb-card-header>Nuovo elemento — {{ typeLabel(selectedType()) || 'Testo libero' }}</nb-card-header>
-        <nb-card-body>
+      <div class="l2m-card add-item-card">
+        <div class="l2m-card__header">Nuovo elemento — {{ typeLabel(selectedType()) || 'Testo libero' }}</div>
+        <div class="l2m-card__body">
           <form [formGroup]="addItemForm" (ngSubmit)="addItem()">
             <div class="form-group">
               <label class="label">Testo *</label>
-              <input nbInput fullWidth formControlName="text" placeholder="Testo dell'elemento..." />
+              <input class="l2m-input" formControlName="text" placeholder="Testo dell'elemento..." />
             </div>
 
             <div class="child-list-toggle">
-              <button nbButton type="button" ghost size="small" (click)="showNewChildList.update(v => !v)">
-                <nb-icon [icon]="showNewChildList() ? 'minus-circle-outline' : 'list-outline'"></nb-icon>
+              <button tuiButton type="button" appearance="flat" size="s" (click)="showNewChildList.update(v => !v)">
+                <tui-icon [icon]="showNewChildList() ? '@tui.circle-minus' : '@tui.list'"></tui-icon>
                 {{ showNewChildList() ? 'Rimuovi sotto-lista' : 'Collega una nuova sotto-lista' }}
               </button>
             </div>
@@ -1166,58 +1166,58 @@
               <div class="child-list-form">
                 <div class="form-group">
                   <label class="label">Titolo sotto-lista *</label>
-                  <input nbInput fullWidth formControlName="new_child_list_title"
+                  <input class="l2m-input" formControlName="new_child_list_title"
                          placeholder="Titolo della nuova sotto-lista..." />
                 </div>
                 <div class="form-group">
                   <label class="label">Visibilità</label>
-                  <nb-select formControlName="new_child_list_visibility" fullWidth>
-                    <nb-option value="public">Pubblica</nb-option>
-                    <nb-option value="private">Privata</nb-option>
-                    <nb-option value="group">Gruppo</nb-option>
-                  </nb-select>
+                  <select class="l2m-input" formControlName="new_child_list_visibility">
+                    <option value="public">Pubblica</option>
+                    <option value="private">Privata</option>
+                    <option value="group">Gruppo</option>
+                  </select>
                 </div>
               </div>
             }
 
             <div class="form-actions">
-              <button nbButton type="button" ghost (click)="backToTypePicker()">
-                <nb-icon icon="arrow-back-outline"></nb-icon>
+              <button tuiButton type="button" appearance="flat" (click)="backToTypePicker()">
+                <tui-icon icon="@tui.arrow-left"></tui-icon>
                 Indietro
               </button>
-              <button nbButton type="button" ghost (click)="closeAddPanel()">Annulla</button>
-              <button nbButton type="submit" status="primary"
+              <button tuiButton type="button" appearance="flat" (click)="closeAddPanel()">Annulla</button>
+              <button tuiButton type="submit" appearance="primary"
                       [disabled]="addItemForm.invalid || addItemLoading()">
                 @if (addItemLoading()) {
-                  <nb-spinner size="small" status="basic"></nb-spinner>
+                  <tui-loader size="s"></tui-loader>
                 } @else {
                   Aggiungi
                 }
               </button>
             </div>
           </form>
-        </nb-card-body>
-      </nb-card>
+        </div>
+      </div>
     }
 
     <!-- ── Items list ─────────────────────────────────────────────────────── -->
-    <nb-card class="items-card">
-      <nb-card-header>
+    <div class="l2m-card items-card">
+      <div class="l2m-card__header">
         <span>Elementi ({{ items().length }})</span>
         @if (reorderLoading()) {
-          <nb-spinner size="tiny" status="primary"></nb-spinner>
+          <tui-loader size="s"></tui-loader>
         }
         @if (canEdit && items().length > 1) {
           <span class="drag-hint">
-            <nb-icon icon="move-outline"></nb-icon>
+            <tui-icon icon="@tui.move"></tui-icon>
             Trascina per riordinare
           </span>
         }
-      </nb-card-header>
-      <nb-card-body class="items-body">
+      </div>
+      <div class="l2m-card__body items-body">
         @if (items().length === 0) {
           <div class="empty-state">
-            <nb-icon icon="inbox-outline" class="empty-icon"></nb-icon>
+            <tui-icon icon="@tui.inbox" class="empty-icon"></tui-icon>
             <p>Nessun elemento. @if (canEdit) { Aggiungine uno qui sopra. }</p>
           </div>
         } @else {
@@ -1230,12 +1230,12 @@
 
                 @if (editingItem()?.id === item.id) {
                   <form [formGroup]="editItemForm" (ngSubmit)="saveEditItem()" class="item-edit-form">
-                    <input nbInput fullWidth formControlName="text" />
+                    <input class="l2m-input" formControlName="text" />
 
                     @if (!item.child_list_detail) {
                       <div class="child-list-toggle">
-                        <button nbButton type="button" ghost size="small" (click)="showEditChildList.update(v => !v)">
-                          <nb-icon [icon]="showEditChildList() ? 'minus-circle-outline' : 'list-outline'"></nb-icon>
+                        <button tuiButton type="button" appearance="flat" size="s" (click)="showEditChildList.update(v => !v)">
+                          <tui-icon [icon]="showEditChildList() ? '@tui.circle-minus' : '@tui.list'"></tui-icon>
                           {{ showEditChildList() ? 'Rimuovi sotto-lista' : 'Collega nuova sotto-lista' }}
                         </button>
                       </div>
@@ -1243,16 +1243,16 @@
                         <div class="child-list-form">
                           <div class="form-group">
                             <label class="label">Titolo sotto-lista *</label>
-                            <input nbInput fullWidth formControlName="new_child_list_title"
+                            <input class="l2m-input" formControlName="new_child_list_title"
                                    placeholder="Titolo della nuova sotto-lista..." />
                           </div>
                           <div class="form-group">
                             <label class="label">Visibilità</label>
-                            <nb-select formControlName="new_child_list_visibility" fullWidth>
-                              <nb-option value="public">Pubblica</nb-option>
-                              <nb-option value="private">Privata</nb-option>
-                              <nb-option value="group">Gruppo</nb-option>
-                            </nb-select>
+                            <select class="l2m-input" formControlName="new_child_list_visibility">
+                              <option value="public">Pubblica</option>
+                              <option value="private">Privata</option>
+                              <option value="group">Gruppo</option>
+                            </select>
                           </div>
                         </div>
                       }
@@ -1261,46 +1261,46 @@
                     <div class="event-location-edit">
                       <div class="form-group">
                         <label class="label">Data</label>
-                        <input nbInput fullWidth type="date" formControlName="event_date" />
+                        <input class="l2m-input" type="date" formControlName="event_date" />
                       </div>
                       <div class="form-group">
                         <label class="label">Ora</label>
-                        <input nbInput fullWidth type="time" formControlName="event_time" />
+                        <input class="l2m-input" type="time" formControlName="event_time" />
                       </div>
                       <div class="form-group form-group--wide">
                         <label class="label">Luogo / indirizzo</label>
-                        <input nbInput fullWidth type="text" formControlName="location_address" placeholder="Indirizzo o nome del luogo..." />
+                        <input class="l2m-input" type="text" formControlName="location_address" placeholder="Indirizzo o nome del luogo..." />
                       </div>
                       <div class="form-group">
                         <label class="label">Latitudine</label>
-                        <input nbInput fullWidth type="number" step="any" formControlName="location_latitude" />
+                        <input class="l2m-input" type="number" step="any" formControlName="location_latitude" />
                       </div>
                       <div class="form-group">
                         <label class="label">Longitudine</label>
-                        <input nbInput fullWidth type="number" step="any" formControlName="location_longitude" />
+                        <input class="l2m-input" type="number" step="any" formControlName="location_longitude" />
                       </div>
                     </div>
 
                     <div class="form-actions">
-                      <button nbButton type="button" size="tiny" ghost (click)="editingItem.set(null)">Annulla</button>
-                      <button nbButton type="submit" size="tiny" status="primary">Salva</button>
+                      <button tuiButton type="button" size="xs" appearance="flat" (click)="editingItem.set(null)">Annulla</button>
+                      <button tuiButton type="submit" size="xs" appearance="primary">Salva</button>
                     </div>
                   </form>
                 } @else {
                   <div class="item-content">
                     @if (canEdit) {
                       <div cdkDragHandle class="drag-handle" title="Trascina per riordinare">
-                        <nb-icon icon="menu-outline"></nb-icon>
+                        <tui-icon icon="@tui.grip-vertical"></tui-icon>
                       </div>
                     }
 
                     @if (canEdit) {
                       <div class="item-reorder">
-                        <button nbButton ghost size="tiny" [disabled]="first" (click)="moveItemUp(i)" title="Sposta su">
-                          <nb-icon icon="arrow-upward-outline"></nb-icon>
+                        <button tuiButton appearance="flat" size="xs" [disabled]="first" (click)="moveItemUp(i)" title="Sposta su">
+                          <tui-icon icon="@tui.arrow-up"></tui-icon>
                         </button>
-                        <button nbButton ghost size="tiny" [disabled]="last" (click)="moveItemDown(i)" title="Sposta giù">
-                          <nb-icon icon="arrow-downward-outline"></nb-icon>
+                        <button tuiButton appearance="flat" size="xs" [disabled]="last" (click)="moveItemDown(i)" title="Sposta giù">
+                          <tui-icon icon="@tui.arrow-down"></tui-icon>
                         </button>
                       </div>
                     }
@@ -1310,7 +1310,7 @@
                     @if (isBookItem(item)) {
                       <app-item-row
                         [imageUrl]="bookMeta(item).cover_url ?? null"
-                        iconFallback="book-outline"
+                        iconFallback="@tui.book"
                         [title]="item.text || '(senza titolo)'"
                         [metaText]="bookMetaLine(item)"
                         (open)="openDetail(item)">
@@ -1318,7 +1318,7 @@
                     } @else if (isTvdbItem(item)) {
                       <app-item-row
                         [imageUrl]="tvdbMeta(item).image_url ?? null"
-                        iconFallback="tv-outline"
+                        iconFallback="@tui.tv"
                         [title]="item.text || '(senza titolo)'"
                         [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
                         [metaText]="tvdbMetaLine(item)"
@@ -1331,7 +1331,7 @@
                           <img [src]="item.image" [alt]="item.text" class="book-cover item-image-thumb" loading="lazy">
                         } @else {
                           <div class="book-cover book-cover--placeholder">
-                            <nb-icon icon="image-outline"></nb-icon>
+                            <tui-icon icon="@tui.image"></tui-icon>
                           </div>
                         }
                         <div class="item-text">
@@ -1360,7 +1360,7 @@
                     } @else if (isVideoGameItem(item)) {
                       <app-item-row
                         [imageUrl]="videoGameMeta(item).image_url ?? null"
-                        iconFallback="monitor-outline"
+                        iconFallback="@tui.monitor"
                         [title]="item.text || '(senza titolo)'"
                         [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
                         [metaText]="videoGameMetaLine(item)"
@@ -1369,7 +1369,7 @@
                     } @else if (isTravelItem(item)) {
                       <app-item-row
                         [imageUrl]="travelMeta(item).image_url ?? null"
-                        iconFallback="compass-outline"
+                        iconFallback="@tui.compass"
                         [title]="item.text || '(senza titolo)'"
                         [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
                         [metaText]="travelMetaLine(item)"
@@ -1378,7 +1378,7 @@
                     } @else if (isConcertItem(item)) {
                       <app-item-row
                         [imageUrl]="concertMeta(item).image_url ?? null"
-                        iconFallback="music-outline"
+                        iconFallback="@tui.music"
                         [title]="item.text || '(senza titolo)'"
                         [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
                         [metaText]="concertMetaLine(item)"
@@ -1387,7 +1387,7 @@
                     } @else if (isMedicineItem(item)) {
                       <app-item-row
                         [imageUrl]="null"
-                        iconFallback="activity-outline"
+                        iconFallback="@tui.activity"
                         [title]="item.text || '(senza titolo)'"
                         [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
                         [metaText]="medicineMetaLine(item)"
@@ -1396,7 +1396,7 @@
                     } @else if (isPlantItem(item)) {
                       <app-item-row
                         [imageUrl]="plantMeta(item).image_url ?? null"
-                        iconFallback="droplet-outline"
+                        iconFallback="@tui.droplet"
                         [title]="item.text || '(senza titolo)'"
                         [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
                         [metaText]="plantMetaLine(item)"
@@ -1405,7 +1405,7 @@
                     } @else if (isPlaceItem(item)) {
                       <app-item-row
                         [imageUrl]="placeRowImageUrl(item)"
-                        iconFallback="pin-outline"
+                        iconFallback="@tui.map-pin"
                         [title]="item.text || '(senza titolo)'"
                         [typeLabel]="item.item_type_detail ? typeLabel(item.item_type_detail) : null"
                         [metaText]="placeMetaLine(item)"
@@ -1444,10 +1444,10 @@
                       <div class="child-list-badge" (click)="navigateToChildList(item.child_list_detail.id)" role="button" tabindex="0"
                            (keyup.enter)="navigateToChildList(item.child_list_detail!.id)"
                            [title]="'Apri sotto-lista: ' + item.child_list_detail.title">
-                        <nb-icon icon="list-outline"></nb-icon>
+                        <tui-icon icon="@tui.list"></tui-icon>
                         <span class="child-list-title">{{ item.child_list_detail.title }}</span>
                         <span class="child-list-meta">
-                          <nb-icon [icon]="item.child_list_detail.visibility === 'public' ? 'globe-2-outline' : item.child_list_detail.visibility === 'group' ? 'people-outline' : 'lock-outline'"></nb-icon>
+                          <tui-icon [icon]="item.child_list_detail.visibility === 'public' ? '@tui.globe' : item.child_list_detail.visibility === 'group' ? '@tui.users' : '@tui.lock'"></tui-icon>
                           {{ item.child_list_detail.items_count }} elementi
                         </span>
                       </div>
@@ -1455,7 +1455,7 @@
 
                     @if (item.copied_from_list_detail) {
                       <span class="copied-from-badge" [title]="'Copiato da: ' + item.copied_from_list_detail.title">
-                        <nb-icon icon="copy-outline"></nb-icon>
+                        <tui-icon icon="@tui.copy"></tui-icon>
                         Copiato da «{{ item.copied_from_list_detail.title }}»
                       </span>
                     }
@@ -1464,13 +1464,13 @@
                       <span class="event-location-chip">
                         @if (item.event_date) {
                           <span class="event-location-chip-part">
-                            <nb-icon icon="calendar-outline"></nb-icon>
+                            <tui-icon icon="@tui.calendar"></tui-icon>
                             {{ item.event_date | date: 'dd/MM/yyyy' }}@if (item.event_time) { , {{ item.event_time!.slice(0, 5) }} }
                           </span>
                         }
                         @if (item.location_address) {
                           <span class="event-location-chip-part">
-                            <nb-icon icon="pin-outline"></nb-icon>
+                            <tui-icon icon="@tui.map-pin"></tui-icon>
                             {{ item.location_address }}
                           </span>
                         }
@@ -1478,79 +1478,79 @@
                     }
 
                     <div class="item-actions">
-                      <button nbButton ghost size="tiny" (click)="openCopyPanel(item)" title="Copia in un'altra lista">
-                        <nb-icon icon="copy-outline"></nb-icon>
+                      <button tuiButton appearance="flat" size="xs" (click)="openCopyPanel(item)" title="Copia in un'altra lista">
+                        <tui-icon icon="@tui.copy"></tui-icon>
                       </button>
                       @if (canEdit) {
                         @if (isBookItem(item)) {
-                          <button nbButton ghost size="tiny"
+                          <button tuiButton appearance="flat" size="xs"
                                   [disabled]="syncingItemId() === item.id"
                                   (click)="syncBookItem(item)"
                                   title="Aggiorna da OpenLibrary">
                             @if (syncingItemId() === item.id) {
-                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                              <tui-loader size="s"></tui-loader>
                             } @else {
-                              <nb-icon icon="refresh-outline"></nb-icon>
+                              <tui-icon icon="@tui.refresh-cw"></tui-icon>
                             }
                           </button>
                         }
                         @if (isBggItem(item)) {
-                          <button nbButton ghost size="tiny"
+                          <button tuiButton appearance="flat" size="xs"
                                   [disabled]="syncingItemId() === item.id"
                                   (click)="syncBggItem(item)"
                                   title="Aggiorna da BoardGameGeek">
                             @if (syncingItemId() === item.id) {
-                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                              <tui-loader size="s"></tui-loader>
                             } @else {
-                              <nb-icon icon="refresh-outline"></nb-icon>
+                              <tui-icon icon="@tui.refresh-cw"></tui-icon>
                             }
                           </button>
                         }
                         @if (isVideoGameItem(item)) {
-                          <button nbButton ghost size="tiny"
+                          <button tuiButton appearance="flat" size="xs"
                                   [disabled]="syncingItemId() === item.id"
                                   (click)="syncVideoGameItem(item)"
                                   title="Aggiorna da IGDB">
                             @if (syncingItemId() === item.id) {
-                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                              <tui-loader size="s"></tui-loader>
                             } @else {
-                              <nb-icon icon="refresh-outline"></nb-icon>
+                              <tui-icon icon="@tui.refresh-cw"></tui-icon>
                             }
                           </button>
                         }
                         @if (isTravelItem(item)) {
-                          <button nbButton ghost size="tiny"
+                          <button tuiButton appearance="flat" size="xs"
                                   [disabled]="syncingItemId() === item.id"
                                   (click)="syncTravelItem(item)"
                                   title="Aggiorna da Wikivoyage">
                             @if (syncingItemId() === item.id) {
-                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                              <tui-loader size="s"></tui-loader>
                             } @else {
-                              <nb-icon icon="refresh-outline"></nb-icon>
+                              <tui-icon icon="@tui.refresh-cw"></tui-icon>
                             }
                           </button>
                         }
                         @if (isConcertItem(item)) {
-                          <button nbButton ghost size="tiny"
+                          <button tuiButton appearance="flat" size="xs"
                                   [disabled]="syncingItemId() === item.id"
                                   (click)="syncConcertItem(item)"
                                   title="Aggiorna da SeatGeek">
                             @if (syncingItemId() === item.id) {
-                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                              <tui-loader size="s"></tui-loader>
                             } @else {
-                              <nb-icon icon="refresh-outline"></nb-icon>
+                              <tui-icon icon="@tui.refresh-cw"></tui-icon>
                             }
                           </button>
                         }
                         @if (isPlantItem(item)) {
-                          <button nbButton ghost size="tiny"
+                          <button tuiButton appearance="flat" size="xs"
                                   [disabled]="syncingItemId() === item.id"
                                   (click)="syncPlantItem(item)"
                                   title="Aggiorna da Perenual">
                             @if (syncingItemId() === item.id) {
-                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                              <tui-loader size="s"></tui-loader>
                             } @else {
-                              <nb-icon icon="refresh-outline"></nb-icon>
+                              <tui-icon icon="@tui.refresh-cw"></tui-icon>
                             }
                           </button>
                         }
@@ -1559,30 +1559,30 @@
                             <input type="file" accept="image/*" hidden (change)="uploadItemImage(item, $event)"
                                    [disabled]="imageUploadingItemId() === item.id">
                             @if (imageUploadingItemId() === item.id) {
-                              <nb-spinner size="tiny" status="info"></nb-spinner>
+                              <tui-loader size="s"></tui-loader>
                             } @else {
-                              <nb-icon icon="camera-outline"></nb-icon>
+                              <tui-icon icon="@tui.camera"></tui-icon>
                             }
                           </label>
                           @if (item.image) {
-                            <button nbButton ghost size="tiny" status="danger" (click)="removeItemImage(item)" title="Rimuovi immagine">
-                              <nb-icon icon="trash-2-outline"></nb-icon>
+                            <button tuiButton appearance="flat" size="xs" status="danger" (click)="removeItemImage(item)" title="Rimuovi immagine">
+                              <tui-icon icon="@tui.trash-2"></tui-icon>
                             </button>
                           }
                         }
                         @if (item.child_list_detail) {
-                          <button nbButton ghost size="tiny" status="warning" (click)="unlinkChildList(item)" title="Scollega sotto-lista">
-                            <nb-icon icon="link-2-outline"></nb-icon>
+                          <button tuiButton appearance="flat" size="xs" status="warning" (click)="unlinkChildList(item)" title="Scollega sotto-lista">
+                            <tui-icon icon="@tui.link-2"></tui-icon>
                           </button>
-                          <button nbButton ghost size="tiny" status="danger" (click)="deleteChildList(item)" title="Elimina sotto-lista definitivamente">
-                            <nb-icon icon="trash-2-outline"></nb-icon>
+                          <button tuiButton appearance="flat" size="xs" status="danger" (click)="deleteChildList(item)" title="Elimina sotto-lista definitivamente">
+                            <tui-icon icon="@tui.trash-2"></tui-icon>
                           </button>
                         }
-                        <button nbButton ghost size="tiny" (click)="startEditItem(item)" title="Modifica">
-                          <nb-icon icon="edit-2-outline"></nb-icon>
+                        <button tuiButton appearance="flat" size="xs" (click)="startEditItem(item)" title="Modifica">
+                          <tui-icon icon="@tui.pencil"></tui-icon>
                         </button>
-                        <button nbButton ghost size="tiny" status="danger" (click)="deleteItem(item)" title="Elimina">
-                          <nb-icon icon="trash-2-outline"></nb-icon>
+                        <button tuiButton appearance="flat" size="xs" status="danger" (click)="deleteItem(item)" title="Elimina">
+                          <tui-icon icon="@tui.trash-2"></tui-icon>
                         </button>
                       }
                     </div>
@@ -1641,25 +1641,25 @@
                             <p class="item-detail-title">{{ item.text }}</p>
                             @if (item.item_type_detail) {
                               <p class="item-detail-row">
-                                <nb-icon icon="compass-outline"></nb-icon>
+                                <tui-icon icon="@tui.compass"></tui-icon>
                                 {{ typeLabel(item.item_type_detail) }}
                               </p>
                             }
                             @if (travelMeta(item).lang) {
                               <p class="item-detail-row">
-                                <nb-icon icon="globe-2-outline"></nb-icon>
+                                <tui-icon icon="@tui.globe"></tui-icon>
                                 {{ travelMeta(item).lang!.toUpperCase() }}
                               </p>
                             }
                             @if (travelMeta(item).see?.length) {
                               <div class="travel-listings">
-                                <p class="travel-listings-title"><nb-icon icon="eye-outline"></nb-icon> Da vedere</p>
+                                <p class="travel-listings-title"><tui-icon icon="@tui.eye"></tui-icon> Da vedere</p>
                                 @for (listing of travelMeta(item).see!; track listing.name) {
                                   <div class="travel-listing">
                                     <p class="travel-listing-name">{{ listing.name }}</p>
                                     @if (listing.description) { <p class="travel-listing-desc">{{ listing.description }}</p> }
                                     @if (listing.address) {
-                                      <p class="travel-listing-address"><nb-icon icon="pin-outline"></nb-icon> {{ listing.address }}</p>
+                                      <p class="travel-listing-address"><tui-icon icon="@tui.map-pin"></tui-icon> {{ listing.address }}</p>
                                     }
                                   </div>
                                 }
@@ -1667,13 +1667,13 @@
                             }
                             @if (travelMeta(item).do?.length) {
                               <div class="travel-listings">
-                                <p class="travel-listings-title"><nb-icon icon="activity-outline"></nb-icon> Da fare</p>
+                                <p class="travel-listings-title"><tui-icon icon="@tui.activity"></tui-icon> Da fare</p>
                                 @for (listing of travelMeta(item).do!; track listing.name) {
                                   <div class="travel-listing">
                                     <p class="travel-listing-name">{{ listing.name }}</p>
                                     @if (listing.description) { <p class="travel-listing-desc">{{ listing.description }}</p> }
                                     @if (listing.address) {
-                                      <p class="travel-listing-address"><nb-icon icon="pin-outline"></nb-icon> {{ listing.address }}</p>
+                                      <p class="travel-listing-address"><tui-icon icon="@tui.map-pin"></tui-icon> {{ listing.address }}</p>
                                     }
                                   </div>
                                 }
@@ -1681,13 +1681,13 @@
                             }
                             @if (travelMeta(item).eat?.length) {
                               <div class="travel-listings">
-                                <p class="travel-listings-title"><nb-icon icon="shopping-bag-outline"></nb-icon> Dove mangiare</p>
+                                <p class="travel-listings-title"><tui-icon icon="@tui.shopping-bag"></tui-icon> Dove mangiare</p>
                                 @for (listing of travelMeta(item).eat!; track listing.name) {
                                   <div class="travel-listing">
                                     <p class="travel-listing-name">{{ listing.name }}</p>
                                     @if (listing.description) { <p class="travel-listing-desc">{{ listing.description }}</p> }
                                     @if (listing.address) {
-                                      <p class="travel-listing-address"><nb-icon icon="pin-outline"></nb-icon> {{ listing.address }}</p>
+                                      <p class="travel-listing-address"><tui-icon icon="@tui.map-pin"></tui-icon> {{ listing.address }}</p>
                                     }
                                   </div>
                                 }
@@ -1696,7 +1696,7 @@
                             @if (travelMeta(item).service_url) {
                               <a [href]="travelMeta(item).service_url" target="_blank" rel="noopener noreferrer"
                                  class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
+                                <tui-icon icon="@tui.external-link"></tui-icon>
                                 Apri su Wikivoyage
                               </a>
                             }
@@ -1736,21 +1736,21 @@
                             <p class="item-detail-title">{{ placeMeta(item).display_name || item.text }}</p>
                             @if (placeMeta(item).category) {
                               <p class="item-detail-row">
-                                <nb-icon icon="pricetags-outline"></nb-icon>
+                                <tui-icon icon="@tui.tags"></tui-icon>
                                 {{ placeMeta(item).category }}
                                 @if (placeMeta(item).place_type) { · {{ placeMeta(item).place_type }} }
                               </p>
                             }
                             @if (placeMeta(item).latitude != null && placeMeta(item).longitude != null) {
                               <p class="item-detail-row">
-                                <nb-icon icon="navigation-2-outline"></nb-icon>
+                                <tui-icon icon="@tui.navigation"></tui-icon>
                                 {{ placeMeta(item).latitude! | number: '1.5-5' }}, {{ placeMeta(item).longitude! | number: '1.5-5' }}
                               </p>
                             }
                             @if (placeMeta(item).service_url) {
                               <a [href]="placeMeta(item).service_url" target="_blank" rel="noopener noreferrer"
                                  class="item-detail-link">
-                                <nb-icon icon="external-link-outline"></nb-icon>
+                                <tui-icon icon="@tui.external-link"></tui-icon>
                                 Apri su OpenStreetMap
                               </a>
                             }
@@ -1778,18 +1778,18 @@
                         <div class="item-detail-event-location">
                           @if (item.event_date) {
                             <p class="item-detail-row">
-                              <nb-icon icon="calendar-outline"></nb-icon>
+                              <tui-icon icon="@tui.calendar"></tui-icon>
                               {{ item.event_date | date: 'dd/MM/yyyy' }}@if (item.event_time) { , {{ item.event_time!.slice(0, 5) }} }
                             </p>
                           }
                           @if (item.location_address) {
                             <p class="item-detail-row">
-                              <nb-icon icon="pin-outline"></nb-icon>
+                              <tui-icon icon="@tui.map-pin"></tui-icon>
                               {{ item.location_address }}
                               @if (item.location_latitude && item.location_longitude) {
                                 <a [href]="'https://www.openstreetmap.org/?mlat=' + item.location_latitude + '&mlon=' + item.location_longitude + '#map=16/' + item.location_latitude + '/' + item.location_longitude"
                                    target="_blank" rel="noopener noreferrer" class="item-detail-link-inline" title="Apri su OpenStreetMap">
-                                  <nb-icon icon="external-link-outline"></nb-icon>
+                                  <tui-icon icon="@tui.external-link"></tui-icon>
                                 </a>
                               }
                             </p>
@@ -1803,16 +1803,16 @@
             }
           </ol>
         }
-      </nb-card-body>
+      </div>
       @if (hasExternalItems) {
-        <nb-card-footer class="items-attribution">
+        <div class="l2m-card__footer items-attribution">
           Dati provenienti da:
           @for (source of externalAttributions(); track source.name; let last = $last) {
             <a [href]="source.url" target="_blank" rel="noopener noreferrer">{{ source.name }}</a>
             @if (!last) { · }
           }
-        </nb-card-footer>
+        </div>
       }
-    </nb-card>
+    </div>
   }
 </div>

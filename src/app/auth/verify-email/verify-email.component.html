@@ -1,7 +1,7 @@
 <div class="auth-wrapper">
   <div class="auth-brand">
     <div class="auth-brand-content">
-      <span class="brand-mark"><nb-icon icon="layers-outline" class="brand-icon"></nb-icon></span>
+      <span class="brand-mark"><tui-icon icon="@tui.layers" class="brand-icon"></tui-icon></span>
       <span class="brand-name">List2Me</span>
       <p class="brand-tagline">Organizza il tuo mondo, condividilo con chi ami.</p>
     </div>
@@ -14,29 +14,29 @@
       @switch (status()) {
         @case ('loading') {
           <div class="status-center">
-            <nb-spinner status="primary" size="giant"></nb-spinner>
+            <tui-loader size="xl"></tui-loader>
             <p class="status-text">Verifica in corso…</p>
           </div>
         }
         @case ('success') {
           <div class="status-center">
-            <nb-icon icon="checkmark-circle-2-outline" class="status-icon status-icon--success"></nb-icon>
+            <tui-icon icon="@tui.circle-check" class="status-icon status-icon--success"></tui-icon>
             <p class="status-text">Il tuo indirizzo email è stato verificato con successo!</p>
           </div>
-          <button nbButton fullWidth status="primary" class="submit-btn" routerLink="/auth/login">
+          <button tuiButton appearance="primary" class="submit-btn l2m-btn-block" routerLink="/auth/login">
             Accedi al tuo account
           </button>
         }
         @case ('error') {
-          <nb-alert status="danger" class="auth-alert">
-            <nb-icon icon="alert-circle-outline"></nb-icon>
+          <div class="l2m-alert l2m-alert--danger auth-alert">
+            <tui-icon icon="@tui.circle-alert"></tui-icon>
             {{ errorMessage() }}
-          </nb-alert>
+          </div>
           <p class="hint-text">
             Il link potrebbe essere già stato utilizzato o essere scaduto.
             Accedi per richiederne uno nuovo.
           </p>
-          <button nbButton fullWidth status="primary" class="submit-btn" routerLink="/auth/login">
+          <button tuiButton appearance="primary" class="submit-btn l2m-btn-block" routerLink="/auth/login">
             Vai al login
           </button>
         }

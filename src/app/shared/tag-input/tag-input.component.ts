@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnDestroy, signal } from '@angular/core';
-import { NbTagModule, NbTagInputAddEvent } from '@nebular/theme';
+import { TuiIcon } from '@taiga-ui/core';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } from 'rxjs';
 import { TagService } from '../../services/tag.service';
@@ -8,7 +8,7 @@ import { Tag } from '../../models/tag.model';
 @Component({
   selector: 'app-tag-input',
   standalone: true,
-  imports: [NbTagModule],
+  imports: [TuiIcon],
   templateUrl: './tag-input.component.html',
   styleUrl: './tag-input.component.scss',
 })
@@ -46,9 +46,9 @@ export class TagInputComponent implements OnDestroy {
     this.suggestions.set([]);
   }
 
-  onTagAdd(event: NbTagInputAddEvent): void {
-    this.addTag(event.value);
-    event.input.nativeElement.value = '';
+  addTagFromInput(input: HTMLInputElement): void {
+    this.addTag(input.value);
+    input.value = '';
   }
 
   removeTag(name: string): void {

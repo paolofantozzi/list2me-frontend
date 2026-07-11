@@ -1,14 +1,15 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import {
-  NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule, NbAlertModule
-} from '@nebular/theme';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-verify-email',
   standalone: true,
-  imports: [RouterLink, NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule, NbAlertModule],
+  imports: [
+    TuiIcon,
+    TuiButton,
+    TuiLoader,RouterLink],
   templateUrl: './verify-email.component.html',
   styleUrl: './verify-email.component.scss'
 })

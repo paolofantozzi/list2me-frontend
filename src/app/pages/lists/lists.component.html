@@ -1,77 +1,80 @@
 <div class="page-container">
-  <app-page-header title="Le mie liste" icon="list-outline">
-    <button actions nbButton status="primary" (click)="showCreateForm.update(v => !v)">
-      <nb-icon icon="plus-outline"></nb-icon>
+  <app-page-header title="Le mie liste" icon="@tui.list">
+    <button actions tuiButton type="button" appearance="primary" size="m" (click)="showCreateForm.update(v => !v)">
+      <tui-icon icon="@tui.plus"></tui-icon>
       Nuova lista
     </button>
   </app-page-header>
 
   @if (showCreateForm()) {
-    <nb-card class="create-form-card">
-      <nb-card-header>Crea nuova lista</nb-card-header>
-      <nb-card-body>
+    <div class="l2m-card create-form-card">
+      <div class="l2m-card__header">Crea nuova lista</div>
+      <div class="l2m-card__body">
         <form [formGroup]="createForm" (ngSubmit)="createList()">
           <div class="form-group">
             <label class="label">Titolo *</label>
-            <input nbInput fullWidth formControlName="title" placeholder="Titolo della lista..." />
+            <input class="l2m-input" formControlName="title" placeholder="Titolo della lista..." />
           </div>
           <div class="form-group">
             <label class="label">Descrizione</label>
-            <textarea nbInput fullWidth formControlName="description"
+            <textarea class="l2m-textarea" formControlName="description"
                       placeholder="Descrizione opzionale..." rows="2"></textarea>
           </div>
           <div class="form-group">
             <label class="label">Visibilità</label>
-            <nb-radio-group formControlName="visibility" class="visibility-options">
-              <nb-radio value="private">Privata</nb-radio>
-              <nb-radio value="public">Pubblica</nb-radio>
-            </nb-radio-group>
+            <div class="l2m-radio-group visibility-options">
+              <label class="l2m-radio">
+                <input type="radio" formControlName="visibility" value="private" /> Privata
+              </label>
+              <label class="l2m-radio">
+                <input type="radio" formControlName="visibility" value="public" /> Pubblica
+              </label>
+            </div>
           </div>
           <div class="form-group">
             <label class="label">Tag</label>
             <app-tag-input [tags]="createTags()" (tagsChange)="createTags.set($event)"></app-tag-input>
           </div>
           <div class="form-actions">
-            <button nbButton type="button" ghost (click)="showCreateForm.set(false); createTags.set([])">Annulla</button>
-            <button nbButton type="submit" status="primary"
+            <button tuiButton type="button" appearance="flat" size="m" (click)="showCreateForm.set(false); createTags.set([])">Annulla</button>
+            <button tuiButton type="submit" appearance="primary" size="m"
                     [disabled]="createForm.invalid || createLoading()">
               @if (createLoading()) {
-                <nb-spinner size="small" status="basic"></nb-spinner>
+                <tui-loader size="s"></tui-loader>
               } @else {
                 Crea
               }
             </button>
           </div>
         </form>
-      </nb-card-body>
-    </nb-card>
+      </div>
+    </div>
   }
 
   @if (loading()) {
     <div class="loading-center">
-      <nb-spinner status="primary" size="giant"></nb-spinner>
+      <tui-loader size="xl"></tui-loader>
     </div>
   } @else if (error()) {
-    <nb-alert status="danger">{{ error() }}</nb-alert>
+    <div class="l2m-alert l2m-alert--danger">{{ error() }}</div>
   } @else {
 
     <!-- ── Filtro rapido ───────────────────────────────────────────────────── -->
     @if (lists().length > 0) {
       <div class="filter-bar">
-        <nb-form-field class="filter-field">
-          <nb-icon nbPrefix icon="search-outline"></nb-icon>
-          <input nbInput fullWidth fieldSize="medium" #filterInput
+        <div class="l2m-input-icon filter-field">
+          <tui-icon icon="@tui.search"></tui-icon>
+          <input class="l2m-input" #filterInput
                  [value]="filterQuery()"
                  (input)="filterQuery.set(filterInput.value)"
                  placeholder="Filtra per titolo, tag o proprietario..." />
           @if (filterActive()) {
-            <button nbSuffix nbButton ghost size="small" type="button"
+            <button tuiIconButton type="button" appearance="flat" size="xs" class="l2m-input-clear"
+                    iconStart="@tui.x"
                     (click)="filterQuery.set(''); filterInput.value = ''"
-                    aria-label="Pulisci filtro">
-              <nb-icon icon="close-outline"></nb-icon>
-            </button>
+                    aria-label="Pulisci filtro">Pulisci filtro</button>
           }
-        </nb-form-field>
+        </div>
         @if (filterActive()) {
           <span class="filter-count">{{ filteredCount() }} {{ filteredCount() === 1 ? 'risultato' : 'risultati' }}</span>
         }
@@ -79,34 +82,34 @@
     }
 
     @if (filterActive() && filteredCount() === 0) {
-      <nb-card>
-        <nb-card-body class="empty-state">
-          <span class="empty-icon-wrap"><nb-icon icon="search-outline" class="empty-icon"></nb-icon></span>
+      <div class="l2m-card">
+        <div class="l2m-card__body empty-state">
+          <span class="empty-icon-wrap"><tui-icon icon="@tui.search" class="empty-icon"></tui-icon></span>
           <p>Nessuna lista corrisponde a «{{ filterQuery() }}».</p>
-          <button nbButton ghost status="primary" size="small" (click)="filterQuery.set('')">Pulisci il filtro</button>
-        </nb-card-body>
-      </nb-card>
+          <button tuiButton type="button" appearance="flat" size="s" (click)="filterQuery.set('')">Pulisci il filtro</button>
+        </div>
+      </div>
     }
 
     <!-- ── Le mie liste ────────────────────────────────────────────────────── -->
     @if (!filterActive() || myLists().length > 0) {
       <div class="section-header">
-        <nb-icon icon="person-outline" class="section-icon"></nb-icon>
+        <tui-icon icon="@tui.user" class="section-icon"></tui-icon>
         <h2 class="section-title">Le mie liste</h2>
         <span class="section-count">{{ myLists().length }}</span>
       </div>
 
       @if (myLists().length === 0) {
-        <nb-card class="empty-section-card">
-          <nb-card-body class="empty-state">
-            <span class="empty-icon-wrap"><nb-icon icon="list-outline" class="empty-icon"></nb-icon></span>
+        <div class="l2m-card empty-section-card">
+          <div class="l2m-card__body empty-state">
+            <span class="empty-icon-wrap"><tui-icon icon="@tui.list" class="empty-icon"></tui-icon></span>
             <p>Non hai ancora creato nessuna lista.</p>
-            <button nbButton status="primary" size="small" (click)="showCreateForm.set(true)">
-              <nb-icon icon="plus-outline"></nb-icon>
+            <button tuiButton type="button" appearance="primary" size="s" (click)="showCreateForm.set(true)">
+              <tui-icon icon="@tui.plus"></tui-icon>
               Crea una lista
             </button>
-          </nb-card-body>
-        </nb-card>
+          </div>
+        </div>
       } @else {
         <div class="lists-grid">
           @for (list of myLists(); track list.id) {
@@ -119,7 +122,7 @@
     <!-- ── Liste dei miei gruppi ───────────────────────────────────────────── -->
     @if (groupLists().length > 0) {
       <div class="section-header section-header--others">
-        <nb-icon icon="people-outline" class="section-icon"></nb-icon>
+        <tui-icon icon="@tui.users" class="section-icon"></tui-icon>
         <h2 class="section-title">Liste dei miei gruppi</h2>
         <span class="section-count">{{ groupLists().length }}</span>
       </div>
@@ -133,7 +136,7 @@
     <!-- ── Liste condivise con te ──────────────────────────────────────────── -->
     @if (sharedLists().length > 0) {
       <div class="section-header section-header--others">
-        <nb-icon icon="share-outline" class="section-icon"></nb-icon>
+        <tui-icon icon="@tui.share-2" class="section-icon"></tui-icon>
         <h2 class="section-title">Condivise con te</h2>
         <span class="section-count">{{ sharedLists().length }}</span>
       </div>
@@ -147,7 +150,7 @@
     <!-- ── Liste pubbliche ─────────────────────────────────────────────────── -->
     @if (publicLists().length > 0) {
       <div class="section-header section-header--others">
-        <nb-icon icon="globe-2-outline" class="section-icon"></nb-icon>
+        <tui-icon icon="@tui.globe" class="section-icon"></tui-icon>
         <h2 class="section-title">Liste pubbliche</h2>
         <span class="section-count">{{ publicLists().length }}</span>
       </div>
@@ -162,27 +165,26 @@
 
 <!-- ── Template condiviso per le card di lista (proprie e non) ─────────────── -->
 <ng-template #listCard let-list="list" let-isOwn="isOwn">
-  <nb-card [routerLink]="['/pages/lists', list.id]" class="list-card"
-           [class.list-card--own]="isOwn" [class.list-card--other]="!isOwn">
-    <nb-card-body>
+  <div [routerLink]="['/pages/lists', list.id]" class="l2m-card list-card"
+       [class.list-card--own]="isOwn" [class.list-card--other]="!isOwn">
+    <div class="l2m-card__body">
       <div class="list-card-top">
         <h3 class="list-title">{{ list.title }}</h3>
         @if (isOwn) {
-          <button nbButton ghost size="tiny" status="danger" class="list-delete-btn"
-                  (click)="deleteList(list, $event)" title="Elimina lista">
-            <nb-icon icon="trash-2-outline"></nb-icon>
-          </button>
+          <button tuiIconButton type="button" appearance="flat" size="xs" status="danger" class="list-delete-btn"
+                  iconStart="@tui.trash-2"
+                  (click)="deleteList(list, $event)" aria-label="Elimina lista">Elimina lista</button>
         }
       </div>
 
       <div class="list-badges">
         <span class="visibility-pill" [class.visibility-pill--public]="list.visibility === 'public'">
-          <nb-icon [icon]="visibilityIcon(list)"></nb-icon>
+          <tui-icon [icon]="visibilityIcon(list)"></tui-icon>
           {{ visibilityLabel(list) }}
         </span>
         @if (!isOwn) {
           <span class="owner-pill">
-            <nb-icon icon="person-outline"></nb-icon>
+            <tui-icon icon="@tui.user"></tui-icon>
             {{ list.owner.username }}
           </span>
         }
@@ -202,70 +204,67 @@
 
       <div class="list-stats">
         <span class="stat">
-          <nb-icon icon="checkmark-square-outline"></nb-icon>
+          <tui-icon icon="@tui.square-check"></tui-icon>
           {{ list.items_count }} {{ list.items_count === 1 ? 'elemento' : 'elementi' }}
         </span>
         @if (isOwn) {
           <span class="stat stat--editable" title="Sei il proprietario: puoi modificarla liberamente">
-            <nb-icon icon="edit-2-outline"></nb-icon>
+            <tui-icon icon="@tui.pencil"></tui-icon>
             Modificabile
           </span>
         } @else if (canEdit(list)) {
           <span class="stat stat--editable" title="Puoi modificare questa lista">
-            <nb-icon icon="edit-2-outline"></nb-icon>
+            <tui-icon icon="@tui.pencil"></tui-icon>
             Modificabile
           </span>
         } @else {
           <span class="stat stat--readonly" title="Puoi solo visualizzarla">
-            <nb-icon icon="eye-outline"></nb-icon>
+            <tui-icon icon="@tui.eye"></tui-icon>
             Sola lettura
           </span>
         }
         @if (!isOwn && list.is_following) {
           <span class="stat stat--following">
-            <nb-icon icon="heart"></nb-icon>
+            <tui-icon icon="@tui.heart"></tui-icon>
             Seguita
           </span>
         }
         @if (list.is_fork) {
           <span class="stat">
-            <nb-icon icon="copy-outline"></nb-icon>
+            <tui-icon icon="@tui.copy"></tui-icon>
             Fork
           </span>
         }
       </div>
-    </nb-card-body>
-  </nb-card>
+    </div>
+  </div>
 </ng-template>
 
 <!-- ── Template condiviso per il pannello sottoliste ────────────────────────── -->
 <ng-template #sublistsPanel let-list="list" let-canEditList="canEdit">
   <div class="sublists-toggle" (click)="toggleSublists(list, $event)">
-    <nb-icon [icon]="isSublistsExpanded(list.id) ? 'chevron-up-outline' : 'chevron-down-outline'"></nb-icon>
+    <tui-icon [icon]="isSublistsExpanded(list.id) ? '@tui.chevron-up' : '@tui.chevron-down'"></tui-icon>
     Sottoliste
   </div>
   @if (isSublistsExpanded(list.id)) {
     <div class="sublists-panel" (click)="$event.stopPropagation()">
       @if (sublistsLoading().has(list.id)) {
-        <nb-spinner size="small" status="primary"></nb-spinner>
+        <tui-loader size="s"></tui-loader>
       } @else if ((sublists()[list.id] ?? []).length === 0) {
         <p class="sublists-empty">Nessuna sottolista.</p>
       } @else {
         @for (entry of sublists()[list.id]; track entry.item.id) {
           <div class="sublist-row">
-            <nb-icon [icon]="entry.detail.visibility === 'public' ? 'globe-2-outline' : entry.detail.visibility === 'group' ? 'people-outline' : 'lock-outline'"></nb-icon>
+            <tui-icon [icon]="entry.detail.visibility === 'public' ? '@tui.globe' : entry.detail.visibility === 'group' ? '@tui.users' : '@tui.lock'"></tui-icon>
             <span class="sublist-title">{{ entry.detail.title }}</span>
             <span class="sublist-count">{{ entry.detail.items_count }} el.</span>
-            <button nbButton ghost size="tiny" (click)="openSublist(entry.detail.id, $event)" title="Apri sottolista">
-              <nb-icon icon="arrow-forward-outline"></nb-icon>
-            </button>
+            <button tuiIconButton type="button" appearance="flat" size="xs" iconStart="@tui.arrow-right"
+                    (click)="openSublist(entry.detail.id, $event)" aria-label="Apri sottolista">Apri sottolista</button>
             @if (canEditList) {
-              <button nbButton ghost size="tiny" status="warning" (click)="unlinkSublist(list.id, entry, $event)" title="Scollega dalla lista">
-                <nb-icon icon="link-2-outline"></nb-icon>
-              </button>
-              <button nbButton ghost size="tiny" status="danger" (click)="deleteSublist(list.id, entry, $event)" title="Elimina sottolista definitivamente">
-                <nb-icon icon="trash-2-outline"></nb-icon>
-              </button>
+              <button tuiIconButton type="button" appearance="flat" size="xs" status="warning" iconStart="@tui.unlink"
+                      (click)="unlinkSublist(list.id, entry, $event)" aria-label="Scollega dalla lista">Scollega</button>
+              <button tuiIconButton type="button" appearance="flat" size="xs" status="danger" iconStart="@tui.trash-2"
+                      (click)="deleteSublist(list.id, entry, $event)" aria-label="Elimina sottolista">Elimina</button>
             }
           </div>
         }

@@ -1,10 +1,9 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule,
-  NbInputModule, NbFormFieldModule, NbToastrService, NbUserModule, NbAlertModule
-} from '@nebular/theme';
+import { ToastService } from '../../services/toast.service';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
+import { UserChipComponent } from '../../shared/user-chip/user-chip.component';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
@@ -13,16 +12,12 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
   selector: 'app-profile',
   standalone: true,
   imports: [
+    TuiIcon,
+    TuiButton,
+    TuiLoader,
+    UserChipComponent,
     ReactiveFormsModule,
     DatePipe,
-    NbCardModule,
-    NbIconModule,
-    NbSpinnerModule,
-    NbButtonModule,
-    NbInputModule,
-    NbFormFieldModule,
-    NbAlertModule,
-    NbUserModule,
   ],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
@@ -42,7 +37,7 @@ export class ProfileComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private fb: FormBuilder,
-    private toastr: NbToastrService,
+    private toastr: ToastService,
     private router: Router,
     private confirmDialog: ConfirmDialogService
   ) {

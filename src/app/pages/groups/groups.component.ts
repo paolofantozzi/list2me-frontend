@@ -1,9 +1,8 @@
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import {
-  NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule,
-  NbInputModule, NbToastrService, NbAlertModule, NbUserModule, NbBadgeModule
-} from '@nebular/theme';
+import { ToastService } from '../../services/toast.service';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
+import { UserChipComponent } from '../../shared/user-chip/user-chip.component';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, switchMap, catchError } from 'rxjs';
 import { of } from 'rxjs';
@@ -19,15 +18,11 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
   selector: 'app-groups',
   standalone: true,
   imports: [
+    TuiIcon,
+    TuiButton,
+    TuiLoader,
+    UserChipComponent,
     ReactiveFormsModule,
-    NbCardModule,
-    NbIconModule,
-    NbSpinnerModule,
-    NbButtonModule,
-    NbInputModule,
-    NbAlertModule,
-    NbUserModule,
-    NbBadgeModule,
     PageHeaderComponent,
   ],
   templateUrl: './groups.component.html',
@@ -62,7 +57,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
     private groupService: GroupService,
     private userService: UserService,
     private fb: FormBuilder,
-    private toastr: NbToastrService,
+    private toastr: ToastService,
     private auth: AuthService,
     private confirmDialog: ConfirmDialogService
   ) {

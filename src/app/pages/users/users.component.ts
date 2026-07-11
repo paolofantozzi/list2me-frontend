@@ -1,10 +1,9 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { combineLatest, debounceTime, distinctUntilChanged, switchMap, catchError, of, startWith } from 'rxjs';
-import {
-  NbCardModule, NbIconModule, NbSpinnerModule, NbButtonModule,
-  NbInputModule, NbUserModule, NbAlertModule, NbSelectModule, NbToastrService
-} from '@nebular/theme';
+import { ToastService } from '../../services/toast.service';
+import { TuiIcon, TuiButton, TuiLoader } from '@taiga-ui/core';
+import { UserChipComponent } from '../../shared/user-chip/user-chip.component';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { AdminUser, UserPublic } from '../../models/user.model';
@@ -17,15 +16,11 @@ type AdminStatusFilter = 'all' | 'active' | 'inactive';
   selector: 'app-users',
   standalone: true,
   imports: [
+    TuiIcon,
+    TuiButton,
+    TuiLoader,
+    UserChipComponent,
     ReactiveFormsModule,
-    NbCardModule,
-    NbIconModule,
-    NbSpinnerModule,
-    NbButtonModule,
-    NbInputModule,
-    NbUserModule,
-    NbAlertModule,
-    NbSelectModule,
     PageHeaderComponent,
   ],
   templateUrl: './users.component.html',
@@ -51,7 +46,7 @@ export class UsersComponent implements OnInit {
   constructor(
     private userService: UserService,
     private authService: AuthService,
-    private toastr: NbToastrService,
+    private toastr: ToastService,
     private confirmDialog: ConfirmDialogService
   ) {
     this.searchControl.valueChanges.pipe(
