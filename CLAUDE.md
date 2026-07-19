@@ -16,7 +16,7 @@ Questo file viene caricato automaticamente da Claude Code all'inizio di ogni ses
 | State | Nessuno store globale — servizi RxJS + Angular Signals |
 | Test | Vitest + jsdom |
 | Formato | Prettier (100 char, single quotes, Angular HTML parser) |
-| Deploy | GitHub Pages via `.github/workflows/deploy.yml` (push su `main`) |
+| Deploy | Cloudflare Pages (build automatica su push su `main`) |
 
 ---
 
@@ -43,9 +43,7 @@ src/
 ├── styles.scss                # Stili globali + token --l2m-* (light/dark) + accent Taiga
 └── index.html
 public/
-├── 404.html                   # Redirect SPA per GitHub Pages
-├── CNAME                      # Dominio custom: www.list2me.it
-└── .nojekyll
+└── _redirects                 # Fallback SPA per Cloudflare Pages (/* → /index.html 200)
 ```
 
 ---
@@ -155,7 +153,6 @@ list2me-backend/apps/
 ```bash
 npm start            # ng serve (dev, porta 4200)
 npm run build        # ng build (production)
-npm run build:gh     # ng build --configuration github-pages
 npm test             # Vitest
 ```
 
@@ -217,8 +214,9 @@ npm test             # Vitest
 
 ## Note importanti
 
-- Il deploy avviene automaticamente al push su `main` via GitHub Actions.
-- `public/404.html` gestisce il redirect SPA su GitHub Pages — non modificare senza testare il routing.
+- Il deploy avviene automaticamente al push su `main` via Cloudflare Pages (build command `npm run build`, output `dist/list2me-frontend/browser`).
+- `public/_redirects` gestisce il fallback SPA su Cloudflare — non modificare senza testare il routing.
+- La versione di Node per la build è fissata da `.nvmrc` (20).
 - Bootstrap Taiga in `app.config.ts` (`provideTaiga()`) e `<tui-root>` in `app.ts`.
 - Servizi globali custom (non più Nebular): `ThemeService` (dark mode via classe body + `TUI_DARK_MODE`), `ToastService` (`.success/.danger/.warning/.info(msg, title?)`), `ConfirmDialogService` (via `TuiDialogService`). Notifiche → iniettare `ToastService`, non un modulo.
 - Non esistono proxy Angular — le chiamate dev vanno direttamente a `localhost:8000` (backend locale).
